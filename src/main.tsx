@@ -13,6 +13,11 @@ import "./index.css";
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
+const AskAI = lazy(() => import("./pages/AskAI.tsx"));
+const MockExams = lazy(() => import("./pages/MockExams.tsx"));
+const QuestionPapers = lazy(() => import("./pages/QuestionPapers.tsx"));
+const StudentTools = lazy(() => import("./pages/StudentTools.tsx"));
+const SubjectDetail = lazy(() => import("./pages/SubjectDetail.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
@@ -132,6 +137,11 @@ createRoot(document.getElementById("root")!).render(
                   </RequireAuth>
                 }
               />
+              <Route path="/ask-ai" element={<RequireAuth><AskAI /></RequireAuth>} />
+              <Route path="/mock-exams" element={<RequireAuth><MockExams /></RequireAuth>} />
+              <Route path="/question-papers" element={<RequireAuth><QuestionPapers /></RequireAuth>} />
+              <Route path="/student-tools" element={<RequireAuth><StudentTools /></RequireAuth>} />
+              <Route path="/subject/:subjectId" element={<RequireAuth><SubjectDetail /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

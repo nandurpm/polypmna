@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import {
   Search,
   LogOut,
@@ -123,10 +125,10 @@ const departments = [
 const quickActions = [
   { label: "Subject Search", desc: "Browse all departments & subjects", icon: Search, color: "bg-indigo-100 text-indigo-600", href: "#departments" },
   { label: "Study Notes", desc: "Chapter-wise notes & materials", icon: BookOpen, color: "bg-emerald-100 text-emerald-600", href: "#notes" },
-  { label: "Ask POLY AI", desc: "AI-powered doubt clearing", icon: Brain, color: "bg-amber-100 text-amber-600", href: "#ai" },
-  { label: "Mock Exams", desc: "Practice tests & assessments", icon: FileText, color: "bg-rose-100 text-rose-600", href: "#mock" },
-  { label: "Question Papers", desc: "Previous year papers with solutions", icon: Library, color: "bg-violet-100 text-violet-600", href: "#papers" },
-  { label: "Tools", desc: "CGPA calculator & utilities", icon: Calendar, color: "bg-cyan-100 text-cyan-600", href: "#tools" },
+  { label: "Ask POLY AI", desc: "AI-powered doubt clearing", icon: Brain, color: "bg-amber-100 text-amber-600", href: "/ask-ai" },
+  { label: "Mock Exams", desc: "Practice tests & assessments", icon: FileText, color: "bg-rose-100 text-rose-600", href: "/mock-exams" },
+  { label: "Question Papers", desc: "Previous year papers with solutions", icon: Library, color: "bg-violet-100 text-violet-600", href: "/question-papers" },
+  { label: "Tools", desc: "CGPA calculator & utilities", icon: Calendar, color: "bg-cyan-100 text-cyan-600", href: "/student-tools" },
 ];
 
 const stats = [
@@ -242,6 +244,21 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState<number | null>(null);
   const [selectedSem, setSelectedSem] = useState<number | null>(null);
+  const seedAll = useMutation(api.seed.seedAll);
+  const [seeded, setSeeded] = useState(false);
+
+  const handleSeed = async () => {
+    try {
+      const result = await seedAll();
+      if (result === "seeded_all") {
+        setSeeded(true);
+      } else {
+        setSeeded(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const dept = selectedDept !== null ? departments[selectedDept] : null;
 
@@ -451,6 +468,20 @@ export default function Dashboard() {
                 Notes, question papers, mock exams, and AI-powered doubt clearing — everything you need for Revision 2026 & 2021 syllabus.
               </motion.p>
 
+              {/* Seed Data Button (shown when no data) */}
+              {!seeded && (
+                <motion.div variants={fadeIn} className="mt-4">
+                  <button onClick={handleSeed} className="text-xs text-muted-foreground hover:text-primary border border-dashed border-border/60 rounded-lg px-4 py-2 transition-colors cursor-pointer">
+                    Click to load study materials data
+                  </button>
+                </motion.div>
+              )}
+              {seeded && (
+                <motion.div variants={fadeIn} className="mt-4">
+                  <p className="text-xs text-emerald-600">✓ Study materials loaded successfully!</p>
+                </motion.div>
+              )}
+
               {/* Stats */}
               <motion.div
                 variants={fadeIn}
@@ -498,6 +529,9 @@ export default function Dashboard() {
                     e.preventDefault();
                     const el = document.getElementById(action.href.slice(1));
                     el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  } else if (action.href.startsWith("/")) {
+                    e.preventDefault();
+                    navigate(action.href);
                   }
                 }}
               >
@@ -728,7 +762,7 @@ export default function Dashboard() {
                   Your personal AI study buddy — ask doubts, get explanations, practice problems, and understand concepts in Malayalam or English.
                 </p>
               </div>
-              <button className="shrink-0 flex items-center gap-2 rounded-xl bg-card/15 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white
+              <button onClick={() => navigate("/ask-ai")} className="shrink-0 flex items-center gap-2 rounded-xl bg-card/15 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white
                                  hover:bg-card/25 transition-all duration-300 cursor-pointer">
                 Try Now
                 <ArrowRight className="h-4 w-4" />
@@ -762,7 +796,8 @@ export default function Dashboard() {
                 <motion.a
                   key={sem}
                   variants={fadeIn}
-                  href="#"
+                  href="/question-papers"
+                  onClick={(e) => { e.preventDefault(); navigate("/question-papers"); }}
                   className="group flex items-center justify-between rounded-xl border border-border/50 bg-card px-5 py-4
                              shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300"
                 >
@@ -812,7 +847,8 @@ export default function Dashboard() {
                 <motion.a
                   key={tool.title}
                   variants={fadeIn}
-                  href="#"
+                  href="/student-tools"
+                  onClick={(e) => { e.preventDefault(); navigate("/student-tools"); }}
                   className="group flex flex-col items-center gap-3 rounded-xl border border-border/50 bg-card p-6
                              shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 text-center"
                 >

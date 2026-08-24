@@ -2,7 +2,6 @@ import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { Infer, v } from "convex/values";
 
-// default user roles. can add / remove based on the project as needed
 export const ROLES = {
   ADMIN: "admin",
   USER: "user",
@@ -18,26 +17,100 @@ export type Role = Infer<typeof roleValidator>;
 
 const schema = defineSchema(
   {
-    // default auth tables using convex auth.
-    ...authTables, // do not remove or modify
+    ...authTables,
 
-    // the users table is the default users table that is brought in by the authTables
     users: defineTable({
-      name: v.optional(v.string()), // name of the user. do not remove
-      image: v.optional(v.string()), // image of the user. do not remove
-      email: v.optional(v.string()), // email of the user. do not remove
-      emailVerificationTime: v.optional(v.number()), // email verification time. do not remove
-      isAnonymous: v.optional(v.boolean()), // is the user anonymous. do not remove
+      name: v.optional(v.string()),
+      image: v.optional(v.string()),
+      email: v.optional(v.string()),
+      emailVerificationTime: v.optional(v.number()),
+      isAnonymous: v.optional(v.boolean()),
+      role: v.optional(roleValidator),
+      // Student profile
+      department: v.optional(v.string()),
+      semester: v.optional(v.number()),
+    }).index("email", ["email"]),
 
-      role: v.optional(roleValidator), // role of the user. do not remove
-    }).index("email", ["email"]), // index for the email. do not remove or modify
+    // ── Departments ──
+    departments: defineTable({
+      name: v.string(),
+      abbr: v.string(),
+      icon: v.string(),
+      color: v.string(),
+      sortOrder: v.number(),
+    }).index("by_abbr", ["abbr"]),
 
-    // add other tables here
+    // ── Subjects ──
+    subjects: defineTable({
+      name: v.string(),
+      departmentId: v.id("departments"),
+      semester: v.number(),
+      code: v.optional(v.string()),
+      description: v.optional(v.string()),
+    }).index("by_department", ["departmentId", "semester"]),
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // ── Study Materials (notes, syllabus, etc.) ──
+    materials: defineTable({
+      title: v.string(),
+      subjectId: v.id("subjects"),
+      type: v.union(v.literal("notes"), v.literal("syllabus"), v.literal("paper")),
+      description: v.optional(v.string()),
+      pageCount: v.optional(v.number()),
+      stars: v.number(),
+      fileUrl: v.optional(v.string()),
+      createdAt: v.number(),
+    }).index("by_subject", ["subjectId"]).index("by_type", ["type"]).index("by_created", ["createdAt"]),
+
+    // ── Question Papers ──
+    questionPapers: defineTable({
+      title: v.string(),
+      subjectId: v.id("subjects"),
+      year: v.number(),
+      examType: v.union(v.literal("mid"), v.literal("end"), v.literal("supply")),
+      fileUrl: v.optional(v.string()),
+      createdAt: v.number(),
+    }).index("by_subject", ["subjectId"]).index("by_year", ["year"]),
+
+    // ── Mock Exams ──
+    mockExams: defineTable({
+      title: v.string(),
+      subjectId: v.id("subjects"),
+      semester: v.number(),
+      questionCount: v.number(),
+      durationMinutes: v.number(),
+      questions: v.array(v.object({
+        question: v.string(),
+        options: v.array(v.string()),
+        correctIndex: v.number(),
+        explanation: v.optional(v.string()),
+      })),
+    }).index("by_subject", ["subjectId"]).index("by_semester", ["semester"]),
+
+    // ── Mock Exam Attempts ──
+    mockExamAttempts: defineTable({
+      userId: v.id("users"),
+      mockExamId: v.id("mockExams"),
+      answers: v.array(v.number()),
+      score: v.number(),
+      totalQuestions: v.number(),
+      completedAt: v.number(),
+    }).index("by_user", ["userId"]).index("by_exam", ["mockExamId"]),
+
+    // ── Chat Messages (Ask POLY AI) ──
+    chatMessages: defineTable({
+      userId: v.id("users"),
+      role: v.union(v.literal("user"), v.literal("assistant")),
+      content: v.string(),
+      timestamp: v.number(),
+    }).index("by_user", ["userId", "timestamp"]),
+
+    // ── User Progress ──
+    userProgress: defineTable({
+      userId: v.id("users"),
+      subjectId: v.id("subjects"),
+      materialsViewed: v.array(v.id("materials")),
+      lastViewedAt: v.number(),
+    }).index("by_user", ["userId"]).index("by_user_subject", ["userId", "subjectId"]),
   },
   {
     schemaValidation: false,
