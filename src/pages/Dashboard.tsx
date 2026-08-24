@@ -282,7 +282,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* ──────────────────────── NAVIGATION ──────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -712,7 +712,7 @@ export default function Dashboard() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-primary via-primary/95 to-[oklch(0.35_0.15_270)] p-8 sm:p-10"
+            className="relative overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-primary to-primary/80 p-8 sm:p-10"
           >
             {/* Decorative orbs */}
             <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-card/[0.06] blur-3xl" />

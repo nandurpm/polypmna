@@ -252,7 +252,7 @@ export default function Landing() {
   }, [search]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* ─── Nav ─── */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
@@ -680,7 +680,7 @@ export default function Landing() {
       )}
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-border bg-card/30">
+      <footer className="mt-auto border-t border-border bg-muted/30">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -691,7 +691,7 @@ export default function Landing() {
                 Polytechnic Study Materials
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground/60">
+            <p className="text-[11px] text-muted-foreground">
               Revision 2026 & 2021 · Kerala Polytechnic Curriculum
             </p>
           </div>
