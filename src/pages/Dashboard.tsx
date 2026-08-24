@@ -244,17 +244,13 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState<number | null>(null);
   const [selectedSem, setSelectedSem] = useState<number | null>(null);
-  const seedAll = useMutation(api.seed.seedAll);
+  const seedFromGitHub = useMutation(api.seed.seedFromGitHub);
   const [seeded, setSeeded] = useState(false);
 
   const handleSeed = async () => {
     try {
-      const result = await seedAll();
-      if (result === "seeded_all") {
-        setSeeded(true);
-      } else {
-        setSeeded(true);
-      }
+      await seedFromGitHub();
+      setSeeded(true);
     } catch (e) {
       console.error(e);
     }
