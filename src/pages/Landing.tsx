@@ -1,267 +1,698 @@
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import {
   BookOpen,
-  Brain,
-  FileText,
   Search,
-  ArrowRight,
-  Building2,
-  Library,
-  Calendar,
-  Sparkles,
   GraduationCap,
-  Users,
+  ChevronRight,
+  Clock,
+  FileText,
+  Download,
+  Building2,
+  Calendar,
+  ArrowRight,
+  Compass,
+  Library,
+  Layers,
+  BarChart3,
+  Bookmark,
+  Tag,
+  ExternalLink,
+  Star,
+  Sparkles,
+  GitBranch,
 } from "lucide-react";
+import { api } from "@/convex/_generated/api";
+import { useAction } from "convex/react";
+
+/* ─── Animation ─── */
+
+const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
 const fadeIn = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 14 },
   visible: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: {
-      delay: i * 0.06,
-      duration: 0.45,
-      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-    },
+    transition: { delay: i * 0.05, duration: 0.4, ease },
   }),
 };
 
-const features = [
-  { icon: BookOpen, title: "Study Notes", desc: "Chapter-wise notes for every subject in the Kerala Polytechnic syllabus.", color: "bg-emerald-100 text-emerald-600" },
-  { icon: Brain, title: "Ask POLY AI", desc: "AI-powered doubt clearing — understand concepts in simple language.", color: "bg-amber-100 text-amber-600" },
-  { icon: FileText, title: "Mock Exams", desc: "Practice with chapter-wise and semester-wise mock tests.", color: "bg-rose-100 text-rose-600" },
-  { icon: Library, title: "Question Papers", desc: "Previous year papers with solutions for all departments.", color: "bg-violet-100 text-violet-600" },
-  { icon: Calendar, title: "Student Tools", desc: "CGPA calculator, attendance tracker, and study planner.", color: "bg-cyan-100 text-cyan-600" },
-  { icon: Search, title: "Subject Search", desc: "Quickly find any subject across all departments and semesters.", color: "bg-indigo-100 text-indigo-600" },
+/* ─── Data ─── */
+
+const departments = [
+  {
+    name: "Computer Engineering",
+    abbr: "CSE",
+    icon: Layers,
+    color: "from-blue-500 to-indigo-600",
+    semesters: [2, 3, 4, 5, 6],
+    totalSubjects: 18,
+  },
+  {
+    name: "Civil Engineering",
+    abbr: "CE",
+    icon: Building2,
+    color: "from-emerald-500 to-teal-600",
+    semesters: [2, 3, 4, 5, 6],
+    totalSubjects: 16,
+  },
+  {
+    name: "Mechanical Engineering",
+    abbr: "ME",
+    icon: Compass,
+    color: "from-orange-500 to-red-500",
+    semesters: [2, 3, 4, 5, 6],
+    totalSubjects: 18,
+  },
+  {
+    name: "Electronics Engineering",
+    abbr: "ECE",
+    icon: Sparkles,
+    color: "from-violet-500 to-purple-600",
+    semesters: [2, 3, 4, 5, 6],
+    totalSubjects: 17,
+  },
+  {
+    name: "Electrical & Electronics",
+    abbr: "EEE",
+    icon: BarChart3,
+    color: "from-amber-500 to-yellow-500",
+    semesters: [2, 3, 4, 5, 6],
+    totalSubjects: 16,
+  },
+  {
+    name: "Automobile Engineering",
+    abbr: "AE",
+    icon: GitBranch,
+    color: "from-rose-500 to-pink-600",
+    semesters: [2, 3, 4, 5, 6],
+    totalSubjects: 15,
+  },
 ];
 
+const recentMaterials = [
+  {
+    title: "Programming in C — Unit 5: Arrays & Pointers",
+    subject: "Programming in C",
+    dept: "Computer Engineering",
+    semester: 3,
+    type: "notes",
+    time: "2 hours ago",
+  },
+  {
+    title: "Database Management Systems — Chapter 4: Normalization",
+    subject: "Database Management Systems",
+    dept: "Computer Engineering",
+    semester: 3,
+    type: "notes",
+    time: "5 hours ago",
+  },
+  {
+    title: "Engineering Mechanics — Previous Year Question Paper 2024",
+    subject: "Engineering Mechanics",
+    dept: "Civil Engineering",
+    semester: 2,
+    type: "paper",
+    time: "1 day ago",
+  },
+  {
+    title: "Strength of Materials — Unit 3: Shear Force & Bending Moment",
+    subject: "Strength of Materials",
+    dept: "Mechanical Engineering",
+    semester: 3,
+    type: "notes",
+    time: "1 day ago",
+  },
+];
+
+const featuredMaterials = [
+  {
+    title: "Data Structures — Complete Study Guide",
+    subject: "Data Structures",
+    dept: "Computer Engineering",
+    semester: 4,
+    type: "notes",
+    pages: 48,
+    stars: 124,
+  },
+  {
+    title: "Object Oriented Programming with C++",
+    subject: "Object Oriented Programming",
+    dept: "Computer Engineering",
+    semester: 4,
+    type: "notes",
+    pages: 36,
+    stars: 98,
+  },
+  {
+    title: "Digital Electronics — Simplified Notes",
+    subject: "Digital Electronics",
+    dept: "Electronics Engineering",
+    semester: 3,
+    type: "notes",
+    pages: 42,
+    stars: 87,
+  },
+  {
+    title: "Fluid Mechanics — All Units Covered",
+    subject: "Fluid Mechanics & Hydraulic Machines",
+    dept: "Mechanical Engineering",
+    semester: 4,
+    type: "notes",
+    pages: 55,
+    stars: 76,
+  },
+  {
+    title: "Theory of Structures — Quick Revision Notes",
+    subject: "Theory of Structures",
+    dept: "Civil Engineering",
+    semester: 3,
+    type: "notes",
+    pages: 32,
+    stars: 65,
+  },
+  {
+    title: "Power Electronics Devices & Circuits",
+    subject: "Power Electronics",
+    dept: "Electrical & Electronics",
+    semester: 4,
+    type: "notes",
+    pages: 40,
+    stars: 58,
+  },
+];
+
+const quickLinks = [
+  { label: "Syllabus", desc: "View full curriculum", icon: FileText },
+  { label: "Question Papers", desc: "Previous years with solutions", icon: Library },
+  { label: "Exam Schedule", desc: "Current exam timetable", icon: Calendar },
+  { label: "CGPA Calculator", desc: "Calculate your GPA", icon: BarChart3 },
+  { label: "Academic Calendar", desc: "Important dates & deadlines", icon: Clock },
+  { label: "Student Portal", desc: "Official polytechnic portal", icon: ExternalLink },
+];
+
+/* ─── Components ─── */
+
+function TypeBadge({ type }: { type: string }) {
+  const styles: Record<string, string> = {
+    notes: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    paper: "bg-violet-500/10 text-violet-400 border-violet-500/20",
+    syllabus: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  };
+  const labels: Record<string, string> = {
+    notes: "Notes",
+    paper: "Question Paper",
+    syllabus: "Syllabus",
+  };
+  return (
+    <span
+      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${styles[type] ?? styles.notes}`}
+    >
+      {labels[type] ?? type}
+    </span>
+  );
+}
+
+/* ─── Main ─── */
+
 export default function Landing() {
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [selectedDept, setSelectedDept] = useState<string | null>(null);
+  const [selectedSem, setSelectedSem] = useState<number | null>(null);
+
+  // GitHub integration (fetches if GITHUB_TOKEN is configured)
+  const getRepoInfo = useAction(api.github.getRepoInfo);
+  const [repoInfo] = useState(() => null as null | { stargazersCount: number; forksCount: number; language: string | null; htmlUrl: string });
+
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const name = user?.name || user?.email?.split("@")[0] || "Student";
+
+  const searchResults = useMemo(() => {
+    if (!search.trim()) return [];
+    const q = search.toLowerCase();
+    return recentMaterials
+      .concat(featuredMaterials.map((m) => ({ ...m, time: "", pages: 0, stars: 0 })))
+      .filter(
+        (m) =>
+          m.title.toLowerCase().includes(q) ||
+          m.subject.toLowerCase().includes(q) ||
+          m.dept.toLowerCase().includes(q),
+      );
+  }, [search]);
 
   return (
-    <div className="min-h-screen bg-[oklch(0.98_0.002_240)]">
-      {/* ──── NAV ──── */}
-      <nav className="sticky top-0 z-50 border-b border-border/60 bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <BookOpen className="h-5 w-5 text-white" />
+    <div className="min-h-screen bg-background text-foreground">
+      {/* ─── Nav ─── */}
+      <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+              <BookOpen className="h-4 w-4 text-primary" />
             </div>
-            <span className="text-lg font-bold text-foreground tracking-tight">
-              POLY<span className="text-primary">PMNA</span>
+            <span className="text-[15px] font-semibold tracking-tight text-foreground">
+              Polytechnic Study Materials
             </span>
           </div>
-          <button
-            onClick={() => navigate("/auth")}
-            className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground
-                       hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer"
-          >
-            Get Started
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          <div className="hidden md:flex flex-1 max-w-md mx-6">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search subjects, notes, papers..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground
+                           placeholder:text-muted-foreground/60 outline-none transition-all
+                           focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-bold">
+              {name[0].toUpperCase()}
+            </div>
+          </div>
         </div>
       </nav>
 
-      {/* ──── HERO ──── */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-48 -right-48 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-primary/[0.07] to-accent/[0.05] blur-3xl" />
-          <div className="absolute -bottom-48 -left-48 h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-primary/[0.04] to-transparent blur-3xl" />
+      {/* ─── Mobile Search ─── */}
+      <div className="md:hidden px-4 pt-3 pb-1">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search subjects, notes, papers..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-border bg-card py-2.5 pl-9 pr-3 text-sm text-foreground
+                       placeholder:text-muted-foreground/60 outline-none transition-all
+                       focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
+          />
         </div>
+      </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-20 sm:pt-28 pb-16 sm:pb-20">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            <motion.div variants={fadeIn} className="flex justify-center mb-6">
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary/8 border border-primary/10 px-4 py-1.5 text-xs font-medium text-primary">
-                <Sparkles className="h-3.5 w-3.5" />
-                Revision 2026 & 2021 Syllabus
-              </span>
-            </motion.div>
-
-            <motion.h1
-              variants={fadeIn}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.1]"
-            >
-              The Complete Study Hub for{" "}
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Kerala Polytechnic
-              </span>
-            </motion.h1>
-
-            <motion.p
-              variants={fadeIn}
-              className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto"
-            >
-              Notes, question papers, mock exams, AI-powered doubt clearing, and student tools — everything a polytechnic student needs, in one place.
-            </motion.p>
-
-            <motion.div variants={fadeIn} className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+      {/* ─── Search Results ─── */}
+      {search.trim() ? (
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-semibold">
+                Search Results
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({searchResults.length})
+                </span>
+              </h2>
               <button
-                onClick={() => navigate("/auth")}
-                className="flex items-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground
-                           hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer"
+                onClick={() => setSearch("")}
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
               >
-                Start Learning
-                <ArrowRight className="h-4 w-4" />
+                Clear
               </button>
-              <button
-                onClick={() => {
-                  document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="flex items-center gap-2 rounded-xl border border-border/60 bg-white px-7 py-3.5 text-sm font-medium text-foreground
-                           hover:border-primary/20 hover:shadow-sm transition-all duration-300 cursor-pointer"
-              >
-                Explore Features
-              </button>
-            </motion.div>
-
-            {/* Trust signals */}
-            <motion.div variants={fadeIn} className="mt-12 flex items-center justify-center gap-6 sm:gap-8 text-muted-foreground/60">
-              <div className="flex items-center gap-2 text-xs">
-                <GraduationCap className="h-4 w-4" />
-                <span>6 Departments</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <Users className="h-4 w-4" />
-                <span>5000+ Students</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <Building2 className="h-4 w-4" />
-                <span>All Semesters</span>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ──── FEATURES ──── */}
-      <section id="features" className="mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20 scroll-mt-20">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-60px" }}
-          variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-        >
-          <motion.div variants={fadeIn} className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              Everything You Need to Succeed
-            </h2>
-            <p className="mt-3 text-muted-foreground max-w-lg mx-auto">
-              A comprehensive platform designed specifically for Kerala Polytechnic students.
-            </p>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map((f) => (
-              <motion.div
-                key={f.title}
-                variants={fadeIn}
-                className="group rounded-2xl border border-border/50 bg-white p-6 shadow-sm hover:shadow-md hover:border-primary/10 transition-all duration-300"
-              >
-                <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${f.color} mb-4 transition-transform duration-300 group-hover:scale-105`}>
-                  <f.icon className="h-5 w-5" />
-                </div>
-                <h3 className="font-semibold text-foreground text-[15px]">{f.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ──── DEPARTMENTS ──── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-60px" }}
-          variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-        >
-          <motion.div variants={fadeIn} className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              All Departments Covered
-            </h2>
-            <p className="mt-3 text-muted-foreground max-w-lg mx-auto">
-              Study materials for every polytechnic engineering department.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {[
-              { name: "Computer", color: "from-blue-500 to-indigo-600" },
-              { name: "Civil", color: "from-emerald-500 to-teal-600" },
-              { name: "Mechanical", color: "from-orange-500 to-red-500" },
-              { name: "Electronics", color: "from-violet-500 to-purple-600" },
-              { name: "EEE", color: "from-amber-500 to-yellow-500" },
-              { name: "Automobile", color: "from-rose-500 to-pink-600" },
-            ].map((dept) => (
-              <motion.div
-                key={dept.name}
-                variants={fadeIn}
-                className="group flex flex-col items-center gap-2.5 rounded-xl border border-border/50 bg-white p-5 shadow-sm hover:shadow-md hover:border-primary/10 transition-all duration-300"
-              >
-                <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${dept.color} shadow-sm transition-transform duration-300 group-hover:scale-110`}>
-                  <Building2 className="h-5 w-5 text-white" />
-                </div>
-                <p className="font-medium text-sm text-foreground">{dept.name}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ──── CTA ──── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-20">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="relative overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-primary via-primary/95 to-[oklch(0.35_0.15_270)] p-10 sm:p-12 text-center"
-        >
-          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/[0.06] blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-accent/[0.12] blur-3xl" />
-
-          <div className="relative">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Ready to Ace Your Exams?</h2>
-            <p className="mt-3 text-white/80 max-w-md mx-auto">
-              Join thousands of polytechnic students using POLY PMNA to study smarter, not harder.
-            </p>
-            <button
-              onClick={() => navigate("/auth")}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-primary
-                         hover:bg-white/90 transition-all duration-300 shadow-sm cursor-pointer"
-            >
-              Get Started — It's Free
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ──── FOOTER ──── */}
-      <footer className="border-t border-border/60 bg-white/60">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <BookOpen className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-foreground tracking-tight">
-                  POLY<span className="text-primary">PMNA</span>
-                </p>
-                <p className="text-xs text-muted-foreground">Kerala Polytechnic Study Hub</p>
-              </div>
             </div>
-            <p className="text-xs text-muted-foreground text-center sm:text-right">
-              Revision 2026 & 2021 · Notes · Mock Exams · AI Assistant · Question Papers
+            {searchResults.length === 0 ? (
+              <div className="rounded-xl border border-border bg-card p-12 text-center">
+                <Search className="mx-auto h-8 w-8 text-muted-foreground/40 mb-3" />
+                <p className="text-muted-foreground">No results for &ldquo;{search}&rdquo;</p>
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                {searchResults.map((r, i) => (
+                  <motion.div
+                    key={`${r.title}-${i}`}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03, duration: 0.25 }}
+                    className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/20 transition-all cursor-pointer"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-primary">
+                      <BookOpen className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                        {r.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {r.dept} · Sem {r.semester}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
+      ) : (
+        /* ─── Main Content ─── */
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          {/* ─── Hero ─── */}
+          <section className="relative pt-10 pb-8 sm:pt-14 sm:pb-10">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-primary/[0.04] blur-3xl" />
+              <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-primary/[0.03] blur-3xl" />
+            </div>
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+              className="relative"
+            >
+              <motion.div variants={fadeIn}>
+                <p className="text-sm font-medium text-primary/80 mb-1.5">
+                  {greeting()}, {name}
+                </p>
+              </motion.div>
+              <motion.h1
+                variants={fadeIn}
+                className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight"
+              >
+                Your Polytechnic Study Space
+              </motion.h1>
+              <motion.p
+                variants={fadeIn}
+                className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-lg"
+              >
+                Browse subjects, access study materials, review question papers, and track your
+                academic progress — all organized by department and semester.
+              </motion.p>
+            </motion.div>
+          </section>
+
+          {/* ─── Department / Semester Selector ─── */}
+          <section className="pb-8">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+            >
+              <motion.div variants={fadeIn} className="flex items-center gap-2.5 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8">
+                  <GraduationCap className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="text-base font-semibold">Browse by Department</h2>
+              </motion.div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                {departments.map((dept) => {
+                  const Icon = dept.icon;
+                  const isActive = selectedDept === dept.abbr;
+                  return (
+                    <motion.button
+                      key={dept.abbr}
+                      variants={fadeIn}
+                      onClick={() => {
+                        setSelectedDept(isActive ? null : dept.abbr);
+                        setSelectedSem(null);
+                      }}
+                      className={`group relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center
+                        transition-all duration-300 cursor-pointer overflow-hidden
+                        ${
+                          isActive
+                            ? "border-primary/30 bg-primary/[0.06] shadow-[0_0_20px_rgba(56,189,248,0.06)]"
+                            : "border-border bg-card hover:border-primary/15 hover:bg-card/80"
+                        }`}
+                    >
+                      <div className="absolute -top-10 -right-10 h-24 w-24 rounded-full bg-gradient-to-br opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-30" />
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${dept.color} shadow-sm transition-transform duration-300 group-hover:scale-110`}
+                      >
+                        <Icon className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground leading-snug">{dept.abbr}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {dept.semesters.length} sems · {dept.totalSubjects} subj
+                        </p>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
+
+              {/* Semester selector (shows when department is selected) */}
+              {selectedDept && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease }}
+                  className="mt-4 flex flex-wrap items-center gap-2"
+                >
+                  <span className="text-xs text-muted-foreground mr-1">Semester:</span>
+                  {departments
+                    .find((d) => d.abbr === selectedDept)
+                    ?.semesters.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setSelectedSem(selectedSem === s ? null : s)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
+                          selectedSem === s
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/20"
+                        }`}
+                      >
+                        Semester {s}
+                      </button>
+                    ))}
+                </motion.div>
+              )}
+            </motion.div>
+          </section>
+
+          {/* ─── Quick Access Cards ─── */}
+          <section className="pb-10">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+            >
+              <motion.div variants={fadeIn} className="flex items-center gap-2.5 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8">
+                  <Bookmark className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="text-base font-semibold">Study Resources</h2>
+              </motion.div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {[
+                  {
+                    icon: Layers,
+                    label: "Subjects",
+                    desc: "Browse all subjects across departments and semesters",
+                    color: "from-blue-500/15 to-indigo-500/10 text-blue-400",
+                    count: "100+ Subjects",
+                  },
+                  {
+                    icon: FileText,
+                    label: "Syllabus",
+                    desc: "Complete curriculum for Revision 2026 & 2021",
+                    color: "from-emerald-500/15 to-teal-500/10 text-emerald-400",
+                    count: "6 Departments",
+                  },
+                  {
+                    icon: Library,
+                    label: "Question Papers",
+                    desc: "Previous year papers with answer keys and solutions",
+                    color: "from-violet-500/15 to-purple-500/10 text-violet-400",
+                    count: "200+ Papers",
+                  },
+                ].map((card) => (
+                  <motion.div
+                    key={card.label}
+                    variants={fadeIn}
+                    className="group relative rounded-xl border border-border bg-card p-5
+                               hover:border-primary/15 hover:shadow-[0_0_24px_rgba(56,189,248,0.04)]
+                               transition-all duration-300 cursor-pointer overflow-hidden"
+                  >
+                    <div className="absolute -top-10 -right-10 h-24 w-24 rounded-full bg-gradient-to-br opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
+                    <div className="relative">
+                      <div
+                        className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${card.color} mb-3`}
+                      >
+                        <card.icon className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-semibold text-sm text-foreground">{card.label}</h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{card.desc}</p>
+                      <p className="text-[11px] text-primary/70 font-medium mt-2.5">{card.count}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </section>
+
+          {/* ─── Featured Materials ─── */}
+          <section className="pb-10">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+            >
+              <motion.div variants={fadeIn} className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8">
+                    <Star className="h-4 w-4 text-primary" />
+                  </div>
+                  <h2 className="text-base font-semibold">Featured Materials</h2>
+                </div>
+                <button className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                  View all <ArrowRight className="h-3 w-3" />
+                </button>
+              </motion.div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                {featuredMaterials.map((mat, i) => (
+                  <motion.div
+                    key={mat.title}
+                    variants={fadeIn}
+                    className="group rounded-xl border border-border bg-card p-4
+                               hover:border-primary/15 hover:shadow-[0_0_20px_rgba(56,189,248,0.04)]
+                               transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <TypeBadge type={mat.type} />
+                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Star className="h-3 w-3 text-amber-500/70" />
+                        {mat.stars}
+                      </div>
+                    </div>
+                    <h3 className="font-medium text-sm text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                      {mat.title}
+                    </h3>
+                    <div className="mt-2.5 flex items-center justify-between">
+                      <p className="text-[11px] text-muted-foreground">
+                        {mat.dept} · Sem {mat.semester}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground/70">{mat.pages} pages</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </section>
+
+          {/* ─── Recently Viewed ─── */}
+          <section className="pb-10">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+            >
+              <motion.div variants={fadeIn} className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8">
+                    <Clock className="h-4 w-4 text-primary" />
+                  </div>
+                  <h2 className="text-base font-semibold">Recently Viewed</h2>
+                </div>
+                <button className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                  View all <ArrowRight className="h-3 w-3" />
+                </button>
+              </motion.div>
+
+              <div className="grid sm:grid-cols-2 gap-2.5">
+                {recentMaterials.map((mat, i) => (
+                  <motion.div
+                    key={`${mat.title}-${i}`}
+                    variants={fadeIn}
+                    className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3
+                               hover:border-primary/15 hover:shadow-[0_0_16px_rgba(56,189,248,0.03)]
+                               transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-primary">
+                      <BookOpen className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                        {mat.title}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2 flex-wrap">
+                        <TypeBadge type={mat.type} />
+                        <span className="text-[11px] text-muted-foreground">
+                          {mat.dept} · Sem {mat.semester}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground/60 mt-1 flex items-center gap-1">
+                        <Clock className="h-2.5 w-2.5" />
+                        {mat.time}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </section>
+
+          {/* ─── Quick Academic Access ─── */}
+          <section className="pb-12">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+            >
+              <motion.div variants={fadeIn} className="flex items-center gap-2.5 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8">
+                  <Compass className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="text-base font-semibold">Quick Academic Access</h2>
+              </motion.div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                {quickLinks.map((link) => (
+                  <motion.div
+                    key={link.label}
+                    variants={fadeIn}
+                    className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4
+                               text-center hover:border-primary/15 hover:shadow-[0_0_16px_rgba(56,189,248,0.03)]
+                               transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/6 text-primary/70 transition-all duration-300 group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105">
+                      <link.icon className="h-4.5 w-4.5" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-xs text-foreground group-hover:text-primary transition-colors">
+                        {link.label}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{link.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </section>
+        </div>
+      )}
+
+      {/* ─── Footer ─── */}
+      <footer className="border-t border-border bg-card/30">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
+                <BookOpen className="h-3 w-3 text-primary" />
+              </div>
+              <span className="text-xs font-semibold text-foreground/80 tracking-tight">
+                Polytechnic Study Materials
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground/60">
+              Revision 2026 & 2021 · Kerala Polytechnic Curriculum
             </p>
           </div>
         </div>

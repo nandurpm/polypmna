@@ -170,7 +170,7 @@ function DepartmentCard({
   return (
     <motion.button
       variants={fadeIn}
-      className="group relative w-full text-left rounded-2xl border border-border/60 bg-white p-6 shadow-sm
+      className="group relative w-full text-left rounded-2xl border border-border/60 bg-card p-6 shadow-sm
                  hover:shadow-lg hover:border-primary/20 transition-all duration-300 cursor-pointer overflow-hidden"
       onClick={onClick}
     >
@@ -221,7 +221,7 @@ function FeatureHighlight({
   return (
     <motion.div
       variants={fadeIn}
-      className="group rounded-2xl border border-border/60 bg-white p-6 shadow-sm hover:shadow-md hover:border-primary/10 transition-all duration-300"
+      className="group rounded-2xl border border-border/60 bg-card p-6 shadow-sm hover:shadow-md hover:border-primary/10 transition-all duration-300"
     >
       <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${color} mb-4 transition-transform duration-300 group-hover:scale-105`}>
         <Icon className="h-5 w-5" />
@@ -282,17 +282,17 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[oklch(0.97_0.004_250)]">
+    <div className="min-h-screen bg-background">
       {/* ──────────────────────── NAVIGATION ──────────────────────── */}
-      <nav className="sticky top-0 z-50 border-b border-border/60 bg-white/80 backdrop-blur-xl">
+      <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <BookOpen className="h-5 w-5 text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+              <BookOpen className="h-5 w-5 text-primary" />
             </div>
-            <span className="text-lg font-bold text-foreground tracking-tight">
-              POLY<span className="text-primary">PMNA</span>
+            <span className="text-[15px] font-semibold text-foreground tracking-tight">
+              Polytechnic Study Materials
             </span>
           </div>
 
@@ -313,7 +313,7 @@ export default function Dashboard() {
                 }}
                 className="w-full rounded-xl border border-border bg-muted/50 py-2.5 pl-10 pr-4 text-sm text-foreground
                            placeholder:text-muted-foreground/70 outline-none transition-all
-                           focus:border-primary/30 focus:bg-white focus:ring-2 focus:ring-primary/10"
+                           focus:border-primary/40 focus:ring-1 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -355,7 +355,7 @@ export default function Dashboard() {
                 setSelectedSem(null);
               }
             }}
-            className="w-full rounded-xl border border-border bg-white py-2.5 pl-10 pr-4 text-sm text-foreground
+            className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground
                        placeholder:text-muted-foreground/70 outline-none transition-all
                        focus:border-primary/30 focus:ring-2 focus:ring-primary/10"
           />
@@ -381,7 +381,7 @@ export default function Dashboard() {
               </button>
             </div>
             {searchResults.length === 0 ? (
-              <div className="rounded-2xl border border-border/60 bg-white p-12 text-center">
+              <div className="rounded-2xl border border-border/60 bg-card p-12 text-center">
                 <Search className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
                 <p className="text-muted-foreground">No results found for "{search}"</p>
                 <p className="text-sm text-muted-foreground/70 mt-1">Try searching for a different subject name</p>
@@ -394,7 +394,7 @@ export default function Dashboard() {
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.03, duration: 0.25 }}
-                    className="group flex items-center justify-between rounded-xl border border-border/50 bg-white px-5 py-3.5 hover:border-primary/20 hover:shadow-sm transition-all"
+                    className="group flex items-center justify-between rounded-xl border border-border/50 bg-card px-5 py-3.5 hover:border-primary/20 hover:shadow-sm transition-all"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-primary">
@@ -459,7 +459,7 @@ export default function Dashboard() {
                 {stats.map((stat) => (
                   <div
                     key={stat.label}
-                    className="rounded-xl border border-border/50 bg-white/80 backdrop-blur-sm px-4 py-3 flex items-center gap-3"
+                    className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm px-4 py-3 flex items-center gap-3"
                   >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/8">
                       <stat.icon className="h-4 w-4 text-primary" />
@@ -491,7 +491,7 @@ export default function Dashboard() {
                 key={action.label}
                 href={action.href}
                 variants={fadeIn}
-                className="group flex flex-col items-center gap-2.5 rounded-2xl border border-border/50 bg-white p-5 text-center
+                className="group flex flex-col items-center gap-2.5 rounded-2xl border border-border/50 bg-card p-5 text-center
                            shadow-sm hover:shadow-md hover:border-primary/15 transition-all duration-300"
                 onClick={(e) => {
                   if (action.href.startsWith("#")) {
@@ -566,7 +566,7 @@ export default function Dashboard() {
                     setSelectedDept(null);
                     setSelectedSem(null);
                   }}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-white text-muted-foreground hover:text-foreground hover:border-primary/20 transition-all cursor-pointer"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-card text-muted-foreground hover:text-foreground hover:border-primary/20 transition-all cursor-pointer"
                 >
                   <ChevronRight className="h-4 w-4 rotate-180" />
                 </button>
@@ -590,7 +590,7 @@ export default function Dashboard() {
                 className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-all cursor-pointer ${
                   selectedSem === null
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-white border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/20"
+                    : "bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/20"
                 }`}
               >
                 All Semesters
@@ -602,7 +602,7 @@ export default function Dashboard() {
                   className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-all cursor-pointer ${
                     selectedSem === s.num
                       ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-white border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/20"
+                      : "bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/20"
                   }`}
                 >
                   Semester {s.num}
@@ -619,7 +619,7 @@ export default function Dashboard() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: si * 0.03, duration: 0.3 }}
-                    className="group flex items-center gap-3.5 rounded-xl border border-border/50 bg-white px-5 py-4
+                    className="group flex items-center gap-3.5 rounded-xl border border-border/50 bg-card px-5 py-4
                                shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary transition-transform duration-300 group-hover:scale-110">
@@ -715,11 +715,11 @@ export default function Dashboard() {
             className="relative overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-br from-primary via-primary/95 to-[oklch(0.35_0.15_270)] p-8 sm:p-10"
           >
             {/* Decorative orbs */}
-            <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/[0.06] blur-3xl" />
+            <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-card/[0.06] blur-3xl" />
             <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-accent/[0.12] blur-3xl" />
 
             <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-card/15 backdrop-blur-sm">
                 <Brain className="h-8 w-8 text-white" />
               </div>
               <div className="flex-1">
@@ -728,8 +728,8 @@ export default function Dashboard() {
                   Your personal AI study buddy — ask doubts, get explanations, practice problems, and understand concepts in Malayalam or English.
                 </p>
               </div>
-              <button className="shrink-0 flex items-center gap-2 rounded-xl bg-white/15 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white
-                                 hover:bg-white/25 transition-all duration-300 cursor-pointer">
+              <button className="shrink-0 flex items-center gap-2 rounded-xl bg-card/15 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-white
+                                 hover:bg-card/25 transition-all duration-300 cursor-pointer">
                 Try Now
                 <ArrowRight className="h-4 w-4" />
               </button>
@@ -763,7 +763,7 @@ export default function Dashboard() {
                   key={sem}
                   variants={fadeIn}
                   href="#"
-                  className="group flex items-center justify-between rounded-xl border border-border/50 bg-white px-5 py-4
+                  className="group flex items-center justify-between rounded-xl border border-border/50 bg-card px-5 py-4
                              shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
@@ -813,7 +813,7 @@ export default function Dashboard() {
                   key={tool.title}
                   variants={fadeIn}
                   href="#"
-                  className="group flex flex-col items-center gap-3 rounded-xl border border-border/50 bg-white p-6
+                  className="group flex flex-col items-center gap-3 rounded-xl border border-border/50 bg-card p-6
                              shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 text-center"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100 text-cyan-600 transition-transform duration-300 group-hover:scale-110">
@@ -867,7 +867,7 @@ export default function Dashboard() {
                   <motion.div
                     key={i}
                     variants={fadeIn}
-                    className="group flex items-start gap-3.5 rounded-xl border border-border/50 bg-white px-5 py-4
+                    className="group flex items-start gap-3.5 rounded-xl border border-border/50 bg-card px-5 py-4
                                shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-primary transition-transform duration-300 group-hover:scale-110">
@@ -897,19 +897,16 @@ export default function Dashboard() {
       )}
 
       {/* ──────────────────────── FOOTER ──────────────────────── */}
-      <footer className="border-t border-border/60 bg-white/60">
+      <footer className="border-t border-border bg-card/30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <BookOpen className="h-4 w-4 text-white" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
+                <BookOpen className="h-3 w-3 text-primary" />
               </div>
-              <div>
-                <p className="text-sm font-bold text-foreground tracking-tight">
-                  POLY<span className="text-primary">PMNA</span>
-                </p>
-                <p className="text-xs text-muted-foreground">Kerala Polytechnic Study Hub</p>
-              </div>
+              <span className="text-xs font-semibold text-foreground/80 tracking-tight">
+                Polytechnic Study Materials
+              </span>
             </div>
             <p className="text-xs text-muted-foreground text-center sm:text-right">
               Revision 2026 & 2021 · Notes · Mock Exams · AI Assistant · Question Papers
