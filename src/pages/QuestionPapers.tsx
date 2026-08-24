@@ -155,7 +155,7 @@ export default function QuestionPapers() {
                   </div>
                 </div>
               </div>
-              <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground
+              <button onClick={() => alert("Download coming soon!")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground
                            hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all cursor-pointer">
                 <Download className="h-4 w-4" />
               </button>

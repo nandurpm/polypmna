@@ -411,7 +411,8 @@ export default function Dashboard() {
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.03, duration: 0.25 }}
-                    className="group flex items-center justify-between rounded-xl border border-border/50 bg-card px-5 py-3.5 hover:border-primary/20 hover:shadow-sm transition-all"
+                    className="group flex items-center justify-between rounded-xl border border-border/50 bg-card px-5 py-3.5 hover:border-primary/20 hover:shadow-sm transition-all cursor-pointer"
+                    onClick={() => navigate("/question-papers")}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-primary">
@@ -655,6 +656,7 @@ export default function Dashboard() {
                     transition={{ delay: si * 0.03, duration: 0.3 }}
                     className="group flex items-center gap-3.5 rounded-xl border border-border/50 bg-card px-5 py-4
                                shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 cursor-pointer"
+                    onClick={() => navigate("/question-papers")}
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary transition-transform duration-300 group-hover:scale-110">
                       <BookOpen className="h-4.5 w-4.5" />

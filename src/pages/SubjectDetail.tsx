@@ -109,7 +109,7 @@ export default function SubjectDetail() {
                       </div>
                     </div>
                   </div>
-                  <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all cursor-pointer">
+                  <button onClick={() => alert("Download coming soon!")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all cursor-pointer">
                     <Download className="h-4 w-4" />
                   </button>
                 </div>
@@ -135,7 +135,7 @@ export default function SubjectDetail() {
                       </div>
                     </div>
                   </div>
-                  <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all cursor-pointer">
+                  <button onClick={() => alert("Download coming soon!")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all cursor-pointer">
                     <Download className="h-4 w-4" />
                   </button>
                 </div>
@@ -148,7 +148,7 @@ export default function SubjectDetail() {
             <div className="grid sm:grid-cols-2 gap-3">
               {(!exams || exams.length === 0) && <div className="sm:col-span-2"><EmptyState text="No mock exams available yet." /></div>}
               {exams?.map((exam) => (
-                <div key={exam._id} className="group rounded-xl border border-border/50 bg-card p-5 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer">
+                <div key={exam._id} className="group rounded-xl border border-border/50 bg-card p-5 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer" onClick={() => navigate("/mock-exams")}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
                       <Brain className="h-4.5 w-4.5" />
