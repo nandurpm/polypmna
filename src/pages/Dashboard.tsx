@@ -298,7 +298,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* ──────────────────────── NAVIGATION ──────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div className="w-full flex h-16 items-center justify-between px-4 sm:px-6 lg:px-10">
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
@@ -377,7 +377,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── SEARCH RESULTS ──────────────────────── */}
       {search.trim() && (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+        <div className="w-full px-4 sm:px-6 lg:px-10 py-8">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">
@@ -439,7 +439,7 @@ export default function Dashboard() {
             <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-tr from-primary/[0.04] to-transparent blur-3xl" />
           </div>
 
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-12 pb-10 sm:pt-16 sm:pb-14">
+          <div className="relative w-full px-4 sm:px-6 lg:px-10 pt-12 pb-10 sm:pt-16 sm:pb-14">
             <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.06 } } }}>
               {/* Greeting */}
               <motion.div variants={fadeIn}>
@@ -506,7 +506,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── QUICK ACTIONS ──────────────────────── */}
       {!search.trim() && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-12">
+        <section className="w-full px-4 sm:px-6 lg:px-10 pb-12">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -547,7 +547,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── DEPARTMENTS ──────────────────────── */}
       {!search.trim() && (
-        <section id="departments" className="mx-auto max-w-7xl px-4 sm:px-6 pb-12 scroll-mt-20">
+        <section id="departments" className="w-full px-4 sm:px-6 lg:px-10 pb-12 scroll-mt-20">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -583,7 +583,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── DEPARTMENT SUBJECTS ──────────────────────── */}
       {dept && !search.trim() && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-12 scroll-mt-20">
+        <section className="w-full px-4 sm:px-6 lg:px-10 pb-12 scroll-mt-20">
           <motion.div
             key={dept.name}
             initial={{ opacity: 0, y: 12 }}
@@ -677,7 +677,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── FEATURE HIGHLIGHTS ──────────────────────── */}
       {!search.trim() && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-12">
+        <section className="w-full px-4 sm:px-6 lg:px-10 pb-12">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -738,7 +738,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── AI ASSISTANT CTA ──────────────────────── */}
       {!search.trim() && (
-        <section id="ai" className="mx-auto max-w-7xl px-4 sm:px-6 pb-12 scroll-mt-20">
+        <section id="ai" className="w-full px-4 sm:px-6 lg:px-10 pb-12 scroll-mt-20">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -772,7 +772,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── QUESTION PAPERS ──────────────────────── */}
       {!search.trim() && (
-        <section id="papers" className="mx-auto max-w-7xl px-4 sm:px-6 pb-12 scroll-mt-20">
+        <section id="papers" className="w-full px-4 sm:px-6 lg:px-10 pb-12 scroll-mt-20">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -818,7 +818,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── TOOLS ──────────────────────── */}
       {!search.trim() && (
-        <section id="tools" className="mx-auto max-w-7xl px-4 sm:px-6 pb-12 scroll-mt-20">
+        <section id="tools" className="w-full px-4 sm:px-6 lg:px-10 pb-12 scroll-mt-20">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -866,7 +866,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── RECENT ACTIVITY ──────────────────────── */}
       {!search.trim() && (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16">
+        <section className="w-full px-4 sm:px-6 lg:px-10 pb-16">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -932,7 +932,7 @@ export default function Dashboard() {
 
       {/* ──────────────────────── FOOTER ──────────────────────── */}
       <footer className="border-t border-border bg-card/30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+        <div className="w-full px-4 sm:px-6 lg:px-10 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">

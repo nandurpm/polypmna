@@ -1,6 +1,5 @@
 import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
-import { RequireAuth } from "@/components/RequireAuth";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
@@ -129,19 +128,12 @@ createRoot(document.getElementById("root")!).render(
                 path="/auth"
                 element={<AuthPage redirectAfterAuth="/dashboard" />}
               />
-              <Route
-                path="/dashboard"
-                element={
-                  <RequireAuth>
-                    <Dashboard />
-                  </RequireAuth>
-                }
-              />
-              <Route path="/ask-ai" element={<RequireAuth><AskAI /></RequireAuth>} />
-              <Route path="/mock-exams" element={<RequireAuth><MockExams /></RequireAuth>} />
-              <Route path="/question-papers" element={<RequireAuth><QuestionPapers /></RequireAuth>} />
-              <Route path="/student-tools" element={<RequireAuth><StudentTools /></RequireAuth>} />
-              <Route path="/subject/:subjectId" element={<RequireAuth><SubjectDetail /></RequireAuth>} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/ask-ai" element={<AskAI />} />
+              <Route path="/mock-exams" element={<MockExams />} />
+              <Route path="/question-papers" element={<QuestionPapers />} />
+              <Route path="/student-tools" element={<StudentTools />} />
+              <Route path="/subject/:subjectId" element={<SubjectDetail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

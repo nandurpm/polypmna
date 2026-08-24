@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Clock,
   FileText,
-  Download,
   Building2,
   Calendar,
   ArrowRight,
@@ -18,11 +17,12 @@ import {
   Layers,
   BarChart3,
   Bookmark,
-  Tag,
   ExternalLink,
   Star,
   Sparkles,
   GitBranch,
+  Bot,
+  ClipboardList,
 } from "lucide-react";
 
 /* ─── Animation ─── */
@@ -70,17 +70,17 @@ const quickLinks = [
   { label: "Question Papers", desc: "Previous years with solutions", icon: Library, href: "/question-papers" },
   { label: "Exam Schedule", desc: "Current exam timetable", icon: Calendar, href: "/student-tools" },
   { label: "CGPA Calculator", desc: "Calculate your GPA", icon: BarChart3, href: "/student-tools" },
-  { label: "Academic Calendar", desc: "Important dates & deadlines", icon: Clock, href: "/student-tools" },
-  { label: "Student Portal", desc: "Official polytechnic portal", icon: ExternalLink, href: "/dashboard" },
+  { label: "Ask POLY AI", desc: "Instant study help", icon: Bot, href: "/ask-ai" },
+  { label: "Mock Exams", desc: "Practice with MCQ tests", icon: ClipboardList, href: "/mock-exams" },
 ];
 
 /* ─── Components ─── */
 
 function TypeBadge({ type }: { type: string }) {
   const styles: Record<string, string> = {
-    notes: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    paper: "bg-violet-500/10 text-violet-400 border-violet-500/20",
-    syllabus: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    notes: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    paper: "bg-violet-500/10 text-violet-500 border-violet-500/20",
+    syllabus: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
   };
   const labels: Record<string, string> = { notes: "Notes", paper: "Question Paper", syllabus: "Syllabus" };
   return (
@@ -117,11 +117,11 @@ export default function Landing() {
   }, [search]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen w-full bg-background text-foreground flex flex-col">
       {/* ─── Nav ─── */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => user ? navigate("/dashboard") : undefined}>
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
+        <div className="w-full flex h-14 items-center justify-between px-4 sm:px-6 lg:px-10">
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/")}>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
               <BookOpen className="h-4 w-4 text-primary" />
             </div>
@@ -129,7 +129,7 @@ export default function Landing() {
               Polytechnic Study Materials
             </span>
           </div>
-          <div className="hidden md:flex flex-1 max-w-md mx-6">
+          <div className="hidden md:flex flex-1 max-w-xl mx-6 lg:mx-10">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <input
@@ -145,12 +145,19 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-2">
             {user ? (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-bold cursor-pointer" onClick={() => navigate("/dashboard")}>
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-bold cursor-pointer"
+                onClick={() => navigate("/dashboard")}
+                title={name}
+              >
                 {name[0].toUpperCase()}
               </div>
             ) : (
-              <button onClick={() => navigate("/auth")} className="rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-all cursor-pointer">
-                Sign In
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-all cursor-pointer"
+              >
+                Open Study Space
               </button>
             )}
           </div>
@@ -158,7 +165,7 @@ export default function Landing() {
       </nav>
 
       {/* ─── Mobile Search ─── */}
-      <div className="md:hidden px-4 pt-3 pb-1">
+      <div className="md:hidden w-full px-4 pt-3 pb-1">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
@@ -175,7 +182,7 @@ export default function Landing() {
 
       {/* ─── Search Results ─── */}
       {search.trim() ? (
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+        <div className="w-full px-4 sm:px-6 lg:px-10 py-8">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-semibold">
@@ -190,7 +197,7 @@ export default function Landing() {
                 <p className="text-muted-foreground">No results for &ldquo;{search}&rdquo;</p>
               </div>
             ) : (
-              <div className="grid gap-2">
+              <div className="grid gap-2 md:grid-cols-2">
                 {searchResults.map((r, i) => (
                   <motion.div
                     key={`${r.title}-${i}`}
@@ -198,9 +205,9 @@ export default function Landing() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.03, duration: 0.25 }}
                     className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/20 transition-all cursor-pointer"
-                    onClick={() => user ? navigate("/dashboard") : navigate("/auth?returnTo=/dashboard")}
+                    onClick={() => navigate("/question-papers")}
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-primary">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <BookOpen className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -215,13 +222,13 @@ export default function Landing() {
           </motion.div>
         </div>
       ) : (
-        /* ─── Main Content ─── */
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        /* ─── Main Content (full width) ─── */
+        <div className="w-full px-4 sm:px-6 lg:px-10">
           {/* ─── Hero ─── */}
           <section className="relative pt-10 pb-8 sm:pt-14 sm:pb-10">
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-primary/[0.04] blur-3xl" />
-              <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-primary/[0.03] blur-3xl" />
+              <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-primary/[0.05] blur-3xl" />
+              <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-primary/[0.04] blur-3xl" />
             </div>
             <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.06 } } }} className="relative">
               <motion.div variants={fadeIn}>
@@ -230,27 +237,21 @@ export default function Landing() {
               <motion.h1 variants={fadeIn} className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
                 Your Polytechnic Study Space
               </motion.h1>
-              <motion.p variants={fadeIn} className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-lg">
+              <motion.p variants={fadeIn} className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl">
                 Browse subjects, access study materials, review question papers, and track your
                 academic progress — all organized by department and semester.
               </motion.p>
-              {!user && (
-                <motion.div variants={fadeIn} className="mt-5 flex gap-3">
-                  <button onClick={() => navigate("/auth")} className="rounded-xl bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer">
-                    Get Started
-                  </button>
-                  <button onClick={() => { const el = document.getElementById("departments"); el?.scrollIntoView({ behavior: "smooth" }); }} className="rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-medium text-foreground hover:border-primary/20 transition-all cursor-pointer">
-                    Browse Departments
-                  </button>
-                </motion.div>
-              )}
-              {user && (
-                <motion.div variants={fadeIn} className="mt-5">
-                  <button onClick={() => navigate("/dashboard")} className="rounded-xl bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer">
-                    Go to Dashboard →
-                  </button>
-                </motion.div>
-              )}
+              <motion.div variants={fadeIn} className="mt-5 flex flex-wrap gap-3">
+                <button onClick={() => navigate("/dashboard")} className="rounded-xl bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer">
+                  Go to Study Space →
+                </button>
+                <button onClick={() => { const el = document.getElementById("departments"); el?.scrollIntoView({ behavior: "smooth" }); }} className="rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-medium text-foreground hover:border-primary/20 transition-all cursor-pointer">
+                  Browse Departments
+                </button>
+                <button onClick={() => navigate("/ask-ai")} className="rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-medium text-foreground hover:border-primary/20 transition-all cursor-pointer">
+                  Ask POLY AI
+                </button>
+              </motion.div>
             </motion.div>
           </section>
 
@@ -258,7 +259,7 @@ export default function Landing() {
           <section id="departments" className="pb-8 scroll-mt-20">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ visible: { transition: { staggerChildren: 0.04 } } }}>
               <motion.div variants={fadeIn} className="flex items-center gap-2.5 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                   <GraduationCap className="h-4 w-4 text-primary" />
                 </div>
                 <h2 className="text-base font-semibold">Browse by Department</h2>
@@ -272,9 +273,8 @@ export default function Landing() {
                       key={dept.abbr}
                       variants={fadeIn}
                       onClick={() => { setSelectedDept(isActive ? null : dept.abbr); setSelectedSem(null); }}
-                      className={`group relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all duration-300 cursor-pointer overflow-hidden ${isActive ? "border-primary/30 bg-primary/[0.06] shadow-[0_0_20px_rgba(56,189,248,0.06)]" : "border-border bg-card hover:border-primary/15 hover:bg-card/80"}`}
+                      className={`group relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all duration-300 cursor-pointer overflow-hidden ${isActive ? "border-primary/30 bg-primary/[0.06]" : "border-border bg-card hover:border-primary/15 hover:bg-card/80"}`}
                     >
-                      <div className="absolute -top-10 -right-10 h-24 w-24 rounded-full bg-gradient-to-br opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-30" />
                       <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${dept.color} shadow-sm transition-transform duration-300 group-hover:scale-110`}>
                         <Icon className="h-5 w-5 text-white" />
                       </div>
@@ -294,6 +294,14 @@ export default function Landing() {
                       Semester {s}
                     </button>
                   ))}
+                  {selectedSem && (
+                    <button
+                      onClick={() => navigate("/dashboard")}
+                      className="ml-2 inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer"
+                    >
+                      View subjects <ArrowRight className="h-3 w-3" />
+                    </button>
+                  )}
                 </motion.div>
               )}
             </motion.div>
@@ -303,31 +311,30 @@ export default function Landing() {
           <section className="pb-10">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ visible: { transition: { staggerChildren: 0.04 } } }}>
               <motion.div variants={fadeIn} className="flex items-center gap-2.5 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                   <Bookmark className="h-4 w-4 text-primary" />
                 </div>
                 <h2 className="text-base font-semibold">Study Resources</h2>
               </motion.div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {[
-                  { icon: Layers, label: "Subjects", desc: "Browse all subjects across departments and semesters", color: "from-blue-500/15 to-indigo-500/10 text-blue-400", count: "100+ Subjects", href: "/dashboard" },
-                  { icon: FileText, label: "Syllabus", desc: "Complete curriculum for Revision 2026 & 2021", color: "from-emerald-500/15 to-teal-500/10 text-emerald-400", count: "6 Departments", href: "/question-papers" },
-                  { icon: Library, label: "Question Papers", desc: "Previous year papers with answer keys and solutions", color: "from-violet-500/15 to-purple-500/10 text-violet-400", count: "200+ Papers", href: "/question-papers" },
+                  { icon: Layers, label: "Subjects", desc: "Browse all subjects across departments and semesters", color: "from-blue-500/15 to-indigo-500/10 text-blue-500", count: "100+ Subjects", href: "/dashboard" },
+                  { icon: FileText, label: "Syllabus", desc: "Complete curriculum for Revision 2026 & 2021", color: "from-emerald-500/15 to-teal-500/10 text-emerald-500", count: "6 Departments", href: "/question-papers" },
+                  { icon: Library, label: "Question Papers", desc: "Previous year papers with answer keys and solutions", color: "from-violet-500/15 to-purple-500/10 text-violet-500", count: "200+ Papers", href: "/question-papers" },
                 ].map((card) => (
                   <motion.div
                     key={card.label}
                     variants={fadeIn}
-                    className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/15 hover:shadow-[0_0_24px_rgba(56,189,248,0.04)] transition-all duration-300 cursor-pointer overflow-hidden"
-                    onClick={() => user ? navigate(card.href) : navigate("/auth?returnTo=" + card.href)}
+                    className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/15 hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden"
+                    onClick={() => navigate(card.href)}
                   >
-                    <div className="absolute -top-10 -right-10 h-24 w-24 rounded-full bg-gradient-to-br opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-40" />
                     <div className="relative">
                       <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${card.color} mb-3`}>
                         <card.icon className="h-5 w-5" />
                       </div>
                       <h3 className="font-semibold text-sm text-foreground">{card.label}</h3>
                       <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{card.desc}</p>
-                      <p className="text-[11px] text-primary/70 font-medium mt-2.5">{card.count}</p>
+                      <p className="text-[11px] text-primary/80 font-medium mt-2.5">{card.count}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -340,20 +347,20 @@ export default function Landing() {
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ visible: { transition: { staggerChildren: 0.04 } } }}>
               <motion.div variants={fadeIn} className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8"><Star className="h-4 w-4 text-primary" /></div>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Star className="h-4 w-4 text-primary" /></div>
                   <h2 className="text-base font-semibold">Featured Materials</h2>
                 </div>
-                <button onClick={() => user ? navigate("/dashboard") : navigate("/auth?returnTo=/dashboard")} className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer">
+                <button onClick={() => navigate("/dashboard")} className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer">
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </motion.div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5">
                 {featuredMaterials.map((mat) => (
                   <motion.div
                     key={mat.title}
                     variants={fadeIn}
-                    className="group rounded-xl border border-border bg-card p-4 hover:border-primary/15 hover:shadow-[0_0_20px_rgba(56,189,248,0.04)] transition-all duration-300 cursor-pointer"
-                    onClick={() => user ? navigate("/dashboard") : navigate("/auth?returnTo=/dashboard")}
+                    className="group rounded-xl border border-border bg-card p-4 hover:border-primary/15 hover:shadow-md transition-all duration-300 cursor-pointer"
+                    onClick={() => navigate("/dashboard")}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <TypeBadge type={mat.type} />
@@ -375,22 +382,22 @@ export default function Landing() {
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ visible: { transition: { staggerChildren: 0.04 } } }}>
               <motion.div variants={fadeIn} className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8"><Clock className="h-4 w-4 text-primary" /></div>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Clock className="h-4 w-4 text-primary" /></div>
                   <h2 className="text-base font-semibold">Recently Viewed</h2>
                 </div>
-                <button onClick={() => user ? navigate("/dashboard") : navigate("/auth?returnTo=/dashboard")} className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer">
+                <button onClick={() => navigate("/dashboard")} className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer">
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </motion.div>
-              <div className="grid sm:grid-cols-2 gap-2.5">
+              <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
                 {recentMaterials.map((mat, i) => (
                   <motion.div
                     key={`${mat.title}-${i}`}
                     variants={fadeIn}
-                    className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/15 hover:shadow-[0_0_16px_rgba(56,189,248,0.03)] transition-all duration-300 cursor-pointer"
-                    onClick={() => user ? navigate("/dashboard") : navigate("/auth?returnTo=/dashboard")}
+                    className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/15 hover:shadow-md transition-all duration-300 cursor-pointer"
+                    onClick={() => navigate("/dashboard")}
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-primary">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <BookOpen className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -412,7 +419,7 @@ export default function Landing() {
           <section className="pb-12">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ visible: { transition: { staggerChildren: 0.04 } } }}>
               <motion.div variants={fadeIn} className="flex items-center gap-2.5 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/8"><Compass className="h-4 w-4 text-primary" /></div>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Compass className="h-4 w-4 text-primary" /></div>
                 <h2 className="text-base font-semibold">Quick Academic Access</h2>
               </motion.div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
@@ -420,10 +427,10 @@ export default function Landing() {
                   <motion.div
                     key={link.label}
                     variants={fadeIn}
-                    className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center hover:border-primary/15 hover:shadow-[0_0_16px_rgba(56,189,248,0.03)] transition-all duration-300 cursor-pointer"
-                    onClick={() => user ? navigate(link.href) : navigate("/auth?returnTo=" + link.href)}
+                    className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center hover:border-primary/15 hover:shadow-md transition-all duration-300 cursor-pointer"
+                    onClick={() => navigate(link.href)}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/6 text-primary/70 transition-all duration-300 group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary/80 transition-all duration-300 group-hover:bg-primary/15 group-hover:text-primary group-hover:scale-105">
                       <link.icon className="h-4.5 w-4.5" />
                     </div>
                     <div>
@@ -439,14 +446,17 @@ export default function Landing() {
       )}
 
       {/* ─── Footer ─── */}
-      <footer className="mt-auto border-t border-border bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6">
+      <footer className="mt-auto w-full border-t border-border bg-muted/30">
+        <div className="w-full px-4 sm:px-6 lg:px-10 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10"><BookOpen className="h-3 w-3 text-primary" /></div>
               <span className="text-xs font-semibold text-foreground/80 tracking-tight">Polytechnic Study Materials</span>
             </div>
-            <p className="text-[11px] text-muted-foreground">Revision 2026 & 2021 · Kerala Polytechnic Curriculum</p>
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+              Revision 2026 &amp; 2021 · Kerala Polytechnic Curriculum
+              <ExternalLink className="h-3 w-3" />
+            </p>
           </div>
         </div>
       </footer>
