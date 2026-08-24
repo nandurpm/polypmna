@@ -226,7 +226,7 @@ export default function StudentTools() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+        <div className="w-full flex h-14 items-center justify-between px-4 sm:px-6 lg:px-10">
           <div className="flex items-center gap-3">
             <button onClick={() => activeTool ? setActiveTool(null) : navigate(-1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:text-foreground transition-all cursor-pointer">
               <ArrowLeft className="h-4 w-4" />
@@ -241,7 +241,7 @@ export default function StudentTools() {
         </div>
       </nav>
 
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6">
+      <div className="w-full max-w-4xl px-4 sm:px-6 lg:px-10 py-6 mx-auto">
         {activeTool === null ? (
           <div className="grid sm:grid-cols-2 gap-3">
             {tools.map((tool) => {

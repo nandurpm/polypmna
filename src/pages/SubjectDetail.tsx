@@ -56,7 +56,7 @@ export default function SubjectDetail() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4">
+        <div className="w-full flex h-14 items-center gap-3 px-4 sm:px-6 lg:px-10">
           <button onClick={() => navigate(-1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:text-foreground transition-all cursor-pointer">
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -69,7 +69,7 @@ export default function SubjectDetail() {
 
       {/* Tabs */}
       <div className="border-b border-border">
-        <div className="mx-auto max-w-5xl flex gap-1 px-4 overflow-x-auto">
+        <div className="w-full flex gap-1 px-4 sm:px-6 lg:px-10 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -87,7 +87,7 @@ export default function SubjectDetail() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl w-full px-4 sm:px-6 py-6">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-6">
         <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease }}>
 
           {/* Materials */}

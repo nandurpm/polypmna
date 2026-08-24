@@ -205,7 +205,7 @@ export default function MockExams() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+        <div className="w-full flex h-14 items-center justify-between px-4 sm:px-6 lg:px-10">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:text-foreground transition-all cursor-pointer">
               <ArrowLeft className="h-4 w-4" />
@@ -220,7 +220,7 @@ export default function MockExams() {
         </div>
       </nav>
 
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-6">
         {/* Semester filter */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           <button onClick={() => setSelectedSem(null)} className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-all cursor-pointer ${selectedSem === null ? "bg-primary text-primary-foreground shadow-sm" : "bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/20"}`}>
