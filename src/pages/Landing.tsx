@@ -117,7 +117,7 @@ export default function Landing() {
   }, [search]);
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground flex flex-col">
+    <div className="min-h-screen w-full bg-background text-foreground flex flex-col" style={{ width: "100vw", maxWidth: "100vw" }}>
       {/* ─── Nav ─── */}
       <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="w-full flex h-14 items-center justify-between px-4 sm:px-6 lg:px-10">
