@@ -244,7 +244,7 @@ export default function MockExams() {
               <p className="text-xs text-muted-foreground/70 mt-1">Check back later or browse other semesters.</p>
             </div>
           )}
-          {filteredExams.map((exam) => (
+          {filteredExams.map((exam: Exam) => (
             <motion.div
               key={exam._id}
               initial={{ opacity: 0, y: 8 }}
