@@ -143,7 +143,7 @@ export default function AskAI() {
             </motion.div>
           )}
 
-          {chatHistory?.map((msg, i) => (
+          {chatHistory?.map((msg: { _id: string; role: string; content: string }, i: number) => (
             <motion.div
               key={msg._id}
               initial={{ opacity: 0, y: 6 }}
