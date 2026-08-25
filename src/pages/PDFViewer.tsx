@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   ArrowLeft,
@@ -24,6 +24,7 @@ export default function PDFViewer() {
 
   useEffect(() => {
     if (!url) return;
+    let cancelled = false;
     setLoading(true);
     setError(false);
     fetch(url)
@@ -32,17 +33,17 @@ export default function PDFViewer() {
         return r.blob();
       })
       .then((blob) => {
+        if (cancelled) return;
         const bUrl = URL.createObjectURL(blob);
         setBlobUrl(bUrl);
         setLoading(false);
       })
       .catch(() => {
+        if (cancelled) return;
         setError(true);
         setLoading(false);
       });
-    return () => {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
+    return () => { cancelled = true; };
   }, [url]);
 
   if (!url) {

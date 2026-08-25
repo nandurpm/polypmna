@@ -4,8 +4,6 @@ import {
   BookOpen,
   Search,
   GraduationCap,
-  ChevronRight,
-  Clock,
   FileText,
   Building2,
   ArrowRight,
@@ -29,7 +27,6 @@ import {
   getAllPdfs,
   getQuestionPapers,
   getProgrammes,
-  getLessonUrl,
   getPdfDownloadUrl,
   type SubjectEntry,
   type PdfSubject,
@@ -87,7 +84,7 @@ export default function Landing() {
   const [loading, setLoading] = useState(true);
   const [subjects, setSubjects] = useState<SubjectEntry[]>([]);
   const [pdfs, setPdfs] = useState<PdfSubject[]>([]);
-  const [papers, setPapers] = useState<any[]>([]);
+  const [papers, setPapers] = useState<{ courseCode: string; courseName: string; pdfUrl: string }[]>([]);
   const [programmes, setProgrammes] = useState<ProgrammeInfo[]>([]);
 
   const loadData = useCallback(async () => {

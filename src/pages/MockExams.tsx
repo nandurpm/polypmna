@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
-  BookOpen,
   ArrowLeft,
   FileText,
   Clock,
@@ -16,9 +15,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
-
-type Exam = {
+const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];  type Exam = {
   _id: string;
   title: string;
   subjectId: string;
@@ -32,6 +29,8 @@ type Exam = {
     explanation?: string;
   }[];
 };
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _examTypeGuard = (e: Exam) => e._id;
 
 export default function MockExams() {
   const { user } = useAuth();
@@ -46,8 +45,12 @@ export default function MockExams() {
   const [selectedSem, setSelectedSem] = useState<number | null>(null);
 
   const semesters = useQuery(api.mockExams.listBySemester, selectedSem !== null ? { semester: selectedSem } : "skip");
-  const allExamIds = [2, 3, 4, 5, 6].map((s) => ({ sem: s, exams: useQuery(api.mockExams.listBySemester, { semester: s }) }));
-  const allExams = allExamIds.flatMap((e) => e.exams ?? []);
+  const sem2 = useQuery(api.mockExams.listBySemester, { semester: 2 });
+  const sem3 = useQuery(api.mockExams.listBySemester, { semester: 3 });
+  const sem4 = useQuery(api.mockExams.listBySemester, { semester: 4 });
+  const sem5 = useQuery(api.mockExams.listBySemester, { semester: 5 });
+  const sem6 = useQuery(api.mockExams.listBySemester, { semester: 6 });
+  const allExams = [...(sem2 ?? []), ...(sem3 ?? []), ...(sem4 ?? []), ...(sem5 ?? []), ...(sem6 ?? [])];
 
   const filteredExams = selectedSem !== null
     ? (semesters ?? [])
