@@ -479,21 +479,6 @@ export default function Dashboard() {
                 </motion.div>
               )}
 
-              {/* Create GitHub Repo Button */}
-              <motion.div variants={fadeIn} className="mt-3">
-                {!repoResult ? (
-                  <button
-                    onClick={handleCreateRepo}
-                    disabled={creatingRepo}
-                    className="text-xs text-muted-foreground hover:text-primary border border-dashed border-border/60 rounded-lg px-4 py-2 transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {creatingRepo ? "Creating GitHub repo..." : "Create GitHub Repo"}
-                  </button>
-                ) : (
-                  <pre className="text-xs text-foreground/80 whitespace-pre-wrap bg-muted/30 rounded-lg p-3 max-w-xl">{repoResult}</pre>
-                )}
-              </motion.div>
-
               {/* Stats */}
               <motion.div
                 variants={fadeIn}
