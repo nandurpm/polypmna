@@ -63,7 +63,7 @@ export default function PDFViewer() {
     );
   }
 
-  const pdfViewerUrl = url;
+  const pdfViewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(url)}`;
 
   return (
     <div className="h-screen flex flex-col bg-background">
