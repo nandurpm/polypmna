@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
   Search,
@@ -245,7 +245,10 @@ export default function Dashboard() {
   const [selectedDept, setSelectedDept] = useState<number | null>(null);
   const [selectedSem, setSelectedSem] = useState<number | null>(null);
   const seedFromGitHub = useMutation(api.seed.seedFromGitHub);
+  const createRepo = useAction(api.createRepo.createRepo);
   const [seeded, setSeeded] = useState(false);
+  const [repoResult, setRepoResult] = useState("");
+  const [creatingRepo, setCreatingRepo] = useState(false);
 
   const handleSeed = async () => {
     try {
@@ -253,6 +256,18 @@ export default function Dashboard() {
       setSeeded(true);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleCreateRepo = async () => {
+    setCreatingRepo(true);
+    try {
+      const result = await createRepo();
+      setRepoResult(result || "Done!");
+    } catch (e) {
+      setRepoResult("Error: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setCreatingRepo(false);
     }
   };
 
@@ -478,6 +493,21 @@ export default function Dashboard() {
                   <p className="text-xs text-emerald-600">✓ Study materials loaded successfully!</p>
                 </motion.div>
               )}
+
+              {/* Create GitHub Repo Button */}
+              <motion.div variants={fadeIn} className="mt-3">
+                {!repoResult ? (
+                  <button
+                    onClick={handleCreateRepo}
+                    disabled={creatingRepo}
+                    className="text-xs text-muted-foreground hover:text-primary border border-dashed border-border/60 rounded-lg px-4 py-2 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {creatingRepo ? "Creating GitHub repo..." : "Create GitHub Repo"}
+                  </button>
+                ) : (
+                  <pre className="text-xs text-foreground/80 whitespace-pre-wrap bg-muted/30 rounded-lg p-3 max-w-xl">{repoResult}</pre>
+                )}
+              </motion.div>
 
               {/* Stats */}
               <motion.div

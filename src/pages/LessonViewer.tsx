@@ -84,7 +84,7 @@ export default function LessonViewer() {
           <div className="absolute inset-0 flex items-center justify-center bg-white">
             <div className="text-center">
               <Loader2 className="mx-auto h-8 w-8 text-primary animate-spin mb-3" />
-              <p className="text-sm text-muted-foreground">Loading lesson...</p>
+              <p className="text-sm text-muted-foreground">Fetching lesson content...</p>
             </div>
           </div>
         )}
