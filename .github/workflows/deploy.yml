@@ -36,9 +36,15 @@ jobs:
         uses: actions/configure-pages@v5
 
       # GitHub Pages does not natively rewrite SPA routes to index.html.
-      # A matching 404 fallback keeps direct links and refreshes working.
-      - name: Prepare SPA fallback
-        run: cp dist/index.html dist/404.html
+      # Publish both a fallback page and route directories so direct links,
+      # refreshes, PDF viewers, lessons, and utility pages all resolve.
+      - name: Prepare SPA route fallbacks
+        run: |
+          cp dist/index.html dist/404.html
+          for route in dashboard ask-ai mock-exams question-papers student-tools pdf lesson resources; do
+            mkdir -p "dist/$route"
+            cp dist/index.html "dist/$route/index.html"
+          done
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
