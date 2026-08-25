@@ -86,7 +86,12 @@ class RootErrorBoundary extends React.Component<
   }
 }
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+// GitHub Pages builds do not receive Freebuff's runtime environment variables.
+// Keep the public production backend available for static hosting while still
+// allowing VITE_CONVEX_URL to override it in local or other deployments.
+const convexUrl =
+  import.meta.env.VITE_CONVEX_URL || "https://hearty-fennec-114.convex.cloud";
+const convex = new ConvexReactClient(convexUrl);
 
 
 
