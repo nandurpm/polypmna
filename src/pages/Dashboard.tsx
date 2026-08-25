@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
-import { useMutation, useAction } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
   Search,
@@ -245,10 +245,7 @@ export default function Dashboard() {
   const [selectedDept, setSelectedDept] = useState<number | null>(null);
   const [selectedSem, setSelectedSem] = useState<number | null>(null);
   const seedFromGitHub = useMutation(api.seed.seedFromGitHub);
-  const createRepo = useAction(api.createRepo.createRepo);
   const [seeded, setSeeded] = useState(false);
-  const [repoResult, setRepoResult] = useState("");
-  const [creatingRepo, setCreatingRepo] = useState(false);
 
   const handleSeed = async () => {
     try {
@@ -256,18 +253,6 @@ export default function Dashboard() {
       setSeeded(true);
     } catch (e) {
       console.error(e);
-    }
-  };
-
-  const handleCreateRepo = async () => {
-    setCreatingRepo(true);
-    try {
-      const result = await createRepo();
-      setRepoResult(result || "Done!");
-    } catch (e) {
-      setRepoResult("Error: " + (e instanceof Error ? e.message : String(e)));
-    } finally {
-      setCreatingRepo(false);
     }
   };
 
