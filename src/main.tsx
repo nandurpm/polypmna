@@ -17,6 +17,8 @@ const MockExams = lazy(() => import("./pages/MockExams.tsx"));
 const QuestionPapers = lazy(() => import("./pages/QuestionPapers.tsx"));
 const StudentTools = lazy(() => import("./pages/StudentTools.tsx"));
 const SubjectDetail = lazy(() => import("./pages/SubjectDetail.tsx"));
+const PDFViewer = lazy(() => import("./pages/PDFViewer.tsx"));
+const LessonViewer = lazy(() => import("./pages/LessonViewer.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
@@ -134,6 +136,8 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/question-papers" element={<QuestionPapers />} />
               <Route path="/student-tools" element={<StudentTools />} />
               <Route path="/subject/:subjectId" element={<SubjectDetail />} />
+              <Route path="/pdf" element={<PDFViewer />} />
+              <Route path="/lesson" element={<LessonViewer />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

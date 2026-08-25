@@ -1,185 +1,251 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useAuth } from "@/hooks/use-auth";
-import type { Id } from "@/convex/_generated/dataModel";
 import {
-  ArrowLeft, BookOpen, FileText, Library, Download,
-  Clock, Star, ChevronRight, Brain,
+  ArrowLeft,
+  BookOpen,
+  Download,
+  Eye,
+  FileText,
+  ExternalLink,
+  Loader2,
+  Layers,
+  Clock,
+  Star,
 } from "lucide-react";
+import {
+  getPdfForCode,
+  getLessonUrl,
+  getPdfDownloadUrl,
+  type PdfSubject,
+} from "@/lib/polydata";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
-const tabs = [
-  { id: "materials", label: "Study Materials", icon: BookOpen },
-  { id: "papers", label: "Question Papers", icon: FileText },
-  { id: "mocks", label: "Mock Exams", icon: Brain },
-] as const;
+function cleanTitle(raw: string): string {
+  return raw
+    .replace(/^Course \d+[A-Z]?\s*[—–-]\s*/i, "")
+    .replace(/^\d+[A-Z]?\s*[—–-]\s*/i, "")
+    .replace(/\s*\|\s*Revision\s*\d+\s*\|\s*POLY PMNA/gi, "")
+    .replace(/\s*\|\s*REV\d+\s*\|\s*POLY PMNA/gi, "")
+    .replace(/\s*\|\s*POLY PMNA/gi, "")
+    .trim();
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export default function SubjectDetail() {
-  const { subjectId } = useParams<{ subjectId: string }>();
-  const { user } = useAuth();
+  const { subjectId } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"materials" | "papers" | "mocks">("materials");
+  const [pdf, setPdf] = useState<PdfSubject | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const subject = useQuery(api.subjects.get, subjectId ? { id: subjectId as Id<"subjects"> } : "skip");
-  const materials = useQuery(api.materials.listBySubject, subjectId ? { subjectId: subjectId as Id<"subjects"> } : "skip");
-  const papers = useQuery(api.questionPapers.listBySubject, subjectId ? { subjectId: subjectId as Id<"subjects"> } : "skip");
-  const exams = useQuery(api.mockExams.listBySubject, subjectId ? { subjectId: subjectId as Id<"subjects"> } : "skip");
+  const code = subjectId || "";
 
-  const typeBadge = (type: string) => {
-    const s: Record<string, string> = {
-      notes: "bg-blue-50 text-blue-600",
-      syllabus: "bg-emerald-50 text-emerald-600",
-      paper: "bg-violet-50 text-violet-600",
-    };
-    const l: Record<string, string> = { notes: "Notes", syllabus: "Syllabus", paper: "Paper" };
-    return <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${s[type] ?? s.notes}`}>{l[type] ?? type}</span>;
-  };
+  const loadPdf = useCallback(async () => {
+    if (!code) { setLoading(false); return; }
+    try {
+      const data = await getPdfForCode(code);
+      setPdf(data);
+    } catch (e) {
+      console.error("Failed to load PDF info:", e);
+    }
+    setLoading(false);
+  }, [code]);
 
-  const examBadge = (type: string) => {
-    const s: Record<string, string> = { mid: "bg-blue-50 text-blue-600 border-blue-200", end: "bg-rose-50 text-rose-600 border-rose-200", supply: "bg-amber-50 text-amber-600 border-amber-200" };
-    const l: Record<string, string> = { mid: "Mid", end: "End", supply: "Supply" };
-    return <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${s[type] ?? s.mid}`}>{l[type] ?? type}</span>;
-  };
+  useEffect(() => { loadPdf(); }, [loadPdf]);
 
-  if (!subject) {
+  const title = pdf ? cleanTitle(pdf.title) : `Subject ${code}`;
+  const lessonUrl = getLessonUrl(code);
+  const pdfUrl = getPdfDownloadUrl(code);
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="w-full flex h-14 items-center gap-3 px-4 sm:px-6 lg:px-10">
-          <button onClick={() => navigate(-1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:text-foreground transition-all cursor-pointer">
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-sm font-semibold text-foreground truncate">{subject.name}</h1>
-            <p className="text-xs text-muted-foreground">Semester {subject.semester}</p>
+        <div className="w-full flex h-14 items-center justify-between px-4 sm:px-6 lg:px-10">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-none">{title}</span>
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* Tabs */}
-      <div className="border-b border-border">
-        <div className="w-full flex gap-1 px-4 sm:px-6 lg:px-10 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
+      {/* Content */}
       <div className="w-full px-4 sm:px-6 lg:px-10 py-6">
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease }}>
-
-          {/* Materials */}
-          {activeTab === "materials" && (
-            <div className="space-y-2">
-              {(!materials || materials.length === 0) && <EmptyState text="No study materials available yet." />}
-              {materials?.map((m, i) => (
-                <div key={m._id} className="group flex items-center justify-between rounded-xl border border-border/50 bg-card px-5 py-4 hover:border-primary/20 hover:shadow-sm transition-all">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-primary">
-                      <BookOpen className="h-4.5 w-4.5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">{m.title}</p>
-                      <div className="mt-1 flex items-center gap-2">
-                        {typeBadge(m.type)}
-                        {m.pageCount && <span className="text-[11px] text-muted-foreground">{m.pageCount} pages</span>}
-                        <span className="flex items-center gap-0.5 text-[11px] text-amber-500"><Star className="h-3 w-3" /> {m.stars}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button onClick={() => alert("Download coming soon!")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all cursor-pointer">
-                    <Download className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Papers */}
-          {activeTab === "papers" && (
-            <div className="space-y-2">
-              {(!papers || papers.length === 0) && <EmptyState text="No question papers available yet." />}
-              {papers?.map((p) => (
-                <div key={p._id} className="group flex items-center justify-between rounded-xl border border-border/50 bg-card px-5 py-4 hover:border-primary/20 hover:shadow-sm transition-all">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
-                      <FileText className="h-4.5 w-4.5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">{p.title}</p>
-                      <div className="mt-1 flex items-center gap-2">
-                        {examBadge(p.examType)}
-                        <span className="text-[11px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> {p.year}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button onClick={() => alert("Download coming soon!")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all cursor-pointer">
-                    <Download className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Mock Exams */}
-          {activeTab === "mocks" && (
-            <div className="grid sm:grid-cols-2 gap-3">
-              {(!exams || exams.length === 0) && <div className="sm:col-span-2"><EmptyState text="No mock exams available yet." /></div>}
-              {exams?.map((exam) => (
-                <div key={exam._id} className="group rounded-xl border border-border/50 bg-card p-5 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer" onClick={() => navigate("/mock-exams")}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
-                      <Brain className="h-4.5 w-4.5" />
-                    </div>
-                    <span className="text-[11px] text-muted-foreground bg-muted/70 rounded-md px-2 py-0.5">Sem {exam.semester}</span>
-                  </div>
-                  <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">{exam.title}</h3>
-                  <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>{exam.questionCount} Questions</span>
-                    <span>{exam.durationMinutes} min</span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-end">
-                    <span className="text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                      Start <ChevronRight className="h-3 w-3" />
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Subject info */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs text-primary font-medium">Code: {code}</span>
+            {pdf && (
+              <span className="text-xs text-muted-foreground">· {pdf.pages} pages · {formatBytes(pdf.bytes)}</span>
+            )}
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-6">{title}</h1>
         </motion.div>
-      </div>
-    </div>
-  );
-}
 
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card p-12 text-center">
-      <BookOpen className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
-      <p className="text-muted-foreground text-sm">{text}</p>
+        {/* Action cards */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+          {/* Study Notes PDF */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+            className="rounded-xl border border-border bg-card p-5"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm text-foreground">Study Notes</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {pdf ? `${pdf.pages} pages · Revision 2026` : "PDF notes"}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+              Complete study notes covering all units of this subject, generated from the official Kerala Polytechnic syllabus.
+            </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={`/pdf?url=${encodeURIComponent(pdfUrl)}&title=${encodeURIComponent(title)}&code=${code}`}
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-all"
+              >
+                <Eye className="h-3.5 w-3.5" /> Read Online
+              </a>
+              <a
+                href={pdfUrl}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-all"
+              >
+                <Download className="h-3.5 w-3.5" /> Download PDF
+              </a>
+            </div>
+          </motion.div>
+
+          {/* Lesson Page */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+            className="rounded-xl border border-border bg-card p-5"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
+                <Layers className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm text-foreground">Lesson Content</h3>
+                <p className="text-[11px] text-muted-foreground">Interactive HTML lesson</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+              Read the full lesson in your browser — covers all chapters with diagrams, examples, and explanations.
+            </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={`/lesson?code=${code}&title=${encodeURIComponent(title)}`}
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-3 py-2 text-xs font-medium text-white hover:bg-violet-600 transition-all"
+              >
+                <Eye className="h-3.5 w-3.5" /> Read Lesson
+              </a>
+              <a
+                href={lessonUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-all"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> Open Full
+              </a>
+            </div>
+          </motion.div>
+
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+            className="rounded-xl border border-border bg-card p-5"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
+                <Star className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm text-foreground">More Resources</h3>
+                <p className="text-[11px] text-muted-foreground">Additional study aids</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+              Access mock exams, question papers, and AI-powered help for this subject.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => navigate("/mock-exams")}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-all cursor-pointer"
+              >
+                Take Mock Exam
+              </button>
+              <button
+                onClick={() => navigate("/question-papers")}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-all cursor-pointer"
+              >
+                Question Papers
+              </button>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* File info */}
+        {pdf && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.3 }}
+            className="rounded-xl border border-border bg-card p-4"
+          >
+            <h3 className="text-sm font-semibold text-foreground mb-2">File Details</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <p className="text-muted-foreground">Pages</p>
+                <p className="font-medium text-foreground">{pdf.pages}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Size</p>
+                <p className="font-medium text-foreground">{formatBytes(pdf.bytes)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Revision</p>
+                <p className="font-medium text-foreground">{pdf.revision}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Code</p>
+                <p className="font-medium text-foreground">{code}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
