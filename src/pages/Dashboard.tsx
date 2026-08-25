@@ -793,7 +793,7 @@ export default function Dashboard() {
                 <motion.a
                   key={sem}
                   variants={fadeIn}
-                  href="/question-papers"
+                  href={`${import.meta.env.BASE_URL}question-papers`}
                   onClick={(e) => { e.preventDefault(); navigate("/question-papers"); }}
                   className="group flex items-center justify-between rounded-xl border border-border/50 bg-card px-5 py-4
                              shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300"
@@ -844,7 +844,7 @@ export default function Dashboard() {
                 <motion.a
                   key={tool.title}
                   variants={fadeIn}
-                  href="/student-tools"
+                  href={`${import.meta.env.BASE_URL}student-tools`}
                   onClick={(e) => { e.preventDefault(); navigate("/student-tools"); }}
                   className="group flex flex-col items-center gap-3 rounded-xl border border-border/50 bg-card p-6
                              shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 text-center"

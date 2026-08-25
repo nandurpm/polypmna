@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import {
   ArrowLeft,
   BookOpen,
@@ -125,12 +125,12 @@ export default function SubjectDetail() {
               Complete study notes covering all units of this subject, generated from the official Kerala Polytechnic syllabus.
             </p>
             <div className="flex items-center gap-2">
-              <a
-                href={`/pdf?url=${encodeURIComponent(pdfUrl)}&title=${encodeURIComponent(title)}&code=${code}`}
+              <Link
+                to={`/pdf?url=${encodeURIComponent(pdfUrl)}&title=${encodeURIComponent(title)}&code=${code}`}
                 className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-all"
               >
                 <Eye className="h-3.5 w-3.5" /> Read Online
-              </a>
+              </Link>
               <a
                 href={pdfUrl}
                 download
@@ -163,12 +163,12 @@ export default function SubjectDetail() {
               Read the full lesson in your browser — covers all chapters with diagrams, examples, and explanations.
             </p>
             <div className="flex items-center gap-2">
-              <a
-                href={`/lesson?code=${code}&title=${encodeURIComponent(title)}`}
+              <Link
+                to={`/lesson?code=${code}&title=${encodeURIComponent(title)}`}
                 className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-3 py-2 text-xs font-medium text-white hover:bg-violet-600 transition-all"
               >
                 <Eye className="h-3.5 w-3.5" /> Read Lesson
-              </a>
+              </Link>
               <a
                 href={lessonUrl}
                 target="_blank"

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   BookOpen,
   Search,
@@ -65,6 +65,7 @@ const quickLinks = [
   { label: "CGPA Calculator", desc: "Calculate your GPA", icon: BarChart3, href: "/student-tools" },
   { label: "Ask POLY AI", desc: "Instant study help", icon: Bot, href: "/ask-ai" },
   { label: "Mock Exams", desc: "Practice with MCQ tests", icon: ClipboardList, href: "/mock-exams" },
+  { label: "Resource Hub", desc: "Revision archives & official links", icon: ExternalLink, href: "/resources" },
 ];
 
 /* ─── Department icons ─── */
@@ -230,18 +231,18 @@ export default function Landing() {
                         <p className="text-xs text-muted-foreground mt-0.5">{r.programme} · {r.semester} · Code: {r.code}</p>
                         <div className="mt-2 flex items-center gap-2 flex-wrap">
                           {pdf && (
-                            <a href={`/pdf?url=${encodeURIComponent(pdf.pdfUrl)}&title=${encodeURIComponent(cleanTitle(pdf.title))}&code=${r.code}`} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors">
+                            <Link to={`/pdf?url=${encodeURIComponent(pdf.pdfUrl)}&title=${encodeURIComponent(cleanTitle(pdf.title))}&code=${r.code}`} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors">
                               <Eye className="h-3 w-3" /> View Notes ({pdf.pages}p)
-                            </a>
+                            </Link>
                           )}
                           {pdf && (
                             <a href={getPdfDownloadUrl(r.code)} download target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-600 hover:bg-emerald-500/20 transition-colors">
                               <Download className="h-3 w-3" /> Download
                             </a>
                           )}
-                          <a href={`/lesson?code=${r.code}&title=${encodeURIComponent(r.name)}`} className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-1 text-[11px] font-medium text-violet-600 hover:bg-violet-500/20 transition-colors">
-                            <FileText className="h-3 w-3" /> Lesson
-                          </a>
+                          <Link to={`/lesson?code=${r.code}&title=${encodeURIComponent(r.name)}`} className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-1 text-[11px] font-medium text-violet-600 hover:bg-violet-500/20 transition-colors">
+<FileText className="h-3 w-3" /> Lesson
+                            </Link>
                         </div>
                       </div>
                     </div>
@@ -403,12 +404,12 @@ export default function Landing() {
                     <h3 className="font-medium text-sm text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">{mat.title}</h3>
                     <p className="text-[11px] text-muted-foreground mt-1">Code: {mat.code}</p>
                     <div className="mt-3 flex items-center gap-2">
-                      <a
-                        href={`/pdf?url=${encodeURIComponent(mat.pdfUrl)}&title=${encodeURIComponent(mat.title)}&code=${mat.code}`}
+                      <Link
+                        to={`/pdf?url=${encodeURIComponent(mat.pdfUrl)}&title=${encodeURIComponent(mat.title)}&code=${mat.code}`}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-all"
                       >
                         <Eye className="h-3.5 w-3.5" /> View
-                      </a>
+                      </Link>
                       <a
                         href={mat.pdfUrl}
                         download
@@ -418,12 +419,12 @@ export default function Landing() {
                       >
                         <Download className="h-3.5 w-3.5" /> Download
                       </a>
-                      <a
-                        href={`/lesson?code=${mat.code}&title=${encodeURIComponent(mat.title)}`}
+                      <Link
+                        to={`/lesson?code=${mat.code}&title=${encodeURIComponent(mat.title)}`}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-all"
                       >
                         <FileText className="h-3.5 w-3.5" /> Lesson
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 ))}

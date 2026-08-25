@@ -20,7 +20,7 @@ export default function PDFViewer() {
   const [zoom, setZoom] = useState(100);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [blobUrl, setBlobUrl] = useState("");
+
 
   useEffect(() => {
     if (!url) return;
@@ -34,8 +34,9 @@ export default function PDFViewer() {
       })
       .then((blob) => {
         if (cancelled) return;
-        const bUrl = URL.createObjectURL(blob);
-        setBlobUrl(bUrl);
+        // Keep the original URL for the browser's native PDF viewer. A blob URL
+        // passed to a different-origin PDF.js viewer is not reliably readable.
+        void blob;
         setLoading(false);
       })
       .catch(() => {
@@ -62,9 +63,7 @@ export default function PDFViewer() {
     );
   }
 
-  const pdfViewerUrl = blobUrl
-    ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(blobUrl)}`
-    : "";
+  const pdfViewerUrl = url;
 
   return (
     <div className="h-screen flex flex-col bg-background">

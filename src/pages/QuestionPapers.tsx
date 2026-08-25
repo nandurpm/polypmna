@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   ArrowLeft,
   Search,
@@ -178,12 +178,12 @@ export default function QuestionPapers() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <a
-                        href={`/pdf?url=${encodeURIComponent(paper.pdfUrl)}&title=${encodeURIComponent(paper.courseName)}&code=${paper.courseCode}`}
+                      <Link
+                        to={`/pdf?url=${encodeURIComponent(paper.pdfUrl)}&title=${encodeURIComponent(paper.courseName)}&code=${paper.courseCode}`}
                         className="flex h-8 items-center gap-1 rounded-lg bg-primary/10 px-2.5 text-[11px] font-medium text-primary hover:bg-primary/20 transition-colors"
                       >
                         <Eye className="h-3 w-3" /> View
-                      </a>
+                      </Link>
                       <a
                         href={paper.pdfUrl}
                         download
