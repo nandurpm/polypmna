@@ -1,8 +1,6 @@
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { ArrowLeft, ExternalLink, BookOpen } from "lucide-react";
-
-const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
+import { ArrowLeft, ExternalLink, BookOpen, Loader2, AlertCircle } from "lucide-react";
 
 const DIPLOMA_BASE = "https://raw.githubusercontent.com/nandurpm/diploma-notes/main";
 
@@ -12,6 +10,29 @@ export default function LessonViewer() {
   const code = searchParams.get("code") || "";
   const title = searchParams.get("title") || "Lesson";
   const lessonUrl = searchParams.get("url") || (code ? `${DIPLOMA_BASE}/revision-2026-content/lessons/lessons-${code}.html` : "");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [htmlContent, setHtmlContent] = useState("");
+
+  useEffect(() => {
+    if (!lessonUrl) return;
+    setLoading(true);
+    setError(false);
+    fetch(lessonUrl)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.text();
+      })
+      .then((html) => {
+        setHtmlContent(html);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }, [lessonUrl]);
 
   if (!lessonUrl) {
     return (
@@ -21,7 +42,7 @@ export default function LessonViewer() {
           <p className="text-muted-foreground mb-4">No lesson available for this subject</p>
           <button
             onClick={() => navigate(-1)}
-            className="rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-all"
+            className="rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-all cursor-pointer"
           >
             Go Back
           </button>
@@ -37,7 +58,7 @@ export default function LessonViewer() {
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate(-1)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition-colors shrink-0"
+            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition-colors shrink-0 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -57,14 +78,44 @@ export default function LessonViewer() {
         </a>
       </nav>
 
-      {/* Lesson iframe */}
-      <div className="flex-1 bg-white overflow-hidden">
-        <iframe
-          src={lessonUrl}
-          className="w-full h-full border-0"
-          title={title}
-          sandbox="allow-scripts allow-same-origin"
-        />
+      {/* Lesson content */}
+      <div className="flex-1 bg-white overflow-hidden relative">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white">
+            <div className="text-center">
+              <Loader2 className="mx-auto h-8 w-8 text-primary animate-spin mb-3" />
+              <p className="text-sm text-muted-foreground">Loading lesson...</p>
+            </div>
+          </div>
+        )}
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white">
+            <div className="text-center max-w-md px-4">
+              <AlertCircle className="mx-auto h-10 w-10 text-orange-400 mb-3" />
+              <p className="text-sm font-medium text-foreground mb-1">Could not load lesson</p>
+              <p className="text-xs text-muted-foreground mb-4">
+                The lesson content could not be loaded. You can try opening it directly.
+              </p>
+              <a
+                href={lessonUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-all"
+              >
+                <ExternalLink className="h-4 w-4" /> Open in New Tab
+              </a>
+            </div>
+          </div>
+        )}
+        {htmlContent && (
+          <iframe
+            ref={iframeRef}
+            srcDoc={htmlContent}
+            className="w-full h-full border-0"
+            title={title}
+            sandbox="allow-scripts allow-same-origin"
+          />
+        )}
       </div>
     </div>
   );
