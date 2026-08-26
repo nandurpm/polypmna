@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { generatePolyAiResponse } from "@/lib/polyAi";
+import { generatePolyAiResponse, isCurriculumDatabaseQuery } from "@/lib/polyAi";
 import {
   Send,
   ArrowLeft,
@@ -52,6 +52,15 @@ export default function AskAI() {
     setInput("");
     setIsSending(true);
     try {
+      if (isCurriculumDatabaseQuery(content)) {
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        setLocalMessages((current) => [
+          ...current,
+          { _id: `${id}-user`, role: "user", content },
+          { _id: `${id}-assistant`, role: "assistant", content: generatePolyAiResponse(content) },
+        ]);
+        return;
+      }
       if (user) {
         await sendMessage({ userId: user._id, content });
       } else {
