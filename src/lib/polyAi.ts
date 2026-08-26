@@ -3,6 +3,12 @@
  * path, but a visitor should never lose a response because anonymous auth is
  * still starting or temporarily unavailable.
  */
+export function isCurriculumDatabaseQuery(query: string): boolean {
+  const q = query.toLowerCase();
+  return /\b(curriculum|catalog(u)?e?|database|schema|index|aggregation|aggregate|department|semester|duplicate|model\s*paper|lesson|resource\s*link)\b/.test(q)
+    && /\b(sql|query|database|schema|count|subject|revision|department|semester|resource|link|model\s*paper|lesson)\b/.test(q);
+}
+
 export function generatePolyAiResponse(query: string): string {
   const q = query.toLowerCase();
 
