@@ -88,15 +88,15 @@ export default function AskAI() {
     setInput("");
     setIsSending(true);
     try {
-      const historyMessages = messages.slice(-20).map((message) => ({
+      const historyMessages = messages.slice(-8).map((message) => ({
         role: message.role as "user" | "assistant",
-        content: message.role === "user" ? message.content : sanitizePolyAiResponse(message.content),
+        content: (message.role === "user" ? message.content : sanitizePolyAiResponse(message.content)).slice(-5000),
       }));
       let response: string;
       try {
         const providerRawAnswer = await Promise.race<string>([
           chatCompletion({ messages: [...historyMessages, { role: "user", content }] }),
-          new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out")), 8000)),
+          new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out")), 18000)),
         ]);
         const providerAnswer = sanitizePolyAiResponse(providerRawAnswer);
         if (!providerAnswer || isGenericPolyAiResponse(providerAnswer) || (isRichPolyAiRequest(content) && !isRichPolyAiResponseForQuery(content, providerAnswer))) {
