@@ -53,12 +53,9 @@ export default function AskAI() {
       ...(chatHistory ?? []).map((message) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content })),
       ...localMessages.filter((message) => !persistedKeys.has(`${message.role}:${message.content}`)),
     ];
-    const seen = new Set<string>();
+    const seenExchanges = new Set<string>();
     for (const message of mergedMessages) {
       if (message.role === "user") {
-        const messageKey = `user:${message.content}`;
-        if (seen.has(messageKey)) continue;
-        seen.add(messageKey);
         visible.push(message);
         continue;
       }
@@ -68,8 +65,8 @@ export default function AskAI() {
       const needsLocalRepair = !content || isLegacyScopeRefusal || isLeakedPolyAiResponse(message.content) || isGenericPolyAiResponse(content);
       let repairedContent = content;
       let repairedId = message._id;
+      const lastUser = [...visible].reverse().find((item) => item.role === "user");
       if (needsLocalRepair) {
-        const lastUser = [...visible].reverse().find((item) => item.role === "user");
         if (lastUser && visible[visible.length - 1]?.role === "user") {
           repairedContent = sanitizePolyAiResponse(generatePolyAiResponse(lastUser.content));
           repairedId = `${message._id}-local-repair`;
@@ -77,9 +74,14 @@ export default function AskAI() {
           continue;
         }
       }
-      const messageKey = `assistant:${repairedContent}`;
-      if (seen.has(messageKey)) continue;
-      seen.add(messageKey);
+      if (lastUser && visible[visible.length - 1]?.role === "user") {
+        const exchangeKey = `${lastUser.content}\u0000${repairedContent}`;
+        if (seenExchanges.has(exchangeKey)) {
+          visible.pop();
+          continue;
+        }
+        seenExchanges.add(exchangeKey);
+      }
       visible.push({ ...message, _id: repairedId, content: repairedContent });
     }
     return visible;
