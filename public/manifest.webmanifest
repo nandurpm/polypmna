@@ -1,16 +1,17 @@
 {
-  "name": "freebuff.com application",
-  "short_name": "freebuff.com",
-  "description": "freebuff.com application",
-  "start_url": "/",
+  "name": "POLY PMNA — Kerala Polytechnic Study Materials",
+  "short_name": "POLY PMNA",
+  "description": "Kerala Polytechnic curriculum, engineering subjects, lessons, notes, question papers, mock exams, study tools, and Ask POLY AI.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "theme_color": "#0f766e",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "logo.svg",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]

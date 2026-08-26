@@ -5,7 +5,8 @@ import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { HashRouter, Route, Routes, useLocation } from "react-router";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router";
+import SeoHead from "./components/SeoHead";
 import "./index.css";
 
 // Lazy load route components for better code splitting
@@ -83,6 +84,15 @@ class RootErrorBoundary extends React.Component<
   }
 }
 
+function normalizeLegacyHashRoute() {
+  if (!window.location.hash.startsWith("#/")) return;
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const target = window.location.hash.slice(1);
+  window.history.replaceState(null, "", `${base}${target}`);
+}
+
+normalizeLegacyHashRoute();
+
 // Static builds must provide their own backend URL. Do not silently connect
 // forks or alternate deployments to the POLY PMNA production database.
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
@@ -135,8 +145,9 @@ createRoot(document.getElementById("root")!).render(
         <VlyToolbar />
       </ToolbarErrorBoundary>
       <ConvexAuthProvider client={convex}>
-        <HashRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           <RouteSyncer />
+          <SeoHead />
           <Suspense fallback={<RouteLoading />}>
             <Routes>
               <Route path="/" element={<Landing />} />
@@ -157,7 +168,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
-        </HashRouter>
+        </BrowserRouter>
         <Toaster />
       </ConvexAuthProvider>
     </RootErrorBoundary>

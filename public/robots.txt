@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /polypmna/auth
+Disallow: /polypmna/dashboard
+Disallow: /polypmna/pdf
+Disallow: /polypmna/lesson
+
+Sitemap: https://nandurpm.github.io/polypmna/sitemap.xml

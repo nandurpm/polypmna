@@ -44,7 +44,7 @@ jobs:
       - name: Prepare SPA route fallbacks
         run: |
           cp dist/index.html dist/404.html
-          for route in dashboard ask-ai mock-exams question-papers student-tools pdf lesson resources; do
+          for route in auth dashboard ask-ai mock-exams question-papers student-tools pdf lesson resources curriculum subject; do
             mkdir -p "dist/$route"
             cp dist/index.html "dist/$route/index.html"
           done
