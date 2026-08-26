@@ -6,6 +6,7 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { PolyAiMessage } from "@/components/PolyAiMessage";
 import { generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isRichPolyAiRequest, isRichPolyAiResponseForQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { clearPolyAiState, loadPolyAiState, savePolyAiState } from "@/lib/polyAiStorage";
 import {
   Send,
   ArrowLeft,
@@ -29,9 +30,9 @@ const quickPrompts = [
 export default function AskAI() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(() => loadPolyAiState().preferences.draft);
   const [isSending, setIsSending] = useState(false);
-  const [localMessages, setLocalMessages] = useState<{ _id: string; role: "user" | "assistant"; content: string }[]>([]);
+  const [localMessages, setLocalMessages] = useState<{ _id: string; role: "user" | "assistant"; content: string }[]>(() => loadPolyAiState().messages);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -73,6 +74,13 @@ export default function AskAI() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    savePolyAiState({
+      messages: localMessages,
+      preferences: { draft: input, renderer: "rich-local" },
+    });
+  }, [input, localMessages]);
 
   const handleSend = async (text?: string) => {
     const content = (text ?? input).trim();
@@ -149,6 +157,8 @@ export default function AskAI() {
   const handleClear = async () => {
     if (!window.confirm("Clear all chat history?")) return;
     setLocalMessages([]);
+    setInput("");
+    clearPolyAiState();
     if (user) {
       try {
         await clearHistory({ userId: user._id });
