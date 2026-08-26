@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { generatePolyAiResponse, isCurriculumDatabaseQuery } from "@/lib/polyAi";
 import {
@@ -39,7 +39,9 @@ export default function AskAI() {
     user ? { userId: user._id } : "skip"
   );
   const sendMessage = useMutation(api.chat.sendMessage);
+  const storeMessages = useMutation(api.chat.storeMessages);
   const clearHistory = useMutation(api.chat.clearHistory);
+  const chatCompletion = useAction(api.aiChat.chatCompletion);
   const messages = useMemo(() => [...(chatHistory ?? []), ...localMessages], [chatHistory, localMessages]);
 
   useEffect(() => {
@@ -52,22 +54,60 @@ export default function AskAI() {
     setInput("");
     setIsSending(true);
     try {
-      if (isCurriculumDatabaseQuery(content)) {
-        const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        setLocalMessages((current) => [
-          ...current,
-          { _id: `${id}-user`, role: "user", content },
-          { _id: `${id}-assistant`, role: "assistant", content: generatePolyAiResponse(content) },
-        ]);
-        return;
-      }
-      if (user) {
-        await sendMessage({ userId: user._id, content });
-      } else {
-        throw new Error("Anonymous session is not ready");
+      // Build conversation history for the AI
+      const historyMessages = messages.slice(-20).map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+
+      // Try real AI first
+      try {
+        const aiResponse = await chatCompletion({
+          messages: [...historyMessages, { role: "user", content }],
+        });
+
+        // Store both messages in Convex
+        if (user) {
+          await storeMessages({
+            userId: user._id,
+            userContent: content,
+            assistantContent: aiResponse,
+          });
+        } else {
+          // Anonymous: show locally
+          const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          setLocalMessages((current) => [
+            ...current,
+            { _id: `${id}-user`, role: "user", content },
+            { _id: `${id}-assistant`, role: "assistant", content: aiResponse },
+          ]);
+        }
+      } catch (aiError) {
+        console.warn("AI action failed, using local fallback:", aiError);
+        // Fall back to local regex-based responses
+        let response: string;
+        if (isCurriculumDatabaseQuery(content)) {
+          response = generatePolyAiResponse(content);
+        } else {
+          response = generatePolyAiResponse(content);
+        }
+        if (user) {
+          await storeMessages({
+            userId: user._id,
+            userContent: content,
+            assistantContent: response,
+          });
+        } else {
+          const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          setLocalMessages((current) => [
+            ...current,
+            { _id: `${id}-user`, role: "user", content },
+            { _id: `${id}-assistant`, role: "assistant", content: response },
+          ]);
+        }
       }
     } catch (error) {
-      console.warn("Using local POLY AI fallback:", error);
+      console.warn("Chat error:", error);
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       setLocalMessages((current) => [
         ...current,

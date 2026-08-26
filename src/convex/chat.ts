@@ -115,6 +115,30 @@ export const sendMessage = mutation({
   },
 });
 
+/** Store a message pair (user + assistant) from the AI action. */
+export const storeMessages = mutation({
+  args: {
+    userId: v.id("users"),
+    userContent: v.string(),
+    assistantContent: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    await ctx.db.insert("chatMessages", {
+      userId: args.userId,
+      role: "user",
+      content: args.userContent,
+      timestamp: now,
+    });
+    await ctx.db.insert("chatMessages", {
+      userId: args.userId,
+      role: "assistant",
+      content: args.assistantContent,
+      timestamp: now + 1,
+    });
+  },
+});
+
 export const clearHistory = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {

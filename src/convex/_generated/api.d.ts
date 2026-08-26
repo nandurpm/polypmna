@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as aiChat from "../aiChat.js";
 import type * as auth from "../auth.js";
 import type * as auth_emailOtp from "../auth/emailOtp.js";
 import type * as chat from "../chat.js";
@@ -29,6 +30,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  aiChat: typeof aiChat;
   auth: typeof auth;
   "auth/emailOtp": typeof auth_emailOtp;
   chat: typeof chat;
