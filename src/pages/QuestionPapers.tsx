@@ -100,7 +100,7 @@ export default function QuestionPapers() {
       {/* Content */}
       <div className="w-full px-4 sm:px-6 lg:px-10 py-6">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-20">
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-10">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading question papers from SITTTR...
           </div>
         ) : (

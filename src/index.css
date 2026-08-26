@@ -131,3 +131,26 @@
     cursor: pointer;
   }
 }
+
+
+@layer components {
+  /* Use the desktop viewport while retaining comfortable reading gutters. */
+  .container {
+    width: 100%;
+    max-width: 1600px;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-inline: 2.5rem;
+    }
+  }
+}

@@ -242,7 +242,7 @@ export default function StudentTools() {
         </div>
       </nav>
 
-      <div className="w-full max-w-7xl px-4 sm:px-6 lg:px-10 py-6 mx-auto">
+      <div className="w-full max-w-[1600px] px-4 sm:px-6 lg:px-10 py-6 mx-auto">
         {activeTool === null ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {tools.map((tool) => {

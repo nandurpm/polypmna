@@ -103,7 +103,7 @@ export default function MockExams() {
       return (
         <div className="min-h-screen bg-background flex flex-col">
           <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-            <div className="mx-auto flex h-14 max-w-5xl items-center px-4">
+            <div className="mx-auto flex h-14 max-w-[1500px] items-center px-4">
               <button onClick={() => { setActiveExam(null); }} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                 <ArrowLeft className="h-4 w-4" /> Back to Exams
               </button>
@@ -145,7 +145,7 @@ export default function MockExams() {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-          <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+          <div className="mx-auto flex h-14 max-w-[1500px] items-center justify-between px-4">
             <button onClick={() => { setActiveExam(null); setCurrentQ(0); }} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
               <ArrowLeft className="h-4 w-4" /> Exit
             </button>
@@ -160,7 +160,7 @@ export default function MockExams() {
           </div>
         </nav>
 
-        <div className="flex-1 mx-auto max-w-5xl px-4 py-8">
+        <div className="flex-1 mx-auto max-w-[1500px] px-4 py-8">
           <motion.div key={currentQ} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease }}>
             <p className="text-xs text-muted-foreground mb-2">Question {currentQ + 1} of {total}</p>
             <h3 className="text-lg font-semibold text-foreground leading-relaxed mb-6">{q.question}</h3>
@@ -186,7 +186,7 @@ export default function MockExams() {
         </div>
 
         <div className="border-t border-border bg-background/80 backdrop-blur-xl">
-          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
+          <div className="mx-auto max-w-[1500px] px-4 py-3 flex items-center justify-between">
             <button disabled={currentQ === 0} onClick={() => setCurrentQ((c) => c - 1)} className="rounded-xl border border-border/60 bg-card px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
               Previous
             </button>

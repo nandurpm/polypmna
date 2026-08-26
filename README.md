@@ -279,3 +279,35 @@ The GitHub Pages frontend never receives provider API keys. The provider-backed 
 GitHub Actions secrets alone are not runtime secrets for GitHub Pages. To let the deployment workflow publish the Convex action and synchronize the keys, add a production `CONVEX_DEPLOY_KEY` repository secret, then rerun the Pages workflow. The workflow accepts the existing secret names `OPENROUTER_API` and `NVDIA_API` shown in the repository settings, as well as `OPENROUTER_API_KEY` and `NVIDIA_API_KEY`. Alternatively, set `OPENROUTER_API_KEY` and `NVIDIA_API_KEY` directly under the Convex production deployment settings. Do not add either key to a `VITE_` variable or commit it to the repository.
 
 See the [Convex environment variable guide](https://docs.convex.dev/production/environment-variables), [Convex deploy-key guide](https://docs.convex.dev/cli/deploy-key-types), [OpenRouter chat-completions reference](https://openrouter.ai/docs/api/api-reference/chat/create-a-chat-completion), and [NVIDIA NIM API reference](https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html) for the provider and deployment conventions.
+
+
+## Local AI provider smoke tests
+
+Run these commands from the repository root. The test script sends one short chat-completions request to the selected provider and prints only the HTTP result and a limited answer preview; it never prints the API key.
+
+```bash
+# OpenRouter only
+OPENROUTER_API_KEY='your-key-in-your-shell-only' \
+  node scripts/test-ai-providers.mjs openrouter
+
+# NVIDIA only
+NVIDIA_API_KEY='your-key-in-your-shell-only' \
+  node scripts/test-ai-providers.mjs nvidia
+
+# Test both providers
+OPENROUTER_API_KEY='your-openrouter-key' \
+NVIDIA_API_KEY='your-nvidia-key' \
+  node scripts/test-ai-providers.mjs both
+
+# Use the exact aliases accepted by the GitHub workflow if preferred
+OPENROUTER_API='your-openrouter-key' \
+NVDIA_API='your-nvidia-key' \
+  node scripts/test-ai-providers.mjs both
+
+# Override the default technical test question
+OPENROUTER_API_KEY='your-key-in-your-shell-only' \
+  node scripts/test-ai-providers.mjs openrouter \
+  "Explain a revision-aware SQL GROUP BY query for subject counts by department and semester."
+```
+
+For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, start the Vite app with `pnpm run dev`, and open `http://127.0.0.1:5173/polypmna/#/ask-ai`. The browser must not receive either provider key. Provider keys belong in Convex production environment variables; the static frontend uses the deterministic fallback when the backend action is unavailable.

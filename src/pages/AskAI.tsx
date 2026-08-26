@@ -121,7 +121,7 @@ export default function AskAI() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+        <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
@@ -155,7 +155,7 @@ export default function AskAI() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-6xl px-4 py-6">
+        <div className="mx-auto max-w-[1600px] px-4 py-6">
           {messages.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -205,7 +205,7 @@ export default function AskAI() {
                 className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   msg.role === "user"
                     ? "ml-auto max-w-[92%] bg-primary text-primary-foreground rounded-br-md"
-                    : "flex-1 min-w-0 w-full max-w-5xl bg-card border border-border/60 text-foreground rounded-bl-md"
+                    : "flex-1 min-w-0 w-full max-w-[1400px] bg-card border border-border/60 text-foreground rounded-bl-md"
                 }`}
               >
                 <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -238,7 +238,7 @@ export default function AskAI() {
 
       {/* Input */}
       <div className="border-t border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-6xl px-4 py-3">
+        <div className="mx-auto max-w-[1600px] px-4 py-3">
           <div className="flex items-end gap-2 rounded-2xl border border-border/60 bg-card px-4 py-2 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10 transition-all">
             <textarea
               ref={inputRef}
