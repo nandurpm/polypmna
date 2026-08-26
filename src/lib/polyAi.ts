@@ -203,6 +203,9 @@ export function generatePolyAiResponse(query: string): string {
       "```mermaid\nflowchart LR\n  Subject --> Resource{Resource status}\n  Resource -->|published| Link[Render safe link]\n  Resource -->|missing| Notice[Show unavailable notice]\n  Resource -->|unavailable| Notice\n```"
     );
   }
+  if (/\bbuck\s+converter\b/.test(q)) {
+    return localAnswerForUnknownQuery(query);
+  }
   if (/\b(exam|prepare|preparation|revision|study\s*plan|how\s*to\s*study|tips)\b/.test(q)) {
     return markdown("## Exam preparation plan", "Start with the syllabus, divide it into weekly topics, and make short notes while studying. Practise diagrams, derivations, numericals, and previous question papers.", "| Stage | Focus |\n|---|---|\n| Early preparation | Understand concepts and mark high-weight topics |\n| Middle phase | Solve problems and previous papers |\n| Final week | Revise formulas and take timed mocks |", "> Avoid starting large new topics immediately before the exam; revise the material you can recall accurately.");
   }
