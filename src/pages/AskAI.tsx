@@ -82,9 +82,13 @@ export default function AskAI() {
       if (pendingUser) {
         const exchangeKey = `${pendingUser.content}\u0000${repairedContent}`;
         if (seenExchanges.has(exchangeKey)) {
-          visible.pop();
-          pendingUser = null;
-          continue;
+          const previousExchangeIndex = visible.findIndex((item, index) => (
+            item.role === "user"
+            && item.content === pendingUser?.content
+            && visible[index + 1]?.role === "assistant"
+            && visible[index + 1]?.content === repairedContent
+          ));
+          if (previousExchangeIndex >= 0) visible.splice(previousExchangeIndex, 2);
         }
         seenExchanges.add(exchangeKey);
         pendingUser = null;
