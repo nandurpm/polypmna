@@ -240,6 +240,36 @@ export function generatePolyAiResponse(query: string): string {
       "For more than two parallel resistors, use the reciprocal formula. The equivalent resistance of parallel resistors is always smaller than the smallest branch resistance."
     );
   }
+  if (/\b(first\s+law|first\s+principle)\b/.test(q) && /\bthermodynamic|thermodynamics|heat|internal\s+energy|work\b/.test(q)) {
+    return markdown(
+      "## First law of thermodynamics",
+      "The first law is conservation of energy applied to a thermodynamic system. Energy entering as heat increases the system’s internal energy or leaves as work.",
+      "```text\nΔU = Q − W\n\nΔU = change in internal energy\nQ  = heat supplied to the system\nW  = work done by the system\n```",
+      "| Quantity | Meaning | Sign convention used here |\n|---|---|---|\n| ΔU | Change in internal energy | Positive when internal energy increases |\n| Q | Heat transferred into the system | Positive when supplied to the system |\n| W | Work done by the system | Positive when the system expands and does work |",
+      "### Engineering example\nIf a closed system receives **500 kJ** of heat and performs **200 kJ** of work, then **ΔU = Q − W = 500 − 200 = 300 kJ**. Its internal energy increases by 300 kJ, assuming changes in kinetic and potential energy are negligible.",
+      "```mermaid\nflowchart LR\n  Heat[Heat supplied Q] --> Energy[System internal energy ΔU]\n  Energy --> Work[Work delivered W]\n  Balance[ΔU = Q − W] --> Energy\n```",
+      "For an open-flow device such as a turbine, compressor, pump, or nozzle, use the steady-flow energy equation and include mass-flow, enthalpy, kinetic-energy, and potential-energy terms when they are significant."
+    );
+  }
+  if (/\b(reynolds|fluid\s+mechanics|fluid\s+flow|viscosity|bernoulli)\b/.test(q)) {
+    return markdown(
+      "## Fluid-flow fundamentals",
+      "Fluid mechanics studies fluids at rest and in motion. The Reynolds number compares inertial effects with viscous effects and helps predict whether internal flow is laminar or turbulent.",
+      "```text\nRe = ρvD / μ = vD / ν\n\nρ = fluid density\nv = mean velocity\nD = characteristic diameter\nμ = dynamic viscosity\nν = kinematic viscosity\n```",
+      "| Internal pipe flow | Approximate regime | Typical behaviour |\n|---:|---|---|\n| Re < 2,300 | Laminar | Smooth layers; viscous effects dominate |\n| 2,300–4,000 | Transition | Sensitive to disturbances |\n| Re > 4,000 | Turbulent | Mixing and fluctuating motion |",
+      "Bernoulli’s equation for steady, incompressible, inviscid flow along a streamline is **p/ρg + v²/2g + z = constant**. Real pipe systems require head-loss terms for friction, valves, bends, and fittings.",
+      "```mermaid\nflowchart LR\n  Properties[ρ, μ, v, D] --> Reynolds[Calculate Reynolds number]\n  Reynolds --> Regime{Flow regime}\n  Regime -->|Low Re| Laminar[Laminar model]\n  Regime -->|High Re| Turbulent[Turbulent model and losses]\n```"
+    );
+  }
+  if (/\b(plc|programmable\s+logic\s+controller|ladder\s+logic)\b/.test(q)) {
+    return markdown(
+      "## PLC scan cycle",
+      "A programmable logic controller repeatedly reads input devices, executes the control program, and updates output devices. This repeated loop is called the scan cycle.",
+      "| Stage | Operation | Example |\n|---:|---|---|\n| 1 | Read inputs | Push buttons, sensors, limit switches |\n| 2 | Execute logic | Ladder rungs, timers, counters, comparisons |\n| 3 | Update outputs | Motors, relays, valves, indicators |\n| 4 | Housekeeping | Diagnostics and communication tasks |",
+      "```mermaid\nflowchart LR\n  Inputs[Read inputs] --> Logic[Execute ladder logic]\n  Logic --> Outputs[Update outputs]\n  Outputs --> Diagnostics[Diagnostics and communication]\n  Diagnostics --> Inputs\n```",
+      "A short scan time improves response, but input filtering, communication delays, timer resolution, and output device dynamics also affect the real control response. Use interlocks and a fail-safe design for hazardous machinery."
+    );
+  }
   if (/\b(capacitor|inductor|resistor|rc\s*circuit|rl\s*circuit)\b/.test(q)) {
     return markdown("## Basic circuit relationships", "Resistors relate voltage and current directly, capacitors store electric-field energy, and inductors store magnetic-field energy.", "| Component | Relationship | Time constant |\n|---|---|---|\n| Resistor | V = IR | — |\n| Capacitor | i = C dv/dt | RC |\n| Inductor | v = L di/dt | L/R |", "For an RC circuit, τ = RC; for an RL circuit, τ = L/R. The time constant describes how quickly the transient approaches its steady-state value.");
   }
