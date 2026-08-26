@@ -17,7 +17,7 @@ export function isLeakedPolyAiResponse(response: string): boolean {
 }
 
 export function isGenericPolyAiResponse(response: string): boolean {
-  return /exam preparation strategy|that's a great question|i can help (?:with|explain) kerala polytechnic|what specific topic would you like me to explain|please include the subject name or topic/i.test(response);
+  return /exam preparation strategy|that's a great question|i can help (?:with|explain) kerala polytechnic|what specific topic would you like me to explain|please include the subject name or topic|i received (?:your )?question|i received [“\"]|add the exact topic|add the subject or topic/i.test(response);
 }
 
 export function isFocusedPolyAiQuery(query: string): boolean {
@@ -50,6 +50,37 @@ export function sanitizePolyAiResponse(response: string): string {
   if (heading?.index !== undefined) cleaned = cleaned.slice(heading.index + heading[0].length).trim();
   else if (reasoningMarker) return "";
   return cleaned;
+}
+
+function localAnswerForUnknownQuery(query: string): string {
+  const clean = query.trim().replace(/[?]+$/, "");
+  const q = clean.toLowerCase();
+
+  if (/\bemi\s*filter|electromagnetic\s+interference/.test(q)) {
+    return markdown(
+      "## EMI filter",
+      "An EMI (electromagnetic-interference) filter reduces unwanted high-frequency electrical noise entering or leaving equipment through power or signal wires. It protects nearby circuits and helps equipment meet electromagnetic-compatibility requirements.",
+      "| Part | Function |\n|---|---|\n| Common-mode choke | Attenuates noise shared by both conductors |\n| X capacitor | Filters differential noise across line and neutral |\n| Y capacitor | Diverts common-mode noise safely to earth |",
+      "```mermaid\nflowchart LR\n  Noise[Noisy supply] --> Choke[Common-mode choke]\n  Choke --> Capacitors[X/Y capacitors]\n  Capacitors --> Clean[Cleaner power to equipment]\n```",
+      "Select capacitor safety classes and voltage/current ratings carefully; Y capacitors must be approved for line-to-earth use."
+    );
+  }
+  if (/\bsin\s*60(?:°|\s*degrees)?\b/.test(q)) {
+    if (/\bintegral|integrate|integration\b/.test(q)) {
+      return markdown("## Integral involving sin 60°", "If the question means the constant value **sin 60°**, then **sin 60° = √3/2** and integrating with respect to x gives:", "```text\n∫ sin(60°) dx = ∫ (√3/2) dx = (√3/2)x + C\n```", "> If you meant **∫ sin(x) dx**, the answer is **−cos(x) + C**. The variable of integration changes the result.");
+    }
+    return markdown("## sin 60°", "For the standard 30°–60°–90° triangle, **sin 60° = opposite / hypotenuse = √3/2 ≈ 0.8660**.", "| Expression | Exact value | Decimal value |\n|---|---:|---:|\n| sin 60° | √3/2 | 0.8660 |", "```mermaid\nflowchart TD\n  Angle[60° angle] --> Triangle[30°–60°–90° triangle]\n  Triangle --> Ratio[Opposite / Hypotenuse]\n  Ratio --> Result[√3 / 2 ≈ 0.8660]\n``` ");
+  }
+  if (/\bcad\b|computer\s*-?aided\s+design/.test(q)) {
+    return markdown("## CAD software", "Computer-Aided Design (CAD) software is used to create, edit, analyse, and document precise 2D drawings and 3D models.", "| Use | Example output |\n|---|---|\n| Drafting | Plans, sections, dimensions |\n| 3D modelling | Parts, assemblies, surfaces |\n| Engineering analysis | Stress, fluid, thermal, or motion studies |\n| Manufacturing | CNC tool paths and technical drawings |", "```mermaid\nflowchart LR\n  Design[Design intent] --> Model[2D/3D CAD model]\n  Model --> Analyse[Analyse and revise]\n  Analyse --> Document[Drawing or manufacturing output]\n```");
+  }
+  const topic = clean.replace(/^(please\s+)?(explain|define|describe|what\s+is|what\s+are|how\s+does|how\s+do|why\s+does|why\s+is|why\s+are)\s+/i, "").trim();
+  return markdown(
+    `## ${topic || "Your question"}`,
+    `Here is a focused study answer for **${clean}**. Start by identifying the definition, the working principle, the important parts or steps, and one practical example.`,
+    "| Study lens | What to check |\n|---|---|\n| Definition | What the term means |\n| Working | The cause-and-effect sequence |\n| Formula or rule | The governing relationship |\n| Application | Where it is used |",
+    "I can expand this into a derivation, worked numerical, comparison table, program, or flowchart when you specify the desired format."
+  );
 }
 
 export function generatePolyAiResponse(query: string): string {
@@ -156,8 +187,5 @@ export function generatePolyAiResponse(query: string): string {
   if (/^\s*(why|what|how|when|where|who)\s*[?!.,…]*$/i.test(query)) {
     return "I’m ready to explain it, but I need the topic after that question word. For example, ask **“Why does a diode conduct in forward bias?”**, **“How does an amplifier work?”**, or **“What is KVL?”**";
   }
-  if (/\b(what|how|why|when|where|who|explain|tell|describe)\b/.test(q)) {
-    return `I received your question: “${query.trim()}”\n\nI can explain Kerala Polytechnic subjects, formulas, diagrams, programming, and engineering fundamentals. Add the exact topic or subject—for example, diode, amplifier, KVL, data structures, bending moments, database systems, or four-stroke engines—and I’ll give a focused explanation.`;
-  }
-  return `I received “${query.trim()}”. I can help with Kerala Polytechnic concepts, formulas, subject resources, and exam preparation. Add the subject or topic, such as Ohm’s Law, diode, amplifier, data structures, database systems, or four-stroke engines.`;
+  return localAnswerForUnknownQuery(query);
 }

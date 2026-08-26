@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { PolyAiMessage } from "@/components/PolyAiMessage";
-import { generatePolyAiResponse, isFocusedPolyAiQuery, isGenericPolyAiResponse, isLeakedPolyAiResponse, isRichPolyAiRequest, isRichPolyAiResponseForQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isRichPolyAiRequest, isRichPolyAiResponseForQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
 import {
   Send,
   ArrowLeft,
@@ -46,16 +46,19 @@ export default function AskAI() {
   const nextId = useRef(0);
   const messages = useMemo(() => {
     const visible: { _id: string; role: "user" | "assistant"; content: string }[] = [];
-    for (const message of [...(chatHistory ?? []), ...localMessages]) {
+    const persistedKeys = new Set((chatHistory ?? []).map((message) => `${message.role}:${message.content}`));
+    const allMessages = [
+      ...(chatHistory ?? []).map((message) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content })),
+      ...localMessages.filter((message) => !persistedKeys.has(`${message.role}:${message.content}`)),
+    ];
+    for (const message of allMessages) {
       if (message.role === "user") {
-        visible.push({ _id: String(message._id), role: "user", content: message.content });
+        visible.push(message);
         continue;
       }
       const content = sanitizePolyAiResponse(message.content);
-      const lastUser = [...visible].reverse().find((item) => item.role === "user");
-      if (!content || isLeakedPolyAiResponse(message.content)) continue;
-      if (lastUser && isFocusedPolyAiQuery(lastUser.content) && isGenericPolyAiResponse(content)) continue;
-      visible.push({ _id: String(message._id), role: "assistant", content });
+      if (!content || isLeakedPolyAiResponse(message.content) || isGenericPolyAiResponse(content)) continue;
+      visible.push({ ...message, content });
     }
     return visible;
   }, [chatHistory, localMessages]);
@@ -81,7 +84,7 @@ export default function AskAI() {
           new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out")), 8000)),
         ]);
         const providerAnswer = sanitizePolyAiResponse(providerRawAnswer);
-        if (!providerAnswer || (isFocusedPolyAiQuery(content) && isGenericPolyAiResponse(providerAnswer)) || (isRichPolyAiRequest(content) && !isRichPolyAiResponseForQuery(content, providerAnswer))) {
+        if (!providerAnswer || isGenericPolyAiResponse(providerAnswer) || (isRichPolyAiRequest(content) && !isRichPolyAiResponseForQuery(content, providerAnswer))) {
           throw new Error("Provider returned an unsuitable answer format");
         }
         response = providerAnswer;
@@ -90,20 +93,19 @@ export default function AskAI() {
         response = sanitizePolyAiResponse(generatePolyAiResponse(content));
       }
 
+      nextId.current += 1;
+      const id = String(nextId.current);
+      setLocalMessages((current) => [
+        ...current,
+        { _id: `${id}-user`, role: "user", content },
+        { _id: `${id}-assistant`, role: "assistant", content: response },
+      ]);
+
       if (user) {
-        await storeMessages({
-          userId: user._id,
-          userContent: content,
-          assistantContent: response,
-        });
-      } else {
-        nextId.current += 1;
-        const id = String(nextId.current);
-        setLocalMessages((current) => [
-          ...current,
-          { _id: `${id}-user`, role: "user", content },
-          { _id: `${id}-assistant`, role: "assistant", content: response },
-        ]);
+        void Promise.race([
+          storeMessages({ userId: user._id, userContent: content, assistantContent: response }),
+          new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("Chat history save timed out")), 5000)),
+        ]).catch((persistError) => console.warn("Could not persist chat history; local answer remains visible:", persistError));
       }
     } catch (error) {
       console.warn("Chat error:", error);
@@ -150,9 +152,9 @@ export default function AskAI() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-[100svh] max-h-[100svh] overflow-hidden bg-background flex flex-col">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+      <nav className="flex-none border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <button
@@ -186,8 +188,8 @@ export default function AskAI() {
       </nav>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1600px] px-4 py-6">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto w-full max-w-[1800px] px-3 py-4 sm:px-5 sm:py-5 lg:px-8">
           {messages.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -234,10 +236,10 @@ export default function AskAI() {
                 </div>
               )}
               <div
-                className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                className={`rounded-2xl px-3 py-3 text-sm leading-relaxed sm:px-4 ${
                   msg.role === "user"
                     ? "ml-auto max-w-[92%] bg-primary text-primary-foreground rounded-br-md"
-                    : "group flex-1 min-w-0 w-full max-w-[1400px] bg-card border border-border/60 text-foreground rounded-bl-md shadow-sm rounded-bl-md"
+                    : "group flex-1 min-w-0 w-full max-w-[1500px] bg-card border border-border/60 text-foreground rounded-bl-md shadow-sm"
                 }`}
               >
                 {msg.role === "assistant" && (
@@ -283,8 +285,8 @@ export default function AskAI() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-[1600px] px-4 py-3">
+      <div className="flex-none border-t border-border bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto w-full max-w-[1800px] px-3 py-2.5 sm:px-5 sm:py-3 lg:px-8">
           <div className="flex items-end gap-2 rounded-2xl border border-border/60 bg-card px-4 py-2 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10 transition-all">
             <textarea
               ref={inputRef}
