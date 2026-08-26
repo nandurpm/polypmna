@@ -25,6 +25,7 @@ export default function PDFViewer() {
   useEffect(() => {
     if (!url) return;
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(false);
     fetch(url)

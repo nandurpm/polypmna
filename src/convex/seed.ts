@@ -1,5 +1,4 @@
-import { mutation, action } from "./_generated/server";
-import { v } from "convex/values";
+import { mutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 
 // Department code prefix mapping (Kerala Polytechnic convention)
@@ -100,7 +99,8 @@ export const seedFromGitHub = mutation({
     const manifestUrl = "https://raw.githubusercontent.com/nandurpm/poly-pmna-pdf-files/main/manifests/notes-2026.json";
     const resp = await fetch(manifestUrl);
     if (!resp.ok) return "fetch_failed";
-    const manifest = await resp.json() as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const manifest = (await resp.json()) as any;
 
     // Create departments
     const deptData = [
@@ -119,6 +119,7 @@ export const seedFromGitHub = mutation({
     }
 
     // Process subjects from manifest
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const subjects = (manifest.subjects as any[]).filter((s: any) => s.status === "published");
     let subjectCount = 0;
     let materialCount = 0;

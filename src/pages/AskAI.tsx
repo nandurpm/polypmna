@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { generatePolyAiResponse, isCurriculumDatabaseQuery } from "@/lib/polyAi";
+import { generatePolyAiResponse } from "@/lib/polyAi";
 import {
   Send,
   ArrowLeft,
@@ -38,10 +38,10 @@ export default function AskAI() {
     api.chat.getHistory,
     user ? { userId: user._id } : "skip"
   );
-  const sendMessage = useMutation(api.chat.sendMessage);
   const storeMessages = useMutation(api.chat.storeMessages);
   const clearHistory = useMutation(api.chat.clearHistory);
   const chatCompletion = useAction(api.aiChat.chatCompletion);
+  const nextId = useRef(0);
   const messages = useMemo(() => [...(chatHistory ?? []), ...localMessages], [chatHistory, localMessages]);
 
   useEffect(() => {
@@ -75,7 +75,8 @@ export default function AskAI() {
           });
         } else {
           // Anonymous: show locally
-          const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          nextId.current += 1;
+          const id = String(nextId.current);
           setLocalMessages((current) => [
             ...current,
             { _id: `${id}-user`, role: "user", content },
@@ -84,13 +85,7 @@ export default function AskAI() {
         }
       } catch (aiError) {
         console.warn("AI action failed, using local fallback:", aiError);
-        // Fall back to local regex-based responses
-        let response: string;
-        if (isCurriculumDatabaseQuery(content)) {
-          response = generatePolyAiResponse(content);
-        } else {
-          response = generatePolyAiResponse(content);
-        }
+        const response = generatePolyAiResponse(content);
         if (user) {
           await storeMessages({
             userId: user._id,
@@ -98,7 +93,8 @@ export default function AskAI() {
             assistantContent: response,
           });
         } else {
-          const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          nextId.current += 1;
+          const id = String(nextId.current);
           setLocalMessages((current) => [
             ...current,
             { _id: `${id}-user`, role: "user", content },
@@ -108,7 +104,8 @@ export default function AskAI() {
       }
     } catch (error) {
       console.warn("Chat error:", error);
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      nextId.current += 1;
+      const id = String(nextId.current);
       setLocalMessages((current) => [
         ...current,
         { _id: `${id}-user`, role: "user", content },

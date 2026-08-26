@@ -6,7 +6,7 @@ import { action } from "./_generated/server";
  */
 export const createRepo = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async () => {
     const { Octokit } = await import("octokit");
     const token = process.env.GITHUB_TOKEN_NEW;
     if (!token) {

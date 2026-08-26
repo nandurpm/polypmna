@@ -33,6 +33,7 @@ function CGPACalculator() {
   const removeSubject = (i: number) => setSubjects(subjects.filter((_, idx) => idx !== i));
   const update = (i: number, field: string, value: string | number) => {
     const updated = [...subjects];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (updated[i] as any)[field] = value;
     setSubjects(updated);
   };
@@ -97,7 +98,6 @@ function AttendanceTracker() {
   const [attended, setAttended] = useState(50);
 
   const percentage = total > 0 ? ((attended / total) * 100).toFixed(1) : "0";
-  const remaining = Math.max(0, total - attended);
   const needFor75 = Math.max(0, Math.ceil(total * 0.75) - attended);
   const safeToBunk = Math.max(0, Math.floor((attended - total * 0.75) / 0.75));
 
@@ -148,6 +148,7 @@ function ExamTimetable() {
   const removeExam = (i: number) => setExams(exams.filter((_, idx) => idx !== i));
   const update = (i: number, field: string, value: string) => {
     const updated = [...exams];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (updated[i] as any)[field] = value;
     setExams(updated);
   };

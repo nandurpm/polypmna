@@ -19,6 +19,7 @@ export default function LessonViewer() {
 
   useEffect(() => {
     if (!lessonUrl) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(false);
     fetch(lessonUrl)

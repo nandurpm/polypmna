@@ -10,7 +10,6 @@ import {
   Library,
   Filter,
   Loader2,
-  Building2,
 } from "lucide-react";
 import { getQuestionPapers, type QuestionPaperDoc } from "@/lib/polydata";
 
@@ -28,6 +27,7 @@ export default function QuestionPapers() {
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     try {
       const paperData = await getQuestionPapers();
@@ -38,6 +38,7 @@ export default function QuestionPapers() {
     setLoading(false);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, [loadData]);
 
   // Unique departments from papers
@@ -61,7 +62,7 @@ export default function QuestionPapers() {
   const filtered = useMemo(() => {
     const q = deferredSearch.trim().toLocaleLowerCase();
     return indexedPapers
-      .filter(({ paper, searchText }) => !selectedDept || paper.department === selectedDept)
+      .filter(({ paper }) => !selectedDept || paper.department === selectedDept)
       .filter(({ searchText }) => !q || searchText.includes(q))
       .map(({ paper }) => paper);
   }, [indexedPapers, selectedDept, deferredSearch]);

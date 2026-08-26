@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation } from "convex/react";
+import type { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import {
   ArrowLeft,
@@ -83,7 +84,7 @@ export default function MockExams() {
     try {
       await submitAttempt({
         userId: user._id,
-        mockExamId: activeExam._id as any,
+        mockExamId: activeExam._id as Id<"mockExams">,
         answers: answers.map((a) => a ?? -1),
       });
     } catch (e) {

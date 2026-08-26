@@ -90,6 +90,7 @@ export default function Landing() {
   const [programmes, setProgrammes] = useState<ProgrammeInfo[]>([]);
 
   const loadData = useCallback(async () => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     try {
       const [subjs, pdfData, paperData, progs] = await Promise.all([
@@ -108,6 +109,7 @@ export default function Landing() {
     setLoading(false);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, [loadData]);
 
   const departments = useMemo(() => {

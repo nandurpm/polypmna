@@ -80,6 +80,7 @@ export default function SubjectDetail() {
     }
   }, [code, programme, revision]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadSubject(); }, [loadSubject]);
 
   const title = subject?.name || (pdf ? cleanTitle(pdf.title) : `Subject ${code}`);
