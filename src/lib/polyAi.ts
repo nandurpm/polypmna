@@ -74,14 +74,18 @@ export function sanitizePolyAiResponse(response: string): string {
   return cleaned
     .replace(/^\s*(?:user|response)\s+safety\s*:\s*(?:safe|unsafe|unknown)\s*$/gim, "")
     .replace(/^\s*safety\s*:\s*(?:safe|unsafe|unknown)\s*$/gim, "")
-    .replace(/\\\\\(|\\\\\)|\\\\\[|\\\\\]/g, "")
-    .replace(/\\\\text\{([^{}]+)\}/g, "$1")
-    .replace(/\\\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
-    .replace(/\\\\sqrt\{([^{}]+)\}/g, "√($1)")
-    .replace(/\\\\times/g, "×")
-    .replace(/\\\\cdot/g, "·")
-    .replace(/\\\\_/g, "_")
-    .replace(/\\\\,/g, " ");
+    .replace(/\\[()[\\]]/g, "")
+    .replace(/\\text\\{([^{}]+)\\}/g, "$1")
+    .replace(/\\frac\\{([^{}]+)\\}\\{([^{}]+)\\}/g, "($1)/($2)")
+    .replace(/\\sqrt\\{([^{}]+)\\}/g, "√($1)")
+    .replace(/\\times/g, "×")
+    .replace(/\\cdot/g, "·")
+    .replace(/\\(?:dots|ldots)/g, "…")
+    .replace(/\\_/g, "_")
+    .replace(/\\,/g, " ")
+    .replace(/\$\$?([\s\S]*?)\$\$?/g, "$1")
+    .replace(/\b([A-Za-z])\*\{([A-Za-z0-9]+)\}/g, "$1_$2")
+    .replace(/\b([A-Za-z])\*(\d+)\b/g, "$1_$2");
 }
 
 function localAnswerForUnknownQuery(query: string): string {
