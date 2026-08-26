@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { motion } from "framer-motion";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -237,7 +237,7 @@ function FeatureHighlight({
 /*                             MAIN DASHBOARD                                 */
 /* -------------------------------------------------------------------------- */
 
-export default function Dashboard() {
+function LegacyDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -949,4 +949,10 @@ export default function Dashboard() {
       </footer>
     </div>
   );
+}
+
+
+/** Compatibility route: legacy dashboard bookmarks now open the complete directory. */
+export default function Dashboard() {
+  return <Navigate to="/curriculum" replace />;
 }

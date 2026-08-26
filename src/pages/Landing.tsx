@@ -60,7 +60,7 @@ function greeting(): string {
 
 /* ─── Quick Links ─── */
 const quickLinks = [
-  { label: "Syllabus", desc: "View full curriculum", icon: FileText, href: "/question-papers" },
+  { label: "Syllabus", desc: "View full curriculum", icon: FileText, href: "/curriculum" },
   { label: "Question Papers", desc: "SITTTR model papers", icon: Library, href: "/question-papers" },
   { label: "Exam Schedule", desc: "Current exam timetable", icon: Bookmark, href: "/student-tools" },
   { label: "CGPA Calculator", desc: "Calculate your GPA", icon: BarChart3, href: "/student-tools" },
@@ -179,7 +179,7 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/curriculum")}
               className="rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-all cursor-pointer"
             >
               Open Study Space
@@ -276,8 +276,8 @@ export default function Landing() {
                 )}
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <button onClick={() => { const el = document.getElementById("departments"); el?.scrollIntoView({ behavior: "smooth" }); }} className="rounded-xl bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer">
-                  Browse Departments
+                <button onClick={() => navigate("/curriculum")} className="rounded-xl bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-all cursor-pointer">
+                  Browse Complete Directory
                 </button>
                 <button onClick={() => navigate("/question-papers")} className="rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-medium text-foreground hover:border-primary/20 transition-all cursor-pointer">
                   Question Papers
@@ -312,6 +312,9 @@ export default function Landing() {
                 <GraduationCap className="h-4 w-4 text-primary" />
               </div>
               <h2 className="text-base font-semibold">Browse by Department</h2>
+              <button onClick={() => navigate("/curriculum")} className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80">
+                All revisions and departments <ArrowRight className="h-3 w-3" />
+              </button>
             </div>
             {loading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-8">
@@ -324,7 +327,7 @@ export default function Landing() {
                   return (
                     <button
                       key={dept.abbr}
-                      onClick={() => navigate(`/dashboard?dept=${dept.abbr}`)}
+                      onClick={() => navigate("/curriculum")}
                       className="group relative flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center hover:border-primary/15 hover:bg-card/80 transition-all duration-300 cursor-pointer overflow-hidden"
                     >
                       <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${deptColors[dept.abbr]} shadow-sm transition-transform duration-300 group-hover:scale-110`}>
@@ -351,8 +354,8 @@ export default function Landing() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {[
-                { icon: Layers, label: "Subjects", desc: `Browse all ${subjects.length.toLocaleString()} subjects across departments`, color: "from-blue-500/15 to-indigo-500/10 text-blue-500", count: `${subjects.length.toLocaleString()} Subjects`, href: "/dashboard" },
-                { icon: FileText, label: "Study Notes", desc: `Download PDF notes for ${pdfs.length.toLocaleString()} subjects`, color: "from-emerald-500/15 to-teal-500/10 text-emerald-500", count: `${pdfs.length.toLocaleString()} PDFs`, href: "/dashboard" },
+                { icon: Layers, label: "Subjects", desc: `Browse all ${subjects.length.toLocaleString()} subjects across departments`, color: "from-blue-500/15 to-indigo-500/10 text-blue-500", count: `${subjects.length.toLocaleString()} Subjects`, href: "/curriculum" },
+                { icon: FileText, label: "Study Notes", desc: `Download PDF notes for ${pdfs.length.toLocaleString()} subjects`, color: "from-emerald-500/15 to-teal-500/10 text-emerald-500", count: `${pdfs.length.toLocaleString()} PDFs`, href: "/curriculum" },
                 { icon: Library, label: "Question Papers", desc: `SITTTR model question papers — ${papers.length.toLocaleString()} available`, color: "from-violet-500/15 to-purple-500/10 text-violet-500", count: `${papers.length.toLocaleString()} Papers`, href: "/question-papers" },
               ].map((card) => (
                 <div
