@@ -66,7 +66,7 @@ export default function ResourceHub() {
       </nav>
 
       <main className="w-full px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
-        <div className="max-w-3xl mb-8">
+        <div className="max-w-5xl mb-8">
           <p className="text-sm font-medium text-primary/80 mb-1">Complete study access</p>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">All POLY PMNA resources in one place</h1>
           <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -88,7 +88,7 @@ export default function ResourceHub() {
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {resourceGroups.map((group) => {
             const Icon = group.icon;
             return (

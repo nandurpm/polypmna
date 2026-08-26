@@ -140,7 +140,7 @@ export default function QuestionPapers() {
                 <p className="text-xs text-muted-foreground/70 mt-1">Try a different filter or search</p>
               </div>
             ) : (
-              <div className="grid gap-2">
+              <div className="grid gap-2 lg:grid-cols-2">
                 {filtered.map((paper, i) => (
                   <div
                     key={`${paper.courseCode}-${paper.department}-${paper.path || i}`}
