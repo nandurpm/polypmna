@@ -128,7 +128,7 @@ export default function QuestionPapers() {
               >
                 All ({papers.length})
               </button>
-              {departments.slice(0, 15).map((dept) => (
+              {departments.map((dept) => (
                 <button
                   key={dept}
                   onClick={() => setSelectedDept(dept)}
@@ -152,7 +152,7 @@ export default function QuestionPapers() {
               </div>
             ) : (
               <div className="grid gap-2">
-                {filtered.slice(0, 100).map((paper, i) => (
+                {filtered.map((paper, i) => (
                   <motion.div
                     key={`${paper.courseCode}-${i}`}
                     initial={{ opacity: 0, y: 6 }}
@@ -206,11 +206,7 @@ export default function QuestionPapers() {
                     </div>
                   </motion.div>
                 ))}
-                {filtered.length > 100 && (
-                  <p className="text-center text-xs text-muted-foreground py-4">
-                    Showing 100 of {filtered.length} papers. Use search to narrow results.
-                  </p>
-                )}
+
               </div>
             )}
           </>
