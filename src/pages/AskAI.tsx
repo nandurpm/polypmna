@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { generatePolyAiResponse, isLeakedPolyAiResponse, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { generatePolyAiResponse, isFocusedPolyAiQuery, isGenericPolyAiResponse, isLeakedPolyAiResponse, sanitizePolyAiResponse } from "@/lib/polyAi";
 import {
   Send,
   ArrowLeft,
@@ -42,16 +42,21 @@ export default function AskAI() {
   const clearHistory = useMutation(api.chat.clearHistory);
   const chatCompletion = useAction(api.aiChat.chatCompletion);
   const nextId = useRef(0);
-  const messages = useMemo(
-    () => [...(chatHistory ?? []), ...localMessages]
-      .map((message) => {
-        if (message.role === "user") return message;
-        if (isLeakedPolyAiResponse(message.content)) return { ...message, content: "" };
-        return { ...message, content: sanitizePolyAiResponse(message.content) };
-      })
-      .filter((message) => message.role === "user" || message.content.length > 0),
-    [chatHistory, localMessages]
-  );
+  const messages = useMemo(() => {
+    const visible: { _id: string; role: "user" | "assistant"; content: string }[] = [];
+    for (const message of [...(chatHistory ?? []), ...localMessages]) {
+      if (message.role === "user") {
+        visible.push({ _id: String(message._id), role: "user", content: message.content });
+        continue;
+      }
+      const content = sanitizePolyAiResponse(message.content);
+      const lastUser = [...visible].reverse().find((item) => item.role === "user");
+      if (!content || isLeakedPolyAiResponse(message.content)) continue;
+      if (lastUser && isFocusedPolyAiQuery(lastUser.content) && isGenericPolyAiResponse(content)) continue;
+      visible.push({ _id: String(message._id), role: "assistant", content });
+    }
+    return visible;
+  }, [chatHistory, localMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,7 +79,9 @@ export default function AskAI() {
           new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out")), 8000)),
         ]);
         const providerAnswer = sanitizePolyAiResponse(providerRawAnswer);
-        if (!providerAnswer) throw new Error("Provider returned no displayable answer");
+        if (!providerAnswer || (isFocusedPolyAiQuery(content) && isGenericPolyAiResponse(providerAnswer))) {
+          throw new Error("Provider returned a generic answer for a focused question");
+        }
         response = providerAnswer;
       } catch (providerError) {
         console.warn("External POLY AI provider unavailable; using deterministic fallback:", providerError);
