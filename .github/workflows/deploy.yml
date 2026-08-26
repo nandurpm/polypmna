@@ -95,7 +95,25 @@ jobs:
             printf '%s' "$NVIDIA_API_KEY" | bunx convex env set --prod NVIDIA_API_KEY
           fi
           printf '%s' "https://nandurpm.github.io/polypmna/" | bunx convex env set --prod POLY_AI_SITE_URL
+          printf '%s' "https://nandurpm.github.io/polypmna/" | bunx convex env set --prod SITE_URL
           printf '%s' "https://freebuff.com" | bunx convex env set --prod VLY_CONVEX_AUTH_ISSUER
+
+      - name: Ensure Convex Auth signing keys
+        if: steps.convex_gate.outputs.enabled == 'true'
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_dir="$(mktemp -d)"
+          trap 'rm -rf "$key_dir"' EXIT
+          if bunx convex env get --prod JWT_PRIVATE_KEY >/dev/null 2>&1 && bunx convex env get --prod JWKS >/dev/null 2>&1; then
+            echo "Convex Auth signing keys already configured"
+          else
+            bun scripts/generate-convex-auth-keys.mjs "$key_dir"
+            bunx convex env set --prod JWT_PRIVATE_KEY < "$key_dir/JWT_PRIVATE_KEY"
+            bunx convex env set --prod JWKS < "$key_dir/JWKS"
+            echo "Generated and configured Convex Auth signing keys"
+          fi
 
       - name: Deploy Convex functions
         if: steps.convex_gate.outputs.enabled == 'true'
