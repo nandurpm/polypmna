@@ -55,24 +55,32 @@ export default function AskAI() {
     ];
     const seen = new Set<string>();
     for (const message of mergedMessages) {
-      const messageKey = `${message.role}:${message.content}`;
-      if (seen.has(messageKey)) continue;
-      seen.add(messageKey);
       if (message.role === "user") {
+        const messageKey = `user:${message.content}`;
+        if (seen.has(messageKey)) continue;
+        seen.add(messageKey);
         visible.push(message);
         continue;
       }
+
       const content = sanitizePolyAiResponse(message.content);
       const isLegacyScopeRefusal = content === POLY_AI_SCOPE_RESPONSE;
       const needsLocalRepair = !content || isLegacyScopeRefusal || isLeakedPolyAiResponse(message.content) || isGenericPolyAiResponse(content);
+      let repairedContent = content;
+      let repairedId = message._id;
       if (needsLocalRepair) {
         const lastUser = [...visible].reverse().find((item) => item.role === "user");
         if (lastUser && visible[visible.length - 1]?.role === "user") {
-          visible.push({ _id: `${message._id}-local-repair`, role: "assistant", content: sanitizePolyAiResponse(generatePolyAiResponse(lastUser.content)) });
+          repairedContent = sanitizePolyAiResponse(generatePolyAiResponse(lastUser.content));
+          repairedId = `${message._id}-local-repair`;
+        } else if (!repairedContent) {
+          continue;
         }
-        continue;
       }
-      visible.push({ ...message, content });
+      const messageKey = `assistant:${repairedContent}`;
+      if (seen.has(messageKey)) continue;
+      seen.add(messageKey);
+      visible.push({ ...message, _id: repairedId, content: repairedContent });
     }
     return visible;
   }, [chatHistory, localMessages]);
