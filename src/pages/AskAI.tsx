@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { PolyAiMessage } from "@/components/PolyAiMessage";
-import { generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isRichPolyAiRequest, isRichPolyAiResponseForQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isPolyAiQueryInScope, isRichPolyAiRequest, isRichPolyAiResponseForQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
 import { clearPolyAiState, loadPolyAiState, savePolyAiState } from "@/lib/polyAiStorage";
 import {
   Send,
@@ -93,7 +93,9 @@ export default function AskAI() {
         content: (message.role === "user" ? message.content : sanitizePolyAiResponse(message.content)).slice(-5000),
       }));
       let response: string;
-      try {
+      if (!isPolyAiQueryInScope(content)) {
+        response = POLY_AI_SCOPE_RESPONSE;
+      } else try {
         const providerRawAnswer = await Promise.race<string>([
           chatCompletion({ messages: [...historyMessages, { role: "user", content }] }),
           new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out")), 18000)),

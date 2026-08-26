@@ -6,6 +6,20 @@
 
 const markdown = (...parts: string[]) => parts.join("\n\n");
 
+export const POLY_AI_SCOPE_RESPONSE = `## POLY AI Scope
+I’m POLY AI, a Kerala Polytechnic study assistant. I can help with Polytechnic subjects, engineering concepts, formulas, programming, practical topics, syllabus, question papers, and exam preparation.
+
+Please ask a Polytechnic-related question.`;
+
+const BLOCKED_SCOPE_PATTERN = /\b(politic|politician|election|news|current\s+affairs|celebrity|movie|film|entertainment|music|song|sport|cricket|football|history|geography|life\s+advice|porn|pornography|sexual|sex|nude|nudity|crime|criminal|murder|weapon|terror|offen[cs]e)\b/i;
+const POLYTECHNIC_CONTEXT_PATTERN = /\b(kerala\s+polytechnic|polytechnic|diploma|curriculum|syllabus|revision\s*(?:2026|2021|2015)?|semester|subject|course|model\s*paper|question\s*paper|exam|laboratory|lab\s*work|engineering|technical|circuit|algorithm|programming|program|code|database|sql|data\s+structure|electronics?|electrical|mechanical|civil|automobile|instrumentation|communication|computer|physics|chemistry|mathematics|calculus|integral|derivative|trigonometry|matrix|formula|numerical|diode|transistor|mosfet|amplifier|op\s*-?amp|kcl|kvl|buck\s+converter|emi\s+filter|bending\s+moment|four\s*stroke)\b/i;
+
+export function isPolyAiQueryInScope(query: string): boolean {
+  const q = query.trim();
+  if (!q || BLOCKED_SCOPE_PATTERN.test(q)) return false;
+  return POLYTECHNIC_CONTEXT_PATTERN.test(q);
+}
+
 export function isCurriculumDatabaseQuery(query: string): boolean {
   const q = query.toLowerCase();
   return /\b(curriculum|catalog(u)?e?|database|schema|index|aggregation|aggregate|department|semester|duplicate|model\s*paper|lesson|resource\s*link)\b/.test(q)
@@ -50,6 +64,8 @@ export function sanitizePolyAiResponse(response: string): string {
   if (heading?.index !== undefined) cleaned = cleaned.slice(heading.index + heading[0].length).trim();
   else if (reasoningMarker) return "";
   return cleaned
+    .replace(/^\s*(?:user|response)\s+safety\s*:\s*(?:safe|unsafe|unknown)\s*$/gim, "")
+    .replace(/^\s*safety\s*:\s*(?:safe|unsafe|unknown)\s*$/gim, "")
     .replace(/\\\\\(|\\\\\)|\\\\\[|\\\\\]/g, "")
     .replace(/\\\\text\{([^{}]+)\}/g, "$1")
     .replace(/\\\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
@@ -110,6 +126,7 @@ function localAnswerForUnknownQuery(query: string): string {
 
 export function generatePolyAiResponse(query: string): string {
   const q = query.toLowerCase();
+  if (!isPolyAiQueryInScope(query)) return POLY_AI_SCOPE_RESPONSE;
 
   if (/\b(hello|hi|hey|namaste|good\s*(morning|afternoon|evening))\b/.test(q)) {
     return markdown("## Hello from POLY AI", "I’m your Kerala Polytechnic study assistant. Ask about a subject concept, formula, diagram, program, curriculum record, or exam preparation topic.", "> Tip: Specific questions produce the best explanations—for example, *derive the RC charging equation* or *write a C program for binary search*.");
