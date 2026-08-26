@@ -49,10 +49,9 @@ export default function AskAI() {
   const nextId = useRef(0);
   const allMessages = useMemo(() => {
     const visible: { _id: string; role: "user" | "assistant"; content: string; source?: "provider" | "local" }[] = [];
-    const persistedKeys = new Set((chatHistory ?? []).map((message) => `${message.role}:${message.content}`));
     const mergedMessages = [
       ...(chatHistory ?? []).map((message) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content, source: undefined as "provider" | "local" | undefined })),
-      ...localMessages.filter((message) => !persistedKeys.has(`${message.role}:${message.content}`)),
+      ...localMessages,
     ];
     const seenExchanges = new Set<string>();
     let pendingUser: (typeof visible)[number] | null = null;
