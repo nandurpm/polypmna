@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getHistory = query({
@@ -149,5 +149,28 @@ export const clearHistory = mutation({
     for (const msg of messages) {
       await ctx.db.delete(msg._id);
     }
+  },
+});
+
+
+export const persistProviderExchange = internalMutation({
+  args: {
+    userId: v.id("users"),
+    content: v.string(),
+    response: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("chatMessages", {
+      userId: args.userId,
+      role: "user",
+      content: args.content,
+      timestamp: Date.now(),
+    });
+    await ctx.db.insert("chatMessages", {
+      userId: args.userId,
+      role: "assistant",
+      content: args.response,
+      timestamp: Date.now(),
+    });
   },
 });

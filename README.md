@@ -270,3 +270,12 @@ When using convex, make sure:
 - This includes importing generated files like `@/convex/_generated/server`, `@/convex/_generated/api`
 - Remember to import functions like useQuery, useMutation, useAction, etc. from `convex/react`
 - NEVER have return type validators.
+
+
+## POLY AI provider configuration
+
+The GitHub Pages frontend never receives provider API keys. The provider-backed chat action in `src/convex/ai.ts` reads `OPENROUTER_API_KEY` first and falls back to `NVIDIA_API_KEY` from the Convex deployment environment. OpenRouter uses `https://openrouter.ai/api/v1/chat/completions`; NVIDIA uses its OpenAI-compatible `https://integrate.api.nvidia.com/v1/chat/completions` endpoint. If both providers fail or are not configured, the browser keeps the deterministic POLY AI fallback.
+
+GitHub Actions secrets alone are not runtime secrets for GitHub Pages. To let the deployment workflow publish the Convex action and synchronize the keys, add a production `CONVEX_DEPLOY_KEY` repository secret, then rerun the Pages workflow. The workflow accepts the existing secret names `OPENROUTER_API` and `NVDIA_API` shown in the repository settings, as well as `OPENROUTER_API_KEY` and `NVIDIA_API_KEY`. Alternatively, set `OPENROUTER_API_KEY` and `NVIDIA_API_KEY` directly under the Convex production deployment settings. Do not add either key to a `VITE_` variable or commit it to the repository.
+
+See the [Convex environment variable guide](https://docs.convex.dev/production/environment-variables), [Convex deploy-key guide](https://docs.convex.dev/cli/deploy-key-types), [OpenRouter chat-completions reference](https://openrouter.ai/docs/api/api-reference/chat/create-a-chat-completion), and [NVIDIA NIM API reference](https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html) for the provider and deployment conventions.

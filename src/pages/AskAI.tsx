@@ -54,53 +54,34 @@ export default function AskAI() {
     setInput("");
     setIsSending(true);
     try {
-      // Build conversation history for the AI
-      const historyMessages = messages.slice(-20).map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
+      const historyMessages = messages.slice(-20).map((message) => ({
+        role: message.role as "user" | "assistant",
+        content: message.content,
       }));
-
-      // Try real AI first
+      let response: string;
       try {
-        const aiResponse = await chatCompletion({
+        response = await chatCompletion({
           messages: [...historyMessages, { role: "user", content }],
         });
+      } catch (providerError) {
+        console.warn("External POLY AI provider unavailable; using deterministic fallback:", providerError);
+        response = generatePolyAiResponse(content);
+      }
 
-        // Store both messages in Convex
-        if (user) {
-          await storeMessages({
-            userId: user._id,
-            userContent: content,
-            assistantContent: aiResponse,
-          });
-        } else {
-          // Anonymous: show locally
-          nextId.current += 1;
-          const id = String(nextId.current);
-          setLocalMessages((current) => [
-            ...current,
-            { _id: `${id}-user`, role: "user", content },
-            { _id: `${id}-assistant`, role: "assistant", content: aiResponse },
-          ]);
-        }
-      } catch (aiError) {
-        console.warn("AI action failed, using local fallback:", aiError);
-        const response = generatePolyAiResponse(content);
-        if (user) {
-          await storeMessages({
-            userId: user._id,
-            userContent: content,
-            assistantContent: response,
-          });
-        } else {
-          nextId.current += 1;
-          const id = String(nextId.current);
-          setLocalMessages((current) => [
-            ...current,
-            { _id: `${id}-user`, role: "user", content },
-            { _id: `${id}-assistant`, role: "assistant", content: response },
-          ]);
-        }
+      if (user) {
+        await storeMessages({
+          userId: user._id,
+          userContent: content,
+          assistantContent: response,
+        });
+      } else {
+        nextId.current += 1;
+        const id = String(nextId.current);
+        setLocalMessages((current) => [
+          ...current,
+          { _id: `${id}-user`, role: "user", content },
+          { _id: `${id}-assistant`, role: "assistant", content: response },
+        ]);
       }
     } catch (error) {
       console.warn("Chat error:", error);

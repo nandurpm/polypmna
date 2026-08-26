@@ -53,6 +53,55 @@ jobs:
         with:
           path: dist
 
+  convex:
+    name: Deploy Convex AI backend
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check Convex deployment credential
+        id: convex_gate
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Convex AI deployment skipped: add CONVEX_DEPLOY_KEY to enable server-side provider deployment."
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure provider secrets in Convex production
+        if: steps.convex_gate.outputs.enabled == 'true'
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API || secrets.OPENROUTER_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVDIA_API || secrets.NVIDIA_API || secrets.NVIDIA_API_KEY }}
+        run: |
+          if [ -n "$OPENROUTER_API_KEY" ]; then
+            printf '%s' "$OPENROUTER_API_KEY" | bunx convex env set --prod OPENROUTER_API_KEY
+          fi
+          if [ -n "$NVIDIA_API_KEY" ]; then
+            printf '%s' "$NVIDIA_API_KEY" | bunx convex env set --prod NVIDIA_API_KEY
+          fi
+          printf '%s' "https://nandurpm.github.io/polypmna/" | bunx convex env set --prod POLY_AI_SITE_URL
+
+      - name: Deploy Convex functions
+        if: steps.convex_gate.outputs.enabled == 'true'
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: bunx convex deploy --message "Deploy provider-backed POLY AI"
+
   deploy:
     environment:
       name: github-pages
