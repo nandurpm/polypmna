@@ -1,1 +1,0 @@
-import{j as r}from"./framer-motion-CMh_u_qu.js";import"./api-DtEPZa4j.js";import{N as t}from"./react-vendor-DN_WDNwy.js";import"./index-ZZMTAN9M.js";import"./radix-ui-DlZy2BTN.js";function p(){return r.jsx(t,{to:"/curriculum",replace:!0})}export{p as default};
