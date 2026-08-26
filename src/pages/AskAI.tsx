@@ -54,6 +54,7 @@ export default function AskAI() {
       ...localMessages.filter((message) => !persistedKeys.has(`${message.role}:${message.content}`)),
     ];
     const seenExchanges = new Set<string>();
+    let seenScopeRefusal = false;
     for (const message of mergedMessages) {
       if (message.role === "user") {
         visible.push(message);
@@ -81,6 +82,13 @@ export default function AskAI() {
           continue;
         }
         seenExchanges.add(exchangeKey);
+        if (repairedContent === POLY_AI_SCOPE_RESPONSE && seenScopeRefusal) {
+          const previousRefusalIndex = visible.findIndex((item) => item.role === "assistant" && item.content === POLY_AI_SCOPE_RESPONSE);
+          if (previousRefusalIndex > 0 && visible[previousRefusalIndex - 1]?.role === "user") {
+            visible.splice(previousRefusalIndex - 1, 2);
+          }
+        }
+        if (repairedContent === POLY_AI_SCOPE_RESPONSE) seenScopeRefusal = true;
       }
       visible.push({ ...message, _id: repairedId, content: repairedContent });
     }
