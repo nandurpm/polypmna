@@ -148,17 +148,22 @@ export const chatCompletion = action({
       },
     ];
 
-    let lastError = "No provider is configured";
+    const errors: string[] = [];
     for (const provider of providers) {
-      if (!provider.apiKey) continue;
+      if (!provider.apiKey) {
+        errors.push(`${provider.name}: API key not set (checked ${Object.keys(process.env).filter(k => k.toUpperCase().includes(provider.name.toUpperCase().slice(0,5))).join(", ") || "no matching env vars"})`);
+        continue;
+      }
       try {
         return await callProvider(provider, args.messages);
       } catch (error) {
-        lastError = error instanceof Error ? error.message : `${provider.name} request failed`;
-        console.warn(lastError);
+        const msg = error instanceof Error ? error.message : `${provider.name} request failed`;
+        errors.push(msg);
+        console.warn(`[POLY AI] ${msg}`);
       }
     }
 
-    throw new Error(`POLY AI providers unavailable: ${lastError}`);
+    const detail = errors.length > 0 ? errors.join(" | ") : "No provider API keys configured";
+    throw new Error(detail);
   },
 });
