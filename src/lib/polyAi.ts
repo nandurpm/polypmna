@@ -9,6 +9,22 @@ export function isCurriculumDatabaseQuery(query: string): boolean {
     && /\b(sql|query|database|schema|count|subject|revision|department|semester|resource|link|model\s*paper|lesson)\b/.test(q);
 }
 
+export function isLeakedPolyAiResponse(response: string): boolean {
+  return /thinking\s+process|analyze\s+user\s+input|determine\s+response\s+style|let\s+(?:me\s+)?draft/i.test(response);
+}
+
+export function sanitizePolyAiResponse(response: string): string {
+  let cleaned = response.trim();
+  const heading = /(?:^|\n|\*\*)\s*(?:let\s+(?:me\s+)?draft|final\s+answer|answer)\s*:\s*\**/im.exec(cleaned);
+  const reasoningMarker = /^(?:here(?:'s| is)\s+)?(?:a\s+)?thinking\s+process\s*:/i.test(cleaned);
+  if (heading?.index !== undefined) {
+    cleaned = cleaned.slice(heading.index + heading[0].length).trim();
+  } else if (reasoningMarker) {
+    return "";
+  }
+  return cleaned;
+}
+
 export function generatePolyAiResponse(query: string): string {
   const q = query.toLowerCase();
 
@@ -29,6 +45,15 @@ export function generatePolyAiResponse(query: string): string {
   }
   if (/\b(transistor|bjt|mosfet)\b/.test(q)) {
     return "A transistor is a semiconductor device used as a switch or amplifier. In an NPN BJT, a small base current controls a larger collector-to-emitter current. A MOSFET is voltage-controlled: the gate voltage controls current between source and drain. Cutoff and saturation are useful switching states, while the active region is used for amplification.";
+  }
+  if (/\b(diode|pn\s*junction|zener|rectifier|led)\b/.test(q)) {
+    return "A diode is a two-terminal semiconductor device that normally conducts current from its anode to its cathode in forward bias and blocks current in reverse bias. A silicon diode has an approximate forward drop of 0.7 V. In a PN junction, forward bias reduces the depletion region while reverse bias widens it. Rectifier diodes convert AC to pulsating DC, Zener diodes regulate voltage in reverse breakdown, and LEDs emit light when forward biased. Check polarity before connecting a diode in a circuit.";
+  }
+  if (/\b(amplifier|op\s*-?amp|operational\s+amplifier|gain|oscillator)\b/.test(q)) {
+    return "An amplifier uses a small input signal to control a larger output signal. Its voltage gain is Aᵥ = Vout/Vin, usually expressed in decibels as 20 log₁₀|Aᵥ|. An op-amp has very high open-loop gain, high input impedance, and low output impedance; with negative feedback, the closed-loop gain is set mainly by the feedback network. Always check bandwidth, saturation, phase shift, and distortion when analysing an amplifier.";
+  }
+  if (/\b(capacitor|inductor|resistor|kcl|kvl|kirchhoff|rc\s*circuit|rl\s*circuit)\b/.test(q)) {
+    return "For basic circuit analysis, a resistor obeys V = IR, a capacitor obeys i = C dv/dt, and an inductor obeys v = L di/dt. Kirchhoff's Current Law states that algebraic current at a node sums to zero; Kirchhoff's Voltage Law states that algebraic voltage around a closed loop sums to zero. In an RC circuit, the time constant is τ = RC; in an RL circuit, τ = L/R.";
   }
   if (/\b(bending\s*moment|shear\s*force|bmd|sfd)\b/.test(q)) {
     return "A bending-moment diagram plots the internal bending moment along a beam. The slope of the bending-moment diagram equals the shear force, dM/dx = V, and the change in shear is related to load intensity. Sagging moment is conventionally positive and hogging moment negative. For a simply supported beam with a central point load W, the maximum moment is WL/4.";
@@ -51,8 +76,11 @@ export function generatePolyAiResponse(query: string): string {
   if (/\b(formula|formulae|equation|derive|derivation)\b/.test(q)) {
     return "Useful fundamentals include F = ma, moment M = F × d, stress σ = F/A, strain ε = ΔL/L, Young's modulus E = σ/ε, Ohm's Law V = IR, electrical power P = VI, and the first-law relation Q = ΔU + W. Tell me the subject or exact formula you need and I can explain its derivation.";
   }
-  if (/\b(what|how|why|when|where|who|explain|tell|describe)\b/.test(q)) {
-    return "I can help explain Kerala Polytechnic subjects, formulas, diagrams, programming, engineering fundamentals, and exam preparation. Include the subject or a more specific topic in your question for a focused answer. You can also browse the complete directory for the matching revision, department, and semester.";
+  if (/^\s*(why|what|how|when|where|who)\s*[?!.,…]*\s*$/i.test(query)) {
+    return "I’m ready to explain it, but I need the topic after that question word. For example, ask ‘Why does a diode conduct in forward bias?’, ‘How does an amplifier work?’, or ‘What is KVL?’";
   }
-  return "I can help with Kerala Polytechnic concepts, formulas, subject resources, and exam preparation. Please include the subject name or topic—for example, Ohm's Law, data structures, bending moments, database systems, or four-stroke engines.";
+  if (/\b(what|how|why|when|where|who|explain|tell|describe)\b/.test(q)) {
+    return `I received your question: “${query.trim()}”\n\nI can explain Kerala Polytechnic subjects, formulas, diagrams, programming, and engineering fundamentals. Add the exact topic or subject—for example, diode, amplifier, KVL, data structures, bending moments, database systems, or four-stroke engines—and I’ll give a focused explanation.`;
+  }
+  return `I received “${query.trim()}”. I can help with Kerala Polytechnic concepts, formulas, subject resources, and exam preparation. Add the subject or topic, such as Ohm's Law, diode, amplifier, data structures, database systems, or four-stroke engines.`;
 }
