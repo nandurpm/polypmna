@@ -106,7 +106,13 @@ jobs:
           set -euo pipefail
           key_dir="$(mktemp -d)"
           trap 'rm -rf "$key_dir"' EXIT
-          if bunx convex env get --prod JWT_PRIVATE_KEY >/dev/null 2>&1 && bunx convex env get --prod JWKS >/dev/null 2>&1; then
+          private_key="$(bunx convex env get --prod JWT_PRIVATE_KEY 2>/dev/null || true)"
+          jwks="$(bunx convex env get --prod JWKS 2>/dev/null || true)"
+          is_present() {
+            local value="$1"
+            [[ -n "$value" && "$value" != "undefined" && "$value" != "null" && "$value" != *"not found"* && "$value" != *"not set"* ]]
+          }
+          if is_present "$private_key" && is_present "$jwks"; then
             echo "Convex Auth signing keys already configured"
           else
             bun scripts/generate-convex-auth-keys.mjs "$key_dir"
