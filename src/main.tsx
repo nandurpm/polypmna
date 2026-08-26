@@ -92,7 +92,7 @@ class RootErrorBoundary extends React.Component<
 // Keep the public production backend available for static hosting while still
 // allowing VITE_CONVEX_URL to override it in local or other deployments.
 const convexUrl =
-  import.meta.env.VITE_CONVEX_URL || "https://hearty-fennec-114.convex.cloud";
+  import.meta.env.VITE_CONVEX_URL || "https://oceanic-snail-406.convex.cloud";
 const convex = new ConvexReactClient(convexUrl);
 
 
