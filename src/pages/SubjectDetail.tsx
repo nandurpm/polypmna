@@ -144,6 +144,7 @@ export default function SubjectDetail() {
           </motion.div>
 
           {/* Lesson Page */}
+          {lessonUrl && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -179,6 +180,7 @@ export default function SubjectDetail() {
               </a>
             </div>
           </motion.div>
+          )}
 
           {/* Quick Actions */}
           <motion.div

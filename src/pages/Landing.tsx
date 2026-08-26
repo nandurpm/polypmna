@@ -28,6 +28,7 @@ import {
   getQuestionPapers,
   getProgrammes,
   getPdfDownloadUrl,
+  getLessonUrl,
   type SubjectEntry,
   type PdfSubject,
   type ProgrammeInfo,
@@ -240,9 +241,11 @@ export default function Landing() {
                               <Download className="h-3 w-3" /> Download
                             </a>
                           )}
-                          <Link to={`/lesson?code=${r.code}&title=${encodeURIComponent(r.name)}`} className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-1 text-[11px] font-medium text-violet-600 hover:bg-violet-500/20 transition-colors">
-<FileText className="h-3 w-3" /> Lesson
+                          {getLessonUrl(r.code) && (
+                            <Link to={`/lesson?code=${r.code}&title=${encodeURIComponent(r.name)}`} className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-2 py-1 text-[11px] font-medium text-violet-600 hover:bg-violet-500/20 transition-colors">
+                              <FileText className="h-3 w-3" /> Lesson
                             </Link>
+                          )}
                         </div>
                       </div>
                     </div>

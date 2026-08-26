@@ -1,5 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { useState, useMemo, useEffect, useCallback, useDeferredValue } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   ArrowLeft,
@@ -13,14 +12,7 @@ import {
   Loader2,
   Building2,
 } from "lucide-react";
-import {
-  getQuestionPapers,
-  getProgrammes,
-  type QuestionPaperDoc,
-  type ProgrammeInfo,
-} from "@/lib/polydata";
-
-const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
+import { getQuestionPapers, type QuestionPaperDoc } from "@/lib/polydata";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -33,18 +25,13 @@ export default function QuestionPapers() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [papers, setPapers] = useState<QuestionPaperDoc[]>([]);
-  const [programmes, setProgrammes] = useState<ProgrammeInfo[]>([]);
   const [selectedDept, setSelectedDept] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [paperData, progData] = await Promise.all([
-        getQuestionPapers(),
-        getProgrammes(),
-      ]);
+      const paperData = await getQuestionPapers();
       setPapers(paperData);
-      setProgrammes(progData);
     } catch (e) {
       console.error("Failed to load papers:", e);
     }
@@ -59,23 +46,25 @@ export default function QuestionPapers() {
     return Array.from(depts).sort();
   }, [papers]);
 
-  // Filtered papers
+  // Normalize each paper once, then defer filtering so typing stays responsive.
+  const indexedPapers = useMemo(
+    () => papers.map((paper) => ({
+      paper,
+      searchText: `${paper.courseCode} ${paper.courseName.replace(/-/g, " ")} ${paper.department}`.toLocaleLowerCase(),
+    })),
+    [papers]
+  );
+  const deferredSearch = useDeferredValue(search);
+
+  // Filtered papers. All matches remain in the DOM; content-visibility lets the browser
+  // skip layout/paint work for rows outside the viewport.
   const filtered = useMemo(() => {
-    let result = papers;
-    if (selectedDept) {
-      result = result.filter((p) => p.department === selectedDept);
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.courseCode.toLowerCase().includes(q) ||
-          p.courseName.toLowerCase().replace(/-/g, " ").includes(q) ||
-          p.department.toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [papers, selectedDept, search]);
+    const q = deferredSearch.trim().toLocaleLowerCase();
+    return indexedPapers
+      .filter(({ paper, searchText }) => !selectedDept || paper.department === selectedDept)
+      .filter(({ searchText }) => !q || searchText.includes(q))
+      .map(({ paper }) => paper);
+  }, [indexedPapers, selectedDept, deferredSearch]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -153,11 +142,9 @@ export default function QuestionPapers() {
             ) : (
               <div className="grid gap-2">
                 {filtered.map((paper, i) => (
-                  <motion.div
-                    key={`${paper.courseCode}-${i}`}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(i * 0.02, 0.5), duration: 0.25 }}
+                  <div
+                    key={`${paper.courseCode}-${paper.department}-${paper.path || i}`}
+                    style={{ contentVisibility: "auto", containIntrinsicSize: "64px" }}
                     className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/20 hover:shadow-sm transition-all"
                   >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
@@ -204,7 +191,7 @@ export default function QuestionPapers() {
                         </a>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
 
               </div>
