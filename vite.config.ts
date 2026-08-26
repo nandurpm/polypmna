@@ -6,7 +6,9 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/',
+  // Freebuff serves at the domain root; GitHub Pages builds pass
+  // VITE_BASE_PATH=/polypmna/ for the repository subpath.
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [react(), vlyPlugin(), tailwindcss()],
   resolve: {
     alias: {
