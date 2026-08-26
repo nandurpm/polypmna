@@ -195,6 +195,18 @@ export function generatePolyAiResponse(query: string): string {
   if (/\b(kvl|kirchhoff'?s?\s*voltage|voltage\s*law)\b/.test(q)) {
     return markdown("## Kirchhoff’s Voltage Law (KVL)", "KVL follows conservation of energy: the algebraic sum of all voltage rises and drops around a closed loop is zero.", "```text\n+V − IR1 − IR2 = 0\nTherefore: I = V / (R1 + R2)\n```", "Choose a loop direction, assign signs to each rise and drop, and keep the same direction while writing the complete equation.");
   }
+  if (/\bbuck\s+converter\b/.test(q) && /\b(design|calculate|calculation|inductor|capacitance|capacitor|ripple|24\s*v|12\s*v|100\s*khz)\b/.test(q)) {
+    return markdown(
+      "## Buck converter design calculation",
+      "Assume an ideal buck converter operating in continuous-conduction mode (CCM), with negligible switch and diode losses, fixed 100 kHz switching frequency, and triangular inductor current ripple.",
+      "### 1. Duty cycle\n\nFor an ideal buck converter:\n\n```text\nD = Vout / Vin = 12 / 24 = 0.50\n```\n\nSo the nominal duty cycle is **50%**.",
+      "### 2. Inductor value\n\nThe load current is 2 A and the specified ripple is 20%:\n\n```text\nΔIL = 0.20 × Iout = 0.20 × 2 = 0.40 A\nL = (Vin − Vout)D / (ΔIL × fs)\n  = (24 − 12) × 0.50 / (0.40 × 100000)\n  = 150 µH\n```\n\nChoose a practical inductor with a saturation-current rating above the peak current, **Ipeak = 2.0 + 0.40/2 = 2.20 A**.",
+      "### 3. Minimum output capacitance\n\nIgnoring ESR, the capacitor ripple for triangular inductor current is approximately **ΔV = ΔIL / (8fsC)**. For a 50 mV limit:\n\n```text\nCmin = ΔIL / (8 × fs × ΔV)\n     = 0.40 / (8 × 100000 × 0.050)\n     = 10 µF\n```\n\nThe capacitor ESR should also be kept below approximately **ΔV/ΔIL = 0.050/0.40 = 0.125 Ω**. In practice, choose a higher-rated low-ESR capacitor after checking transient and tolerance margins.",
+      "| Design quantity | Result | Design note |\n|---|---:|---|\n| Input voltage | 24 V | Source voltage |\n| Output voltage | 12 V | Ideal target |\n| Load current | 2 A | 24 W output |\n| Switching frequency | 100 kHz | Fixed assumption |\n| Duty cycle | 0.50 | 50% nominal |\n| Inductor ripple | 0.40 A peak-to-peak | 20% of load current |\n| Inductor | 150 µH minimum | Use saturation rating above 2.20 A |\n| Output capacitor | 10 µF minimum | Ignoring ESR; use low-ESR margin |",
+      "```mermaid\nflowchart LR\n  Input[24 V input] --> Switch[50% duty switch]\n  Switch --> L[150 µH inductor]\n  L --> C[≥10 µF low-ESR capacitor]\n  C --> Load[12 V, 2 A load]\n  Load --> Feedback[Measure ripple and Vout]\n  Feedback --> Switch\n```",
+      "These are ideal first-pass values. Real hardware must additionally check losses, inductor saturation, switch and diode ratings, capacitor RMS ripple current, control-loop stability, layout, temperature, and transient response."
+    );
+  }
   if (/\b(capacitor|inductor|resistor|rc\s*circuit|rl\s*circuit)\b/.test(q)) {
     return markdown("## Basic circuit relationships", "Resistors relate voltage and current directly, capacitors store electric-field energy, and inductors store magnetic-field energy.", "| Component | Relationship | Time constant |\n|---|---|---|\n| Resistor | V = IR | — |\n| Capacitor | i = C dv/dt | RC |\n| Inductor | v = L di/dt | L/R |", "For an RC circuit, τ = RC; for an RL circuit, τ = L/R. The time constant describes how quickly the transient approaches its steady-state value.");
   }
