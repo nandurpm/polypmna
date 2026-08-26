@@ -135,6 +135,16 @@ export const chatCompletion = action({
         apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
         endpoint: "https://openrouter.ai/api/v1/chat/completions",
         model: process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free",
+        name: "NVIDIA",
+        apiKey: process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API,
+        endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
+        model: process.env.NVIDIA_MODEL || "meta/llama-3.1-8b-instruct",
+      },
+      {
+        name: "OpenRouter",
+        apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
+        endpoint: "https://openrouter.ai/api/v1/chat/completions",
+        model: process.env.OPENROUTER_MODEL || "meta-llama/llama-3.1-8b-instruct:free",
         headers: {
           "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
           "X-Title": "POLY PMNA Study Materials",
