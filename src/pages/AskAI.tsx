@@ -35,6 +35,7 @@ export default function AskAI() {
   const [localMessages, setLocalMessages] = useState<{ _id: string; role: "user" | "assistant"; content: string }[]>(() => loadPolyAiState().messages);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showOlderMessages, setShowOlderMessages] = useState(false);
+  const [providerError, setProviderError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -133,6 +134,7 @@ export default function AskAI() {
         response = providerAnswer;
       } catch (providerError) {
         console.warn("External POLY AI provider unavailable; using deterministic fallback:", providerError);
+        setProviderError(providerError instanceof Error ? providerError.message : "AI provider unavailable");
         response = sanitizePolyAiResponse(generatePolyAiResponse(content));
       }
 
@@ -236,6 +238,13 @@ export default function AskAI() {
       {/* Messages */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="w-full px-3 py-4 sm:px-5 sm:py-5 lg:px-8">
+          {providerError && (
+            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+              <p className="font-semibold">AI provider unavailable — using local fallback</p>
+              <p className="mt-1 opacity-80">{providerError}</p>
+              <p className="mt-1 opacity-80">To enable real AI, add <code>OPENROUTER_API_KEY</code> in your Convex dashboard → Settings → Environment.</p>
+            </div>
+          )}
           {messages.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}

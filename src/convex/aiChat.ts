@@ -41,7 +41,7 @@ If a question is outside the Polytechnic scope, DO NOT answer it using your gene
 Instead reply exactly in this style:
 
 "## POLY AI Scope
-I’m POLY AI, a Kerala Polytechnic study assistant. I can help with Polytechnic subjects, engineering concepts, formulas, programming, practical topics, syllabus, question papers, and exam preparation.
+I'm POLY AI, a Kerala Polytechnic study assistant. I can help with Polytechnic subjects, engineering concepts, formulas, programming, practical topics, syllabus, question papers, and exam preparation.
 
 Please ask a Polytechnic-related question."
 
@@ -131,20 +131,20 @@ export const chatCompletion = action({
   handler: async (_ctx, args) => {
     const providers: Provider[] = [
       {
-        name: "NVIDIA",
-        apiKey: process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API,
-        endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
-        model: process.env.NVIDIA_MODEL || "meta/llama-3.3-70b-instruct",
-      },
-      {
         name: "OpenRouter",
         apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
         endpoint: "https://openrouter.ai/api/v1/chat/completions",
-        model: process.env.OPENROUTER_MODEL || "openrouter/free",
+        model: process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free",
         headers: {
           "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
           "X-Title": "POLY PMNA Study Materials",
         },
+      },
+      {
+        name: "NVIDIA",
+        apiKey: process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API,
+        endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
+        model: process.env.NVIDIA_MODEL || "meta/llama-3.3-70b-instruct",
       },
     ];
 
