@@ -57,7 +57,14 @@ export default function AskAI() {
         continue;
       }
       const content = sanitizePolyAiResponse(message.content);
-      if (!content || isLeakedPolyAiResponse(message.content) || isGenericPolyAiResponse(content)) continue;
+      const needsLocalRepair = !content || isLeakedPolyAiResponse(message.content) || isGenericPolyAiResponse(content);
+      if (needsLocalRepair) {
+        const lastUser = [...visible].reverse().find((item) => item.role === "user");
+        if (lastUser && visible[visible.length - 1]?.role === "user") {
+          visible.push({ _id: `${message._id}-local-repair`, role: "assistant", content: sanitizePolyAiResponse(generatePolyAiResponse(lastUser.content)) });
+        }
+        continue;
+      }
       visible.push({ ...message, content });
     }
     return visible;
