@@ -100,7 +100,7 @@ jobs:
         if: steps.convex_gate.outputs.enabled == 'true'
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: bunx convex deploy --prod --message "Deploy provider-backed POLY AI"
+        run: bunx convex deploy --message "Deploy provider-backed POLY AI"
 
   deploy:
     environment:
