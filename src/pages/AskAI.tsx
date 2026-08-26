@@ -51,13 +51,15 @@ export default function AskAI() {
     const visible: { _id: string; role: "user" | "assistant"; content: string; source?: "provider" | "local" }[] = [];
     const persistedKeys = new Set((chatHistory ?? []).map((message) => `${message.role}:${message.content}`));
     const mergedMessages = [
-      ...(chatHistory ?? []).map((message) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content })),
+      ...(chatHistory ?? []).map((message) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content, source: undefined as "provider" | "local" | undefined })),
       ...localMessages.filter((message) => !persistedKeys.has(`${message.role}:${message.content}`)),
     ];
     const seenExchanges = new Set<string>();
+    let pendingUser: (typeof visible)[number] | null = null;
     for (const message of mergedMessages) {
       if (message.role === "user") {
         visible.push(message);
+        pendingUser = message;
         continue;
       }
 
@@ -66,24 +68,28 @@ export default function AskAI() {
       const needsLocalRepair = !content || isLegacyScopeRefusal || isLeakedPolyAiResponse(message.content) || isGenericPolyAiResponse(content);
       let repairedContent = content;
       let repairedId = message._id;
-      const lastUser = [...visible].reverse().find((item) => item.role === "user");
+      let repairedSource = message.source;
       if (needsLocalRepair) {
-        if (lastUser && visible[visible.length - 1]?.role === "user") {
-          repairedContent = sanitizePolyAiResponse(generatePolyAiResponse(lastUser.content));
+        if (pendingUser) {
+          repairedContent = sanitizePolyAiResponse(generatePolyAiResponse(pendingUser.content));
           repairedId = `${message._id}-local-repair`;
-        } else if (!repairedContent) {
+          repairedSource = "local";
+        } else {
+          // Invalid assistant records without a paired user are stale/orphaned.
           continue;
         }
       }
-      if (lastUser && visible[visible.length - 1]?.role === "user") {
-        const exchangeKey = `${lastUser.content}\u0000${repairedContent}`;
+      if (pendingUser) {
+        const exchangeKey = `${pendingUser.content}\u0000${repairedContent}`;
         if (seenExchanges.has(exchangeKey)) {
           visible.pop();
+          pendingUser = null;
           continue;
         }
         seenExchanges.add(exchangeKey);
+        pendingUser = null;
       }
-      visible.push({ ...message, _id: repairedId, content: repairedContent });
+      visible.push({ ...message, _id: repairedId, content: repairedContent, source: repairedSource });
     }
     const normalized: typeof visible = [];
     for (let index = 0; index < visible.length; index += 1) {
