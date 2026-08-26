@@ -13,10 +13,18 @@ Please ask a Polytechnic-related question.`;
 
 const BLOCKED_SCOPE_PATTERN = /\b(politic|politician|election|news|current\s+affairs|celebrity|movie|film|entertainment|music|song|sport|cricket|football|history|geography|life\s+advice|porn|pornography|sexual|sex|nude|nudity|crime|criminal|murder|weapon|terror|offen[cs]e)\b/i;
 const POLYTECHNIC_CONTEXT_PATTERN = /\b(kerala\s+polytechnic|polytechnic|diploma|curriculum|syllabus|revision\s*(?:2026|2021|2015)?|semester|subject|course|model\s*paper|question\s*paper|exam|laboratory|lab\s*work|engineering|technical|circuit|algorithm|programming|program|code|database|sql|data\s+structure|electronics?|electrical|mechanical|civil|automobile|instrumentation|communication|computer|physics|chemistry|mathematics|calculus|integral|derivative|trigonometry|matrix|formula|numerical|diode|transistor|mosfet|amplifier|op\s*-?amp|kcl|kvl|buck\s+converter|emi\s+filter|bending\s+moment|four\s*stroke)\b/i;
+const GREETING_PATTERN = /^\s*(?:hi|hello|hey|namaste|good\s+(?:morning|afternoon|evening))[.!? ]*$/i;
+const THANKS_PATTERN = /^\s*(?:thanks?|thank\s+you|thankyou)[.!? ]*$/i;
+const BASIC_ARITHMETIC_PATTERN = /^\s*(?:what\s+is\s+)?(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)\s*[?!. ]*$/i;
+
+export function isPolyAiUtilityQuery(query: string): boolean {
+  return GREETING_PATTERN.test(query) || THANKS_PATTERN.test(query) || BASIC_ARITHMETIC_PATTERN.test(query);
+}
 
 export function isPolyAiQueryInScope(query: string): boolean {
   const q = query.trim();
   if (!q || BLOCKED_SCOPE_PATTERN.test(q)) return false;
+  if (isPolyAiUtilityQuery(q)) return true;
   return POLYTECHNIC_CONTEXT_PATTERN.test(q);
 }
 
@@ -126,14 +134,25 @@ function localAnswerForUnknownQuery(query: string): string {
 
 export function generatePolyAiResponse(query: string): string {
   const q = query.toLowerCase();
-  if (!isPolyAiQueryInScope(query)) return POLY_AI_SCOPE_RESPONSE;
+  const clean = query.trim();
 
-  if (/\b(hello|hi|hey|namaste|good\s*(morning|afternoon|evening))\b/.test(q)) {
+  if (GREETING_PATTERN.test(clean)) {
     return markdown("## Hello from POLY AI", "I’m your Kerala Polytechnic study assistant. Ask about a subject concept, formula, diagram, program, curriculum record, or exam preparation topic.", "> Tip: Specific questions produce the best explanations—for example, *derive the RC charging equation* or *write a C program for binary search*.");
   }
-  if (/\b(thank|thanks|thankyou)\b/.test(q)) {
+  if (THANKS_PATTERN.test(clean)) {
     return markdown("## You’re welcome", "Keep revising from the syllabus, practise previous question papers, and use the curriculum directory to locate your subject resources. All the best for your exams!");
   }
+  const arithmeticMatch = clean.match(BASIC_ARITHMETIC_PATTERN);
+  if (arithmeticMatch) {
+    const left = Number(arithmeticMatch[1]);
+    const right = Number(arithmeticMatch[3]);
+    const operator = arithmeticMatch[2];
+    if (operator === "/" && right === 0) return markdown("## Arithmetic", "Division by zero is undefined. Please provide a non-zero divisor.");
+    const result = operator === "+" ? left + right : operator === "-" ? left - right : operator === "*" ? left * right : left / right;
+    return markdown("## Arithmetic result", `**${left} ${operator} ${right} = ${result}**`, "This quick calculation is handled locally so the chat responds immediately.");
+  }
+  if (!isPolyAiQueryInScope(query)) return POLY_AI_SCOPE_RESPONSE;
+
   if (/\b(ohm'?s?\s*law|ohms?\s*law)\b/.test(q)) {
     const includeProgram = /\b(program|programming|code|c\s*language)\b/.test(q);
     return markdown(

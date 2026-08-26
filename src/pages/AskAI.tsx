@@ -58,7 +58,8 @@ export default function AskAI() {
         continue;
       }
       const content = sanitizePolyAiResponse(message.content);
-      const needsLocalRepair = !content || isLeakedPolyAiResponse(message.content) || isGenericPolyAiResponse(content);
+      const isLegacyScopeRefusal = content === POLY_AI_SCOPE_RESPONSE;
+      const needsLocalRepair = !content || isLegacyScopeRefusal || isLeakedPolyAiResponse(message.content) || isGenericPolyAiResponse(content);
       if (needsLocalRepair) {
         const lastUser = [...visible].reverse().find((item) => item.role === "user");
         if (lastUser && visible[visible.length - 1]?.role === "user") {
