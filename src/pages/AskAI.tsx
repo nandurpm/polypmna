@@ -32,7 +32,7 @@ export default function AskAI() {
   const navigate = useNavigate();
   const [input, setInput] = useState(() => loadPolyAiState().preferences.draft);
   const [isSending, setIsSending] = useState(false);
-  const [localMessages, setLocalMessages] = useState<{ _id: string; role: "user" | "assistant"; content: string }[]>(() => loadPolyAiState().messages);
+  const [localMessages, setLocalMessages] = useState<{ _id: string; role: "user" | "assistant"; content: string; source?: "provider" | "local" }[]>(() => loadPolyAiState().messages);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showOlderMessages, setShowOlderMessages] = useState(false);
   const [providerError, setProviderError] = useState<string | null>(null);
@@ -48,14 +48,13 @@ export default function AskAI() {
   const chatCompletion = useAction(api.aiChat.chatCompletion);
   const nextId = useRef(0);
   const allMessages = useMemo(() => {
-    const visible: { _id: string; role: "user" | "assistant"; content: string }[] = [];
+    const visible: { _id: string; role: "user" | "assistant"; content: string; source?: "provider" | "local" }[] = [];
     const persistedKeys = new Set((chatHistory ?? []).map((message) => `${message.role}:${message.content}`));
     const mergedMessages = [
       ...(chatHistory ?? []).map((message) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content })),
       ...localMessages.filter((message) => !persistedKeys.has(`${message.role}:${message.content}`)),
     ];
     const seenExchanges = new Set<string>();
-    let seenScopeRefusal = false;
     for (const message of mergedMessages) {
       if (message.role === "user") {
         visible.push(message);
@@ -83,17 +82,23 @@ export default function AskAI() {
           continue;
         }
         seenExchanges.add(exchangeKey);
-        if (repairedContent === POLY_AI_SCOPE_RESPONSE && seenScopeRefusal) {
-          const previousRefusalIndex = visible.findIndex((item) => item.role === "assistant" && item.content === POLY_AI_SCOPE_RESPONSE);
-          if (previousRefusalIndex > 0 && visible[previousRefusalIndex - 1]?.role === "user") {
-            visible.splice(previousRefusalIndex - 1, 2);
-          }
-        }
-        if (repairedContent === POLY_AI_SCOPE_RESPONSE) seenScopeRefusal = true;
       }
       visible.push({ ...message, _id: repairedId, content: repairedContent });
     }
-    return visible;
+    const normalized: typeof visible = [];
+    for (let index = 0; index < visible.length; index += 1) {
+      const message = visible[index];
+      normalized.push(message);
+      if (message.role === "user" && visible[index + 1]?.role !== "assistant") {
+        normalized.push({
+          _id: `${message._id}-orphan-repair`,
+          role: "assistant",
+          content: sanitizePolyAiResponse(generatePolyAiResponse(message.content)),
+          source: "local",
+        });
+      }
+    }
+    return normalized;
   }, [chatHistory, localMessages]);
   const hiddenMessageCount = Math.max(0, allMessages.length - 16);
   const messages = showOlderMessages ? allMessages : allMessages.slice(-16);
@@ -120,6 +125,7 @@ export default function AskAI() {
         content: (message.role === "user" ? message.content : sanitizePolyAiResponse(message.content)).slice(-5000),
       }));
       let response: string;
+      let responseSource: "provider" | "local" = "local";
       if (!isPolyAiQueryInScope(content)) {
         response = POLY_AI_SCOPE_RESPONSE;
       } else try {
@@ -132,6 +138,7 @@ export default function AskAI() {
           throw new Error("Provider returned an unsuitable answer format");
         }
         response = providerAnswer;
+        responseSource = "provider";
       } catch (providerError) {
         console.warn("External POLY AI provider unavailable; using deterministic fallback:", providerError);
         setProviderError(providerError instanceof Error ? providerError.message : "AI provider unavailable");
@@ -143,7 +150,7 @@ export default function AskAI() {
       setLocalMessages((current) => [
         ...current,
         { _id: `${id}-user`, role: "user", content },
-        { _id: `${id}-assistant`, role: "assistant", content: response },
+        { _id: `${id}-assistant`, role: "assistant", content: response, source: responseSource },
       ]);
 
       if (user) {
@@ -159,7 +166,7 @@ export default function AskAI() {
       setLocalMessages((current) => [
         ...current,
         { _id: `${id}-user`, role: "user", content },
-        { _id: `${id}-assistant`, role: "assistant", content: sanitizePolyAiResponse(generatePolyAiResponse(content)) },
+        { _id: `${id}-assistant`, role: "assistant", content: sanitizePolyAiResponse(generatePolyAiResponse(content)), source: "local" },
       ]);
     } finally {
       setIsSending(false);
@@ -290,7 +297,7 @@ export default function AskAI() {
             </div>
           )}
 
-          {messages.map((msg: { _id: string; role: string; content: string }, i: number) => (
+          {messages.map((msg: { _id: string; role: string; content: string; source?: "provider" | "local" }, i: number) => (
             <motion.div
               key={msg._id}
               initial={{ opacity: 0, y: 6 }}
@@ -313,7 +320,7 @@ export default function AskAI() {
                 {msg.role === "assistant" && (
                   <div className="mb-2 flex items-center justify-between gap-3 border-b border-slate-100 pb-2">
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
-                      <Sparkles className="h-3 w-3" /> POLY AI · formatted locally
+                      <Sparkles className="h-3 w-3" /> POLY AI · {msg.source === "provider" ? "provider answer" : msg.source === "local" ? "formatted locally" : "answer"}
                     </span>
                     <button
                       onClick={() => handleCopy(msg._id, msg.content)}

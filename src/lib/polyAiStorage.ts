@@ -2,6 +2,7 @@ export type LocalPolyAiMessage = {
   _id: string;
   role: "user" | "assistant";
   content: string;
+  source?: "provider" | "local";
 };
 
 export type LocalPolyAiPreferences = {
@@ -39,6 +40,7 @@ export function loadPolyAiState(): LocalPolyAiState {
         && (message.role === "user" || message.role === "assistant")
         && typeof message._id === "string"
         && typeof message.content === "string"
+        && (message.source === undefined || message.source === "provider" || message.source === "local")
       ))
       : [];
     const preferences = parsed.preferences && typeof parsed.preferences === "object"
