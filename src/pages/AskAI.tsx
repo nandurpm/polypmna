@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { generatePolyAiResponse, isFocusedPolyAiQuery, isGenericPolyAiResponse, isLeakedPolyAiResponse, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { PolyAiMessage } from "@/components/PolyAiMessage";
+import { generatePolyAiResponse, isFocusedPolyAiQuery, isGenericPolyAiResponse, isLeakedPolyAiResponse, isRichPolyAiRequest, isRichPolyAiResponseForQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
 import {
   Send,
   ArrowLeft,
@@ -31,6 +32,7 @@ export default function AskAI() {
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [localMessages, setLocalMessages] = useState<{ _id: string; role: "user" | "assistant"; content: string }[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -79,8 +81,8 @@ export default function AskAI() {
           new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out")), 8000)),
         ]);
         const providerAnswer = sanitizePolyAiResponse(providerRawAnswer);
-        if (!providerAnswer || (isFocusedPolyAiQuery(content) && isGenericPolyAiResponse(providerAnswer))) {
-          throw new Error("Provider returned a generic answer for a focused question");
+        if (!providerAnswer || (isFocusedPolyAiQuery(content) && isGenericPolyAiResponse(providerAnswer)) || (isRichPolyAiRequest(content) && !isRichPolyAiResponseForQuery(content, providerAnswer))) {
+          throw new Error("Provider returned an unsuitable answer format");
         }
         response = providerAnswer;
       } catch (providerError) {
@@ -122,6 +124,16 @@ export default function AskAI() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleCopy = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedId(messageId);
+      window.setTimeout(() => setCopiedId((current) => current === messageId ? null : current), 1600);
+    } catch (error) {
+      console.warn("Could not copy answer:", error);
     }
   };
 
@@ -225,10 +237,24 @@ export default function AskAI() {
                 className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   msg.role === "user"
                     ? "ml-auto max-w-[92%] bg-primary text-primary-foreground rounded-br-md"
-                    : "flex-1 min-w-0 w-full max-w-[1400px] bg-card border border-border/60 text-foreground rounded-bl-md"
+                    : "group flex-1 min-w-0 w-full max-w-[1400px] bg-card border border-border/60 text-foreground rounded-bl-md shadow-sm rounded-bl-md"
                 }`}
               >
-                <p className="whitespace-pre-wrap">{msg.content}</p>
+                {msg.role === "assistant" && (
+                  <div className="mb-2 flex items-center justify-between gap-3 border-b border-slate-100 pb-2">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
+                      <Sparkles className="h-3 w-3" /> POLY AI · formatted locally
+                    </span>
+                    <button
+                      onClick={() => handleCopy(msg._id, msg.content)}
+                      className="rounded-md px-2 py-1 text-[10px] font-medium text-muted-foreground opacity-0 transition-opacity hover:bg-slate-100 hover:text-foreground group-hover:opacity-100 focus:opacity-100"
+                      aria-label="Copy answer"
+                    >
+                      {copiedId === msg._id ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                )}
+                {msg.role === "assistant" ? <PolyAiMessage content={msg.content} /> : <p className="whitespace-pre-wrap">{msg.content}</p>}
               </div>
               {msg.role === "user" && (
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary mt-1">
