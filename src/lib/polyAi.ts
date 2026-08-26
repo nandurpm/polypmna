@@ -12,7 +12,7 @@ I’m POLY AI, a Kerala Polytechnic study assistant. I can help with Polytechnic
 Please ask a Polytechnic-related question.`;
 
 const BLOCKED_SCOPE_PATTERN = /\b(politic|politician|election|news|current\s+affairs|celebrity|movie|film|entertainment|music|song|sport|cricket|football|history|geography|life\s+advice|porn|pornography|sexual|sex|nude|nudity|crime|criminal|murder|weapon|terror|offen[cs]e)\b/i;
-const POLYTECHNIC_CONTEXT_PATTERN = /\b(kerala\s+polytechnic|polytechnic|diploma|curriculum|syllabus|revision\s*(?:2026|2021|2015)?|semester|subject|course|model\s*paper|question\s*paper|exam|laboratory|lab\s*work|engineering|technical|circuit|algorithm|programming|program|code|database|sql|data\s+structure|electronics?|electrical|mechanical|civil|automobile|instrumentation|communication|computer|physics|chemistry|mathematics|calculus|integral|derivative|trigonometry|matrix|formula|numerical|student\s+marks?|marks\s+calculator|average\s+calculation|grade|kirchhoff|voltage\s+law|current\s+law|diode|transistor|mosfet|amplifier|op\s*-?amp|kcl|kvl|buck\s+converter|emi\s+filter|bending\s+moment|four\s*stroke)\b/i;
+const POLYTECHNIC_CONTEXT_PATTERN = /\b(kerala\s+polytechnic|polytechnic|diploma|curriculum|syllabus|revision\s*(?:2026|2021|2015)?|semester|subject|course|model\s*paper|question\s*paper|exam|laboratory|lab\s*work|engineering|technical|circuit|algorithm|programming|program|code|database|sql|data\s+structure|electronics?|electrical|mechanical|civil|automobile|instrumentation|communication|computer|physics|chemistry|mathematics|calculus|integral|derivative|trigonometry|matrix|formula|numerical|student\s+marks?|marks\s+calculator|average\s+calculation|grade|kirchhoff|voltage\s+law|current\s+law|resistor|resistance|series|parallel|equivalent\s+resistance|diode|transistor|mosfet|amplifier|op\s*-?amp|kcl|kvl|buck\s+converter|emi\s+filter|bending\s+moment|four\s*stroke)\b/i;
 const GREETING_PATTERN = /^\s*(?:hi|hello|hey|namaste|good\s+(?:morning|afternoon|evening))[.!? ]*$/i;
 const THANKS_PATTERN = /^\s*(?:thanks?|thank\s+you|thankyou)[.!? ]*$/i;
 const BASIC_ARITHMETIC_PATTERN = /^\s*(?:what\s+is\s+)?(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)\s*[?!. ]*$/i;
@@ -224,6 +224,15 @@ export function generatePolyAiResponse(query: string): string {
       "| Design quantity | Result | Design note |\n|---|---:|---|\n| Input voltage | 24 V | Source voltage |\n| Output voltage | 12 V | Ideal target |\n| Load current | 2 A | 24 W output |\n| Switching frequency | 100 kHz | Fixed assumption |\n| Duty cycle | 0.50 | 50% nominal |\n| Inductor ripple | 0.40 A peak-to-peak | 20% of load current |\n| Inductor | 150 µH minimum | Use saturation rating above 2.20 A |\n| Output capacitor | 10 µF minimum | Ignoring ESR; use low-ESR margin |",
       "```mermaid\nflowchart LR\n  Input[24 V input] --> Switch[50% duty switch]\n  Switch --> L[150 µH inductor]\n  L --> C[≥10 µF low-ESR capacitor]\n  C --> Load[12 V, 2 A load]\n  Load --> Feedback[Measure ripple and Vout]\n  Feedback --> Switch\n```",
       "These are ideal first-pass values. Real hardware must additionally check losses, inductor saturation, switch and diode ratings, capacitor RMS ripple current, control-loop stability, layout, temperature, and transient response."
+    );
+  }
+  if (/\b(series|parallel)\b/.test(q) && /\b(resistor|resistance)\b/.test(q)) {
+    return markdown(
+      "## Series and parallel resistors",
+      "In a **series circuit**, the same current flows through every resistor. In a **parallel circuit**, the same voltage appears across each branch.",
+      "| Connection | Equivalent resistance | Key property |\n|---|---|---|\n| Series | **Rₑq = R₁ + R₂ + … + Rₙ** | Same current; resistances add |\n| Parallel | **1/Rₑq = 1/R₁ + 1/R₂ + … + 1/Rₙ** | Same voltage; conductances add |",
+      "```text\nTwo parallel resistors:\nRₑq = (R₁ × R₂) / (R₁ + R₂)\n\nExample: R₁ = 4 Ω, R₂ = 6 Ω\nSeries:   Rₑq = 4 + 6 = 10 Ω\nParallel: Rₑq = (4 × 6)/(4 + 6) = 2.4 Ω\n```",
+      "For more than two parallel resistors, use the reciprocal formula. The equivalent resistance of parallel resistors is always smaller than the smallest branch resistance."
     );
   }
   if (/\b(capacitor|inductor|resistor|rc\s*circuit|rl\s*circuit)\b/.test(q)) {
