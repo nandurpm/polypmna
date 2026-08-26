@@ -17,7 +17,7 @@ export function isLeakedPolyAiResponse(response: string): boolean {
 }
 
 export function isGenericPolyAiResponse(response: string): boolean {
-  return /exam preparation strategy|that's a great question|i can help (?:with|explain) kerala polytechnic|what specific topic would you like me to explain|please include the subject name or topic|i received (?:your )?question|i received [“\"]|add the exact topic|add the subject or topic/i.test(response);
+  return /exam preparation strategy|that's a great question|i can help (?:with|explain) kerala polytechnic|what specific topic would you like me to explain|please include the subject name or topic|i received (?:your )?question|i received [“\"]|add the exact topic|add the subject or topic|i['’]?m ready to explain it|for example, ask ['“]why does/i.test(response);
 }
 
 export function isFocusedPolyAiQuery(query: string): boolean {
