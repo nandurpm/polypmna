@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { generatePolyAiResponse } from "@/lib/polyAi";
+import { generatePolyAiResponse, isLeakedPolyAiResponse, sanitizePolyAiResponse } from "@/lib/polyAi";
 import {
   Send,
   ArrowLeft,
@@ -42,7 +42,16 @@ export default function AskAI() {
   const clearHistory = useMutation(api.chat.clearHistory);
   const chatCompletion = useAction(api.aiChat.chatCompletion);
   const nextId = useRef(0);
-  const messages = useMemo(() => [...(chatHistory ?? []), ...localMessages], [chatHistory, localMessages]);
+  const messages = useMemo(
+    () => [...(chatHistory ?? []), ...localMessages]
+      .map((message) => {
+        if (message.role === "user") return message;
+        if (isLeakedPolyAiResponse(message.content)) return { ...message, content: "" };
+        return { ...message, content: sanitizePolyAiResponse(message.content) };
+      })
+      .filter((message) => message.role === "user" || message.content.length > 0),
+    [chatHistory, localMessages]
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,16 +65,20 @@ export default function AskAI() {
     try {
       const historyMessages = messages.slice(-20).map((message) => ({
         role: message.role as "user" | "assistant",
-        content: message.content,
+        content: message.role === "user" ? message.content : sanitizePolyAiResponse(message.content),
       }));
       let response: string;
       try {
-        response = await chatCompletion({
-          messages: [...historyMessages, { role: "user", content }],
-        });
+        const providerRawAnswer = await Promise.race<string>([
+          chatCompletion({ messages: [...historyMessages, { role: "user", content }] }),
+          new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out")), 8000)),
+        ]);
+        const providerAnswer = sanitizePolyAiResponse(providerRawAnswer);
+        if (!providerAnswer) throw new Error("Provider returned no displayable answer");
+        response = providerAnswer;
       } catch (providerError) {
         console.warn("External POLY AI provider unavailable; using deterministic fallback:", providerError);
-        response = generatePolyAiResponse(content);
+        response = sanitizePolyAiResponse(generatePolyAiResponse(content));
       }
 
       if (user) {
@@ -90,7 +103,7 @@ export default function AskAI() {
       setLocalMessages((current) => [
         ...current,
         { _id: `${id}-user`, role: "user", content },
-        { _id: `${id}-assistant`, role: "assistant", content: generatePolyAiResponse(content) },
+        { _id: `${id}-assistant`, role: "assistant", content: sanitizePolyAiResponse(generatePolyAiResponse(content)) },
       ]);
     } finally {
       setIsSending(false);
