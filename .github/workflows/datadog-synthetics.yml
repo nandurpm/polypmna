@@ -22,21 +22,26 @@ on:
 jobs:
   configuration:
     runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
     steps:
       - name: Check Datadog credentials
+        id: check
         env:
           DD_API_KEY: ${{ secrets.DD_API_KEY }}
           DD_APP_KEY: ${{ secrets.DD_APP_KEY }}
         run: |
           if [[ -z "$DD_API_KEY" || -z "$DD_APP_KEY" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "::notice title=Datadog tests skipped::Add DD_API_KEY and DD_APP_KEY as repository Actions secrets to enable synthetic tests."
           else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
             echo "Datadog credentials detected; synthetic tests will run."
           fi
 
   build:
     needs: configuration
-    if: ${{ secrets.DD_API_KEY != '' && secrets.DD_APP_KEY != '' }}
+    if: ${{ needs.configuration.outputs.enabled == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
