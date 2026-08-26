@@ -1,10 +1,10 @@
-import { action } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 
 /**
  * Creates a new GitHub repo and pushes project files via the GitHub API.
  * Requires GITHUB_TOKEN_NEW env var with repo scope.
  */
-export const createRepo = action({
+export const createRepo = internalAction({
   args: {},
   handler: async () => {
     const { Octokit } = await import("octokit");

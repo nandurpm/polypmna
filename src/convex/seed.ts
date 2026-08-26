@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 
 // Department code prefix mapping (Kerala Polytechnic convention)
@@ -89,7 +89,7 @@ function cleanTitle(raw: string): string {
     .trim();
 }
 
-export const seedFromGitHub = mutation({
+export const seedFromGitHub = internalMutation({
   args: {},
   handler: async (ctx) => {
     const existing = await ctx.db.query("departments").first();

@@ -26,8 +26,6 @@ const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];  type Exam 
   questions: {
     question: string;
     options: string[];
-    correctIndex: number;
-    explanation?: string;
   }[];
 };
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -75,20 +73,15 @@ export default function MockExams() {
 
   const finishExam = async () => {
     if (!activeExam || !user) return;
-    let s = 0;
-    for (let i = 0; i < activeExam.questions.length; i++) {
-      if (answers[i] === activeExam.questions[i].correctIndex) s++;
-    }
-    setScore(s);
-    setSubmitted(true);
     try {
-      await submitAttempt({
-        userId: user._id,
+      const result = await submitAttempt({
         mockExamId: activeExam._id as Id<"mockExams">,
         answers: answers.map((a) => a ?? -1),
       });
+      setScore(result.score);
+      setSubmitted(true);
     } catch (e) {
-      console.error(e);
+      console.error("Could not submit exam:", e);
     }
   };
 

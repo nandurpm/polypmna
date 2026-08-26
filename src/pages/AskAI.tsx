@@ -41,7 +41,7 @@ export default function AskAI() {
 
   const chatHistory = useQuery(
     api.chat.getHistory,
-    user ? { userId: user._id } : "skip"
+    user ? {} : "skip"
   );
   const storeMessages = useMutation(api.chat.storeMessages);
   const clearHistory = useMutation(api.chat.clearHistory);
@@ -148,7 +148,7 @@ export default function AskAI() {
 
       if (user) {
         void Promise.race([
-          storeMessages({ userId: user._id, userContent: content, assistantContent: response }),
+          storeMessages({ userContent: content, assistantContent: response }),
           new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("Chat history save timed out")), 5000)),
         ]).catch((persistError) => console.warn("Could not persist chat history; local answer remains visible:", persistError));
       }
@@ -192,7 +192,7 @@ export default function AskAI() {
     clearPolyAiState();
     if (user) {
       try {
-        await clearHistory({ userId: user._id });
+        await clearHistory({});
       } catch (error) {
         console.warn("Could not clear server history:", error);
       }
@@ -242,7 +242,7 @@ export default function AskAI() {
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
               <p className="font-semibold">AI provider unavailable — using local fallback</p>
               <p className="mt-1 opacity-80">{providerError}</p>
-              <p className="mt-1 opacity-80">To enable real AI, add <code>OPENROUTER_API_KEY</code> in your Convex dashboard → Settings → Environment.</p>
+              <p className="mt-1 opacity-80">The request reached Convex, but the configured provider did not return an answer. Your API keys remain server-side; check the Convex production logs for provider status or retry after the provider quota resets.</p>
             </div>
           )}
           {messages.length === 0 && (

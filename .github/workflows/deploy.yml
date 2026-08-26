@@ -32,6 +32,7 @@ jobs:
       - name: Build
         env:
           VITE_BASE_PATH: /polypmna/
+          VITE_CONVEX_URL: https://oceanic-snail-406.convex.cloud
         run: bun run build
 
       - name: Setup Pages

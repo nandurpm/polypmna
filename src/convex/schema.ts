@@ -104,6 +104,11 @@ const schema = defineSchema(
       timestamp: v.number(),
     }).index("by_user", ["userId", "timestamp"]),
 
+    aiRequests: defineTable({
+      userId: v.id("users"),
+      createdAt: v.number(),
+    }).index("by_user_time", ["userId", "createdAt"]),
+
     // ── User Progress ──
     userProgress: defineTable({
       userId: v.id("users"),
@@ -113,7 +118,7 @@ const schema = defineSchema(
     }).index("by_user", ["userId"]).index("by_user_subject", ["userId", "subjectId"]),
   },
   {
-    schemaValidation: false,
+    schemaValidation: true,
   },
 );
 

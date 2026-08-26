@@ -53,14 +53,13 @@ class ToolbarErrorBoundary extends React.Component<
 /** Hard guard so runtime errors never leave the preview as a blank page. */
 class RootErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean; message: string; stack: string }
+  { hasError: boolean; message: string }
 > {
-  state = { hasError: false, message: "", stack: "" };
-  static getDerivedStateFromError(error: Error) {
+  state = { hasError: false, message: "" };
+  static getDerivedStateFromError() {
     return {
       hasError: true,
-      message: error.message || "Unknown runtime error",
-      stack: error.stack || "",
+      message: "Something went wrong while loading this page.",
     };
   }
   componentDidCatch(err: Error) {
@@ -75,11 +74,7 @@ class RootErrorBoundary extends React.Component<
             <p className="mt-2 text-xs text-muted-foreground break-words">
               {this.state.message}
             </p>
-            {this.state.stack && (
-              <pre className="mt-3 text-left text-[10px] leading-4 text-muted-foreground/80 max-h-40 overflow-auto rounded border border-border/60 p-2">
-                {this.state.stack}
-              </pre>
-            )}
+            <p className="mt-3 text-xs text-muted-foreground">Please reload the page. If the problem continues, report the page and action that caused it.</p>
           </div>
         </div>
       );
@@ -88,26 +83,38 @@ class RootErrorBoundary extends React.Component<
   }
 }
 
-// GitHub Pages builds do not receive Freebuff's runtime environment variables.
-// Keep the public production backend available for static hosting while still
-// allowing VITE_CONVEX_URL to override it in local or other deployments.
-const convexUrl =
-  import.meta.env.VITE_CONVEX_URL || "https://oceanic-snail-406.convex.cloud";
+// Static builds must provide their own backend URL. Do not silently connect
+// forks or alternate deployments to the POLY PMNA production database.
+const convexUrl = import.meta.env.VITE_CONVEX_URL;
+if (!convexUrl) {
+  throw new Error("VITE_CONVEX_URL is required for this deployment");
+}
 const convex = new ConvexReactClient(convexUrl);
 
 
 
 function RouteSyncer() {
   const location = useLocation();
+  const parentOrigin = (() => {
+    try {
+      return document.referrer ? new URL(document.referrer).origin : window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  })();
+
   useEffect(() => {
-    window.parent.postMessage(
-      { type: "iframe-route-change", path: location.pathname },
-      "*",
-    );
-  }, [location.pathname]);
+    if (window.parent !== window) {
+      window.parent.postMessage(
+        { type: "iframe-route-change", path: location.pathname },
+        parentOrigin,
+      );
+    }
+  }, [location.pathname, parentOrigin]);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      if (event.source !== window.parent || event.origin !== parentOrigin) return;
       if (event.data?.type === "navigate") {
         if (event.data.direction === "back") window.history.back();
         if (event.data.direction === "forward") window.history.forward();
@@ -115,7 +122,7 @@ function RouteSyncer() {
     }
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [parentOrigin]);
 
   return null;
 }

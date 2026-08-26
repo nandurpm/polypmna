@@ -1,39 +1,53 @@
-import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
+import { query, mutation, internalMutation } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
+
+function toPublicExam(exam: Doc<"mockExams">) {
+  return {
+    ...exam,
+    questions: exam.questions.map(({ question, options }) => ({ question, options })),
+  };
+}
 
 export const listBySubject = query({
   args: { subjectId: v.id("subjects") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const exams = await ctx.db
       .query("mockExams")
       .withIndex("by_subject", (q) => q.eq("subjectId", args.subjectId))
       .collect();
+    return exams.map(toPublicExam);
   },
 });
 
 export const listBySemester = query({
   args: { semester: v.number() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const exams = await ctx.db
       .query("mockExams")
       .withIndex("by_semester", (q) => q.eq("semester", args.semester))
       .collect();
+    return exams.map(toPublicExam);
   },
 });
 
 export const get = query({
   args: { id: v.id("mockExams") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const exam = await ctx.db.get(args.id);
+    return exam ? toPublicExam(exam) : null;
   },
 });
 
 export const getUserAttempts = query({
-  args: { userId: v.id("users"), mockExamId: v.optional(v.id("mockExams")) },
+  args: { mockExamId: v.optional(v.id("mockExams")) },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Authentication required");
     let results = await ctx.db
       .query("mockExamAttempts")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     if (args.mockExamId) {
       results = results.filter((a) => a.mockExamId === args.mockExamId);
@@ -44,34 +58,38 @@ export const getUserAttempts = query({
 
 export const submitAttempt = mutation({
   args: {
-    userId: v.id("users"),
     mockExamId: v.id("mockExams"),
     answers: v.array(v.number()),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Authentication required");
     const exam = await ctx.db.get(args.mockExamId);
     if (!exam) throw new Error("Exam not found");
+    if (args.answers.length !== exam.questions.length) throw new Error("Every question must have an answer");
+    if (args.answers.some((answer, index) => answer < 0 || answer >= exam.questions[index].options.length)) {
+      throw new Error("Invalid answer selection");
+    }
 
     let score = 0;
     for (let i = 0; i < exam.questions.length; i++) {
-      if (args.answers[i] === exam.questions[i].correctIndex) {
-        score++;
-      }
+      if (args.answers[i] === exam.questions[i].correctIndex) score++;
     }
 
-    return await ctx.db.insert("mockExamAttempts", {
-      userId: args.userId,
+    const attemptId = await ctx.db.insert("mockExamAttempts", {
+      userId,
       mockExamId: args.mockExamId,
       answers: args.answers,
       score,
       totalQuestions: exam.questions.length,
       completedAt: Date.now(),
     });
+    return { attemptId, score, totalQuestions: exam.questions.length };
   },
 });
 
 // Seed mock exams with sample questions
-export const seedMockExams = mutation({
+export const seedMockExams = internalMutation({
   args: {},
   handler: async (ctx) => {
     const existing = await ctx.db.query("mockExams").first();

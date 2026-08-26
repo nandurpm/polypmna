@@ -1,6 +1,8 @@
 "use node";
 
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { action } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
 const SYSTEM_PROMPT = `
@@ -128,14 +130,30 @@ export const chatCompletion = action({
       })
     ),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Authentication required");
+    await ctx.runMutation(internal.chat.reserveAiRequest, {
+      userId,
+      windowStart: Date.now() - 60_000,
+      createdAt: Date.now(),
+      limit: 20,
+    });
+
+    const nvidiaApiKey = process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API;
+    const configuredNvidiaModel = process.env.NVIDIA_MODEL;
+    const nvidiaModels = Array.from(new Set([
+      configuredNvidiaModel,
+      "deepseek-ai/deepseek-v4-flash-0731",
+      "nvidia/nemotron-3.5-lightning-30b-a3b",
+    ].filter((model): model is string => Boolean(model))));
     const providers: Provider[] = [
-      {
-        name: "NVIDIA",
-        apiKey: process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API,
+      ...nvidiaModels.map((model) => ({
+        name: `NVIDIA (${model})`,
+        apiKey: nvidiaApiKey,
         endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
-        model: process.env.NVIDIA_MODEL || "deepseek-ai/deepseek-v4-flash-0731",
-      },
+        model,
+      })),
       {
         name: "OpenRouter",
         apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
