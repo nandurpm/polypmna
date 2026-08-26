@@ -5,6 +5,11 @@
 
 const NOTES_BASE = "https://raw.githubusercontent.com/nandurpm/poly-pmna-pdf-files/main";
 const DIPLOMA_BASE = "https://raw.githubusercontent.com/nandurpm/diploma-notes/main";
+const SITTTR_BASE = "https://www.sitttrkerala.ac.in";
+
+// These two subjects are present in the syllabus manifest but do not have a
+// published lesson file in diploma-notes. Do not advertise dead lesson links.
+const MISSING_LESSON_CODES = new Set(["3302", "3359"]);
 
 /* ─── Types ─── */
 
@@ -70,6 +75,28 @@ async function fetchJSON<T>(url: string): Promise<T> {
   return resp.json();
 }
 
+/** Convert legacy SITTTR source routes in older manifests to current pages. */
+function normalizeSitttrSourceUrl(sourceUrl: string): string {
+  if (!sourceUrl) return sourceUrl;
+  try {
+    const url = new URL(sourceUrl);
+    const route = url.searchParams.get("r");
+    const course = url.searchParams.get("course");
+    if (route === "site/diploma-model-question-paper-show") {
+      return `${SITTTR_BASE}/index.php?r=site%2Fdiploma-modelqp-courses-show&course=${encodeURIComponent(course || "")}`;
+    }
+    if (route === "site/diploma-lab-manual-show") {
+      return `${SITTTR_BASE}/index.php?r=site%2Fdiploma-lab-manual-courses-show&course=${encodeURIComponent(course || "")}`;
+    }
+    if (route === "site/diploma-syllabus-show") {
+      return `${SITTTR_BASE}/index.php?r=site%2Fdiploma-syllabus&scheme=REV2026`;
+    }
+  } catch {
+    // Keep malformed third-party URLs unchanged so callers can still display them.
+  }
+  return sourceUrl;
+}
+
 /* ─── Public API ─── */
 
 /** All subjects from diploma-notes (2485 entries for Rev 2026) */
@@ -98,7 +125,9 @@ export async function getQuestionPapers(): Promise<QuestionPaperDoc[]> {
   const data = await fetchJSON<{ documents: QuestionPaperDoc[] }>(
     `${NOTES_BASE}/manifests/sitttr-2026.json`
   );
-  _papersCache = (data.documents || []).filter((d) => d.status === "published");
+  _papersCache = (data.documents || [])
+    .filter((d) => d.status === "published")
+    .map((d) => ({ ...d, sourceUrl: normalizeSitttrSourceUrl(d.sourceUrl) }));
   return _papersCache;
 }
 
@@ -155,6 +184,7 @@ export async function getPdfForCode(code: string): Promise<PdfSubject | null> {
 
 /** Lesson HTML page URL (from diploma-notes) */
 export function getLessonUrl(code: string): string {
+  if (MISSING_LESSON_CODES.has(code)) return "";
   return `${DIPLOMA_BASE}/revision-2026-content/lessons/lessons-${code}.html`;
 }
 
