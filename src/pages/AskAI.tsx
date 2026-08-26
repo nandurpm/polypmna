@@ -34,6 +34,7 @@ export default function AskAI() {
   const [isSending, setIsSending] = useState(false);
   const [localMessages, setLocalMessages] = useState<{ _id: string; role: "user" | "assistant"; content: string }[]>(() => loadPolyAiState().messages);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showOlderMessages, setShowOlderMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -45,14 +46,18 @@ export default function AskAI() {
   const clearHistory = useMutation(api.chat.clearHistory);
   const chatCompletion = useAction(api.aiChat.chatCompletion);
   const nextId = useRef(0);
-  const messages = useMemo(() => {
+  const allMessages = useMemo(() => {
     const visible: { _id: string; role: "user" | "assistant"; content: string }[] = [];
     const persistedKeys = new Set((chatHistory ?? []).map((message) => `${message.role}:${message.content}`));
-    const allMessages = [
+    const mergedMessages = [
       ...(chatHistory ?? []).map((message) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content })),
       ...localMessages.filter((message) => !persistedKeys.has(`${message.role}:${message.content}`)),
     ];
-    for (const message of allMessages) {
+    const seen = new Set<string>();
+    for (const message of mergedMessages) {
+      const messageKey = `${message.role}:${message.content}`;
+      if (seen.has(messageKey)) continue;
+      seen.add(messageKey);
       if (message.role === "user") {
         visible.push(message);
         continue;
@@ -71,6 +76,8 @@ export default function AskAI() {
     }
     return visible;
   }, [chatHistory, localMessages]);
+  const hiddenMessageCount = Math.max(0, allMessages.length - 16);
+  const messages = showOlderMessages ? allMessages : allMessages.slice(-16);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -160,6 +167,7 @@ export default function AskAI() {
   const handleClear = async () => {
     if (!window.confirm("Clear all chat history?")) return;
     setLocalMessages([]);
+    setShowOlderMessages(false);
     setInput("");
     clearPolyAiState();
     if (user) {
@@ -240,6 +248,19 @@ export default function AskAI() {
                 ))}
               </div>
             </motion.div>
+          )}
+
+          {allMessages.length > 16 && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-dashed border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground sm:px-4">
+              <span>{showOlderMessages ? "Showing the full saved conversation." : `${hiddenMessageCount} earlier messages are collapsed to keep this session focused.`}</span>
+              <button
+                type="button"
+                onClick={() => setShowOlderMessages((current) => !current)}
+                className="shrink-0 font-medium text-primary hover:underline"
+              >
+                {showOlderMessages ? "Collapse" : "Show earlier"}
+              </button>
+            </div>
           )}
 
           {messages.map((msg: { _id: string; role: string; content: string }, i: number) => (
