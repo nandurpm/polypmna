@@ -134,7 +134,7 @@ export const chatCompletion = action({
         name: "NVIDIA",
         apiKey: process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API,
         endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
-        model: process.env.NVIDIA_MODEL || "meta/llama-3.1-8b-instruct",
+        model: process.env.NVIDIA_MODEL || "deepseek-ai/deepseek-v4-flash-0731",
       },
       {
         name: "OpenRouter",

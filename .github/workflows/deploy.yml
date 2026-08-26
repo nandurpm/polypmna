@@ -94,6 +94,7 @@ jobs:
           if [ -n "$NVIDIA_API_KEY" ]; then
             printf '%s' "$NVIDIA_API_KEY" | bunx convex env set --prod NVIDIA_API_KEY
           fi
+          printf '%s' "deepseek-ai/deepseek-v4-flash-0731" | bunx convex env set --prod NVIDIA_MODEL
           printf '%s' "https://nandurpm.github.io/polypmna/" | bunx convex env set --prod POLY_AI_SITE_URL
           printf '%s' "https://nandurpm.github.io/polypmna/" | bunx convex env set --prod SITE_URL
           printf '%s' "https://freebuff.com" | bunx convex env set --prod VLY_CONVEX_AUTH_ISSUER
