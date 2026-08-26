@@ -187,6 +187,18 @@ export function generatePolyAiResponse(query: string): string {
   if (/\b(4\s*-?\s*stroke|four\s*stroke|internal\s*combustion|ic\s*engine)\b/.test(q)) {
     return markdown("## Four-stroke engine cycle", "A four-stroke engine completes one cycle through intake, compression, power, and exhaust. The piston makes four strokes and the crankshaft turns twice.", "| Stroke | Piston movement | Main event |\n|---|---|---|\n| Intake | TDC → BDC | Fresh charge enters |\n| Compression | BDC → TDC | Charge is compressed |\n| Power | TDC → BDC | Combustion drives piston down |\n| Exhaust | BDC → TDC | Burnt gases leave |", "```mermaid\nflowchart TD\n  Intake --> Compression\n  Compression --> Power\n  Power --> Exhaust\n  Exhaust --> Intake\n```");
   }
+  if (/\bstudent\s+marks?|marks\s+calculator|average\s+calculation/.test(q)) {
+    return markdown(
+      "## Student marks calculator",
+      "Read each mark, validate that it is numeric and within the allowed range (0–100), then accumulate the total and divide by the number of subjects. The examples below use a list of marks and reject invalid input.",
+      "| Step | Rule |\n|---|---|\n| Validate | Every mark must be a finite number between 0 and 100 |\n| Accumulate | Add each valid mark to `total` |\n| Average | `average = total / count` |\n| Complexity | O(n) time and O(1) extra space for a streaming calculation |",
+      "```c\n#include <stdio.h>\n\nint main(void) {\n    double marks[] = {78, 84, 91, 67};\n    int n = sizeof(marks) / sizeof(marks[0]);\n    double total = 0.0;\n\n    for (int i = 0; i < n; ++i) {\n        if (marks[i] < 0 || marks[i] > 100) {\n            printf(\"Invalid mark: %.2f\\n\", marks[i]);\n            return 1;\n        }\n        total += marks[i];\n    }\n    printf(\"Average = %.2f\\n\", total / n);\n    return 0;\n}\n```",
+      "```python\ndef average_marks(marks):\n    if not marks:\n        raise ValueError(\"at least one mark is required\")\n    if any(not isinstance(mark, (int, float)) or not 0 <= mark <= 100 for mark in marks):\n        raise ValueError(\"each mark must be between 0 and 100\")\n    return sum(marks) / len(marks)\n\nprint(f\"Average = {average_marks([78, 84, 91, 67]):.2f}\")\n```",
+      "```javascript\nfunction averageMarks(marks) {\n  if (!Array.isArray(marks) || marks.length === 0) {\n    throw new Error(\"at least one mark is required\");\n  }\n  if (marks.some((mark) => !Number.isFinite(mark) || mark < 0 || mark > 100)) {\n    throw new Error(\"each mark must be between 0 and 100\");\n  }\n  return marks.reduce((total, mark) => total + mark, 0) / marks.length;\n}\n\nconsole.log(averageMarks([78, 84, 91, 67]).toFixed(2));\n```",
+      "```sql\nSELECT student_id,\n       AVG(mark) AS average_mark,\n       COUNT(*) AS subject_count\nFROM student_marks\nWHERE mark BETWEEN 0 AND 100\nGROUP BY student_id;\n```",
+      "For `n` marks, validation and accumulation each scan the input once, so the time complexity is **O(n)**. The streaming versions use **O(1)** extra space; the list itself requires **O(n)** storage."
+    );
+  }
   if (/\b(programming|c\s*language|pointer|array|function|for\s*loop|while)\b/.test(q)) {
     return markdown("## Programming fundamentals", "Use variables for named data, functions for reusable logic, arrays for indexed collections, and loops for repetition. A `for` loop is useful when the iteration pattern is known; a `while` loop is useful when repetition depends on a condition.", "```c\n#include <stdio.h>\n\nint main(void) {\n    for (int i = 0; i < 5; i++) {\n        printf(\"%d\\n\", i);\n    }\n    return 0;\n}\n```", "Compile with warnings enabled, test boundary cases, and explain the time and space complexity of non-trivial programs.");
   }
