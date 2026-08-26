@@ -49,13 +49,27 @@ export function sanitizePolyAiResponse(response: string): string {
   const reasoningMarker = /^(?:here(?:'s| is)\s+)?(?:a\s+)?thinking\s+process\s*:/i.test(cleaned);
   if (heading?.index !== undefined) cleaned = cleaned.slice(heading.index + heading[0].length).trim();
   else if (reasoningMarker) return "";
-  return cleaned;
+  return cleaned
+    .replace(/\\\\\(|\\\\\)|\\\\\[|\\\\\]/g, "")
+    .replace(/\\\\text\{([^{}]+)\}/g, "$1")
+    .replace(/\\\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
+    .replace(/\\\\sqrt\{([^{}]+)\}/g, "√($1)")
+    .replace(/\\\\times/g, "×")
+    .replace(/\\\\cdot/g, "·")
+    .replace(/\\\\_/g, "_")
+    .replace(/\\\\,/g, " ");
 }
 
 function localAnswerForUnknownQuery(query: string): string {
   const clean = query.trim().replace(/[?]+$/, "");
   const q = clean.toLowerCase();
 
+  const sumMatch = q.match(/sum\s+of\s+(?:the\s+)?(?:first|1st)\s+(\d+)\s+numbers?/i);
+  if (sumMatch) {
+    const n = Number(sumMatch[1]);
+    const total = n * (n + 1) / 2;
+    return markdown(`## Sum of the first ${n} natural numbers`, `For the first **${n}** natural numbers, use **S = n(n + 1) / 2**.`, `| n | Calculation | Result |\n|---:|---|---:|\n| ${n} | ${n} × (${n} + 1) / 2 | ${total} |`, "```text\nS = n(n + 1) / 2\n```", "This formula assumes the sequence 1, 2, 3, …, n. If your sequence starts at another value, provide the first and last terms.");
+  }
   if (/\bemi\s*filter|electromagnetic\s+interference/.test(q)) {
     return markdown(
       "## EMI filter",
@@ -70,6 +84,17 @@ function localAnswerForUnknownQuery(query: string): string {
       return markdown("## Integral involving sin 60°", "If the question means the constant value **sin 60°**, then **sin 60° = √3/2** and integrating with respect to x gives:", "```text\n∫ sin(60°) dx = ∫ (√3/2) dx = (√3/2)x + C\n```", "> If you meant **∫ sin(x) dx**, the answer is **−cos(x) + C**. The variable of integration changes the result.");
     }
     return markdown("## sin 60°", "For the standard 30°–60°–90° triangle, **sin 60° = opposite / hypotenuse = √3/2 ≈ 0.8660**.", "| Expression | Exact value | Decimal value |\n|---|---:|---:|\n| sin 60° | √3/2 | 0.8660 |", "```mermaid\nflowchart TD\n  Angle[60° angle] --> Triangle[30°–60°–90° triangle]\n  Triangle --> Ratio[Opposite / Hypotenuse]\n  Ratio --> Result[√3 / 2 ≈ 0.8660]\n``` ");
+  }
+  if (/\bbuck\s+converter\b/.test(q)) {
+    return markdown(
+      "## Buck converter",
+      "A buck converter is a step-down DC–DC converter. A high-frequency switch applies the input voltage to an inductor; the inductor, diode or synchronous MOSFET, capacitor, and load smooth the switched waveform into a lower DC output.",
+      "### Ideal continuous-conduction derivation\nDuring the switch-on interval, the inductor voltage is **Vᵢₙ − Vₒ** for duty ratio **D**. During switch-off, it is **−Vₒ**. Volt-second balance gives:\n\n```text\nD(Vin − Vout) + (1 − D)(−Vout) = 0\nVout = D × Vin\n```\n\nTherefore, for an ideal buck converter, **D = Vout/Vin**.",
+      "| Item | Continuous conduction (CCM) | Discontinuous conduction (DCM) |\n|---|---|---|\n| Inductor current | Never reaches zero | Reaches zero each cycle |\n| Ideal voltage relation | Vout ≈ D × Vin | Depends on D, load, L, and frequency |\n| Design assumption | Usually easier to model | Requires a second conduction interval |\n| Ripple control | Select L and C for limits | Check peak current and boundary condition |",
+      "| Component | Selection check |\n|---|---|\n| Switch | Voltage, current, switching loss |\n| Inductor | Saturation current and ripple |\n| Diode/MOSFET | Reverse voltage or conduction loss |\n| Capacitor | Ripple current, ESR, voltage rating |",
+      "```mermaid\nflowchart LR\n  Vin[DC input] --> Switch[High frequency switch]\n  Switch --> Inductor[Inductor]\n  Inductor --> Capacitor[Output capacitor]\n  Capacitor --> Load[Lower DC output]\n  Load --> Feedback[Measure Vout]\n  Feedback --> Control[Adjust duty ratio D]\n  Control --> Switch\n```",
+      "```c\n#include <stdio.h>\n\nint main(void) {\n    double vin = 24.0, vout = 12.0;\n    double duty = vout / vin;\n    printf(\"Ideal duty ratio = %.3f (%.1f%%)\\n\", duty, duty * 100.0);\n    return 0;\n}\n```"
+    );
   }
   if (/\bcad\b|computer\s*-?aided\s+design/.test(q)) {
     return markdown("## CAD software", "Computer-Aided Design (CAD) software is used to create, edit, analyse, and document precise 2D drawings and 3D models.", "| Use | Example output |\n|---|---|\n| Drafting | Plans, sections, dimensions |\n| 3D modelling | Parts, assemblies, surfaces |\n| Engineering analysis | Stress, fluid, thermal, or motion studies |\n| Manufacturing | CNC tool paths and technical drawings |", "```mermaid\nflowchart LR\n  Design[Design intent] --> Model[2D/3D CAD model]\n  Model --> Analyse[Analyse and revise]\n  Analyse --> Document[Drawing or manufacturing output]\n```");
