@@ -1,23 +1,26 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   ArrowLeft,
   BookOpen,
   Download,
-  Eye,
-  FileText,
   ExternalLink,
-  Loader2,
+  FileText,
   Layers,
-  Clock,
+  Loader2,
   Star,
 } from "lucide-react";
 import {
-  getPdfForCode,
   getLessonUrl,
+  getModelPaperUrl,
   getPdfDownloadUrl,
+  getPdfForCode,
+  getRevisionSubjects,
+  getSyllabusUrl,
+  type CurriculumSubject,
   type PdfSubject,
+  type Revision,
 } from "@/lib/polydata";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
@@ -38,216 +41,111 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function isRevision(value: string | null): value is Revision {
+  return value === "2026" || value === "2021" || value === "2015";
+}
+
 export default function SubjectDetail() {
   const { subjectId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [pdf, setPdf] = useState<PdfSubject | null>(null);
+  const [subject, setSubject] = useState<CurriculumSubject | null>(null);
   const [loading, setLoading] = useState(true);
 
   const code = subjectId || "";
+  const selectedRevision = searchParams.get("revision");
+  const revision: Revision = isRevision(selectedRevision) ? selectedRevision : "2026";
+  const programme = searchParams.get("programme") || "";
 
-  const loadPdf = useCallback(async () => {
-    if (!code) { setLoading(false); return; }
-    try {
-      const data = await getPdfForCode(code);
-      setPdf(data);
-    } catch (e) {
-      console.error("Failed to load PDF info:", e);
+  const loadSubject = useCallback(async () => {
+    if (!code) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
-  }, [code]);
+    try {
+      const [revisionSubjects, pdfData] = await Promise.all([
+        getRevisionSubjects(revision),
+        revision === "2026" ? getPdfForCode(code) : Promise.resolve(null),
+      ]);
+      const match = revisionSubjects.find((item) => item.code === code && (!programme || item.programmeCode === programme))
+        || revisionSubjects.find((item) => item.code === code)
+        || null;
+      setSubject(match);
+      setPdf(pdfData);
+    } catch (error) {
+      console.error("Failed to load subject resources:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [code, programme, revision]);
 
-  useEffect(() => { loadPdf(); }, [loadPdf]);
+  useEffect(() => { loadSubject(); }, [loadSubject]);
 
-  const title = pdf ? cleanTitle(pdf.title) : `Subject ${code}`;
-  const lessonUrl = getLessonUrl(code);
-  const pdfUrl = getPdfDownloadUrl(code);
+  const title = subject?.name || (pdf ? cleanTitle(pdf.title) : `Subject ${code}`);
+  const notesUrl = subject?.notesUrl || (revision === "2026" ? getPdfDownloadUrl(code) : "");
+  const lessonUrl = subject?.lessonUrl || getLessonUrl(code, revision);
+  const syllabusUrl = subject?.syllabusUrl || getSyllabusUrl(code, revision);
+  const modelPaperUrl = subject?.modelPaperUrl || getModelPaperUrl(code, revision);
+  const hasPublishedNotes = Boolean(pdf || subject?.notesUrl);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="w-full flex h-14 items-center justify-between px-4 sm:px-6 lg:px-10">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-none">{title}</span>
-            </div>
+        <div className="container flex h-14 items-center justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <button onClick={() => navigate(-1)} aria-label="Go back" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg hover:bg-muted transition-colors"><ArrowLeft className="h-4 w-4" /></button>
+            <div className="flex min-w-0 items-center gap-2"><BookOpen className="h-4 w-4 shrink-0 text-primary" /><span className="truncate text-sm font-semibold">{title}</span></div>
           </div>
+          <span className="hidden rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary sm:block">Revision {revision}</span>
         </div>
       </nav>
 
-      {/* Content */}
-      <div className="w-full px-4 sm:px-6 lg:px-10 py-6">
-        {/* Subject info */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs text-primary font-medium">Code: {code}</span>
-            {pdf && (
-              <span className="text-xs text-muted-foreground">· {pdf.pages} pages · {formatBytes(pdf.bytes)}</span>
-            )}
+      <main className="container py-6 sm:py-8">
+        <motion.header initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="mb-6">
+          <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="font-semibold text-primary">Code: {code}</span>
+            {subject && <><span>·</span><span>{subject.programme}</span><span>·</span><span>{subject.semester}</span><span>·</span><span>{subject.type}</span></>}
+            {pdf && <><span>·</span><span>{pdf.pages} pages · {formatBytes(pdf.bytes)}</span></>}
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-6">{title}</h1>
-        </motion.div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Revision-aware resources for this subject. Official links open the corresponding SITTTR or maintained archive page.</p>
+        </motion.header>
 
-        {/* Action cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
-          {/* Study Notes PDF */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.3 }}
-            className="rounded-xl border border-border bg-card p-5"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-foreground">Study Notes</h3>
-                <p className="text-[11px] text-muted-foreground">
-                  {pdf ? `${pdf.pages} pages · Revision 2026` : "PDF notes"}
-                </p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-              Complete study notes covering all units of this subject, generated from the official Kerala Polytechnic syllabus.
-            </p>
-            <div className="flex items-center gap-2">
-              <Link
-                to={`/pdf?url=${encodeURIComponent(pdfUrl)}&title=${encodeURIComponent(title)}&code=${code}`}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-all"
-              >
-                <Eye className="h-3.5 w-3.5" /> Read Online
-              </Link>
-              <a
-                href={pdfUrl}
-                download
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-all"
-              >
-                <Download className="h-3.5 w-3.5" /> Download PDF
-              </a>
-            </div>
-          </motion.div>
-
-          {/* Lesson Page */}
-          {lessonUrl && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-            className="rounded-xl border border-border bg-card p-5"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
-                <Layers className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-foreground">Lesson Content</h3>
-                <p className="text-[11px] text-muted-foreground">Interactive HTML lesson</p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-              Read the full lesson in your browser — covers all chapters with diagrams, examples, and explanations.
-            </p>
-            <div className="flex items-center gap-2">
-              <Link
-                to={`/lesson?code=${code}&title=${encodeURIComponent(title)}`}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-3 py-2 text-xs font-medium text-white hover:bg-violet-600 transition-all"
-              >
-                <Eye className="h-3.5 w-3.5" /> Read Lesson
-              </Link>
-              <a
-                href={lessonUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-all"
-              >
-                <ExternalLink className="h-3.5 w-3.5" /> Open Full
-              </a>
-            </div>
-          </motion.div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {hasPublishedNotes && (
+            <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.3 }} className="rounded-2xl border border-border bg-card p-5">
+              <div className="mb-3 flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><FileText className="h-5 w-5" /></div><div><h2 className="text-sm font-semibold">Study Notes</h2><p className="text-[11px] text-muted-foreground">{pdf ? `${pdf.pages} pages · ` : "Archive PDF · "}Revision {revision}</p></div></div>
+              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">Download the published subject PDF. Revision 2026 notes are maintained in the POLY PMNA notes archive; Revision 2015 syllabus PDFs come from the archive mapping.</p>
+              <div className="flex gap-2"><Link to={`/pdf?url=${encodeURIComponent(notesUrl)}&title=${encodeURIComponent(title)}&code=${code}`} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"><BookOpen className="h-3.5 w-3.5" /> Read online</Link><a href={notesUrl} download target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-muted"><Download className="h-3.5 w-3.5" /> Download</a></div>
+            </motion.section>
           )}
 
-          {/* Quick Actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.3 }}
-            className="rounded-xl border border-border bg-card p-5"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
-                <Star className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-foreground">More Resources</h3>
-                <p className="text-[11px] text-muted-foreground">Additional study aids</p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-              Access mock exams, question papers, and AI-powered help for this subject.
-            </p>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => navigate("/mock-exams")}
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-all cursor-pointer"
-              >
-                Take Mock Exam
-              </button>
-              <button
-                onClick={() => navigate("/question-papers")}
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-all cursor-pointer"
-              >
-                Question Papers
-              </button>
-            </div>
-          </motion.div>
+          {lessonUrl && (
+            <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.3 }} className="rounded-2xl border border-border bg-card p-5">
+              <div className="mb-3 flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600"><Layers className="h-5 w-5" /></div><div><h2 className="text-sm font-semibold">Lesson Content</h2><p className="text-[11px] text-muted-foreground">Published HTML lesson</p></div></div>
+              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">Read the maintained lesson page in the browser. The card is hidden when the upstream lesson file is unavailable.</p>
+              <div className="flex gap-2"><Link to={`/lesson?code=${encodeURIComponent(code)}&revision=${revision}&title=${encodeURIComponent(title)}`} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-700"><BookOpen className="h-3.5 w-3.5" /> Read lesson</Link><a href={lessonUrl} target="_blank" rel="noopener noreferrer" className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-muted"><ExternalLink className="h-3.5 w-3.5" /> Open full</a></div>
+            </motion.section>
+          )}
+
+          <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }} className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-3 flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><Star className="h-5 w-5" /></div><div><h2 className="text-sm font-semibold">Official Resources</h2><p className="text-[11px] text-muted-foreground">SITTTR curriculum pages</p></div></div>
+            <p className="mb-4 text-xs leading-relaxed text-muted-foreground">Open the syllabus and model-paper pages for this course. Availability depends on the selected revision and the official archive.</p>
+            <div className="flex flex-col gap-2"><a href={syllabusUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-muted"><FileText className="h-3.5 w-3.5" /> Syllabus</a>{modelPaperUrl && <a href={modelPaperUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-muted"><ExternalLink className="h-3.5 w-3.5" /> Model paper</a>}</div>
+          </motion.section>
         </div>
 
-        {/* File info */}
-        {pdf && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.3 }}
-            className="rounded-xl border border-border bg-card p-4"
-          >
-            <h3 className="text-sm font-semibold text-foreground mb-2">File Details</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div>
-                <p className="text-muted-foreground">Pages</p>
-                <p className="font-medium text-foreground">{pdf.pages}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Size</p>
-                <p className="font-medium text-foreground">{formatBytes(pdf.bytes)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Revision</p>
-                <p className="font-medium text-foreground">{pdf.revision}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Code</p>
-                <p className="font-medium text-foreground">{code}</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </div>
+        <section className="mt-5 rounded-2xl border border-border bg-card p-5">
+          <h2 className="text-sm font-semibold">More study tools</h2>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Use question papers, mock exams, and POLY AI to revise this subject.</p>
+          <div className="mt-3 flex flex-wrap gap-2"><button onClick={() => navigate("/question-papers")} className="rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-muted">Question papers</button><button onClick={() => navigate("/mock-exams")} className="rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-muted">Mock exams</button><button onClick={() => navigate("/ask-ai")} className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90">Ask POLY AI</button></div>
+        </section>
+      </main>
     </div>
   );
 }

@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ArrowLeft, ExternalLink, BookOpen, Loader2, AlertCircle } from "lucide-react";
+import { getLessonUrl, type Revision } from "@/lib/polydata";
 
-const DIPLOMA_BASE = "https://raw.githubusercontent.com/nandurpm/diploma-notes/main";
 
 export default function LessonViewer() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const code = searchParams.get("code") || "";
   const title = searchParams.get("title") || "Lesson";
-  const lessonUrl = searchParams.get("url") || (code ? `${DIPLOMA_BASE}/revision-2026-content/lessons/lessons-${code}.html` : "");
+  const requestedRevision = searchParams.get("revision");
+  const revision: Revision = requestedRevision === "2021" || requestedRevision === "2015" || requestedRevision === "2026" ? requestedRevision : "2026";
+  const lessonUrl = searchParams.get("url") || (code ? getLessonUrl(code, revision) : "");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

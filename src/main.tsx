@@ -20,6 +20,7 @@ const SubjectDetail = lazy(() => import("./pages/SubjectDetail.tsx"));
 const PDFViewer = lazy(() => import("./pages/PDFViewer.tsx"));
 const LessonViewer = lazy(() => import("./pages/LessonViewer.tsx"));
 const ResourceHub = lazy(() => import("./pages/ResourceHub.tsx"));
+const CurriculumBrowser = lazy(() => import("./pages/CurriculumBrowser.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
@@ -134,7 +135,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/" element={<Landing />} />
               <Route
                 path="/auth"
-                element={<AuthPage redirectAfterAuth="/dashboard" />}
+                element={<AuthPage redirectAfterAuth="/curriculum" />}
               />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/ask-ai" element={<AskAI />} />
@@ -145,6 +146,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/pdf" element={<PDFViewer />} />
               <Route path="/lesson" element={<LessonViewer />} />
               <Route path="/resources" element={<ResourceHub />} />
+              <Route path="/curriculum" element={<CurriculumBrowser />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

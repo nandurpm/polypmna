@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { generatePolyAiResponse } from "@/lib/polyAi";
 import {
   Send,
   ArrowLeft,
@@ -29,6 +30,7 @@ export default function AskAI() {
   const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [localMessages, setLocalMessages] = useState<{ _id: string; role: "user" | "assistant"; content: string }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -38,23 +40,35 @@ export default function AskAI() {
   );
   const sendMessage = useMutation(api.chat.sendMessage);
   const clearHistory = useMutation(api.chat.clearHistory);
+  const messages = useMemo(() => [...(chatHistory ?? []), ...localMessages], [chatHistory, localMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatHistory]);
+  }, [messages]);
 
   const handleSend = async (text?: string) => {
-    const content = text || input.trim();
-    if (!content || !user || isSending) return;
+    const content = (text ?? input).trim();
+    if (!content || isSending) return;
     setInput("");
     setIsSending(true);
     try {
-      await sendMessage({ userId: user._id, content });
-    } catch (e) {
-      console.error(e);
+      if (user) {
+        await sendMessage({ userId: user._id, content });
+      } else {
+        throw new Error("Anonymous session is not ready");
+      }
+    } catch (error) {
+      console.warn("Using local POLY AI fallback:", error);
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setLocalMessages((current) => [
+        ...current,
+        { _id: `${id}-user`, role: "user", content },
+        { _id: `${id}-assistant`, role: "assistant", content: generatePolyAiResponse(content) },
+      ]);
+    } finally {
+      setIsSending(false);
+      inputRef.current?.focus();
     }
-    setIsSending(false);
-    inputRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -65,9 +79,14 @@ export default function AskAI() {
   };
 
   const handleClear = async () => {
-    if (!user) return;
-    if (window.confirm("Clear all chat history?")) {
-      await clearHistory({ userId: user._id });
+    if (!window.confirm("Clear all chat history?")) return;
+    setLocalMessages([]);
+    if (user) {
+      try {
+        await clearHistory({ userId: user._id });
+      } catch (error) {
+        console.warn("Could not clear server history:", error);
+      }
     }
   };
 
@@ -95,7 +114,7 @@ export default function AskAI() {
               </div>
             </div>
           </div>
-          {chatHistory && chatHistory.length > 0 && (
+          {messages.length > 0 && (
             <button
               onClick={handleClear}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
@@ -110,7 +129,7 @@ export default function AskAI() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-6">
-          {(!chatHistory || chatHistory.length === 0) && (
+          {messages.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -142,12 +161,12 @@ export default function AskAI() {
             </motion.div>
           )}
 
-          {chatHistory?.map((msg: { _id: string; role: string; content: string }, i: number) => (
+          {messages.map((msg: { _id: string; role: string; content: string }, i: number) => (
             <motion.div
               key={msg._id}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i === chatHistory.length - 1 ? 0.05 : 0, duration: 0.25 }}
+              transition={{ delay: i === messages.length - 1 ? 0.05 : 0, duration: 0.25 }}
               className={`flex gap-3 mb-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "assistant" && (
