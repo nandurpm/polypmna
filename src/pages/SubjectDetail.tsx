@@ -86,7 +86,7 @@ export default function SubjectDetail() {
   const notesUrl = subject?.notesUrl || (revision === "2026" ? getPdfDownloadUrl(code) : "");
   const lessonUrl = subject?.lessonUrl || getLessonUrl(code, revision);
   const syllabusUrl = subject?.syllabusUrl || getSyllabusUrl(code, revision);
-  const modelPaperUrl = subject?.modelPaperUrl || getModelPaperUrl(code, revision);
+  const modelPaperUrl = subject?.modelPaperUrl || (revision === "2015" ? "" : getModelPaperUrl(code, revision));
   const hasPublishedNotes = Boolean(pdf || subject?.notesUrl);
 
   if (loading) {
