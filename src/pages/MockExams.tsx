@@ -102,14 +102,14 @@ export default function MockExams() {
       return (
         <div className="min-h-screen bg-background flex flex-col">
           <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-            <div className="mx-auto flex h-14 max-w-2xl items-center px-4">
+            <div className="mx-auto flex h-14 max-w-5xl items-center px-4">
               <button onClick={() => { setActiveExam(null); }} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                 <ArrowLeft className="h-4 w-4" /> Back to Exams
               </button>
             </div>
           </nav>
           <div className="flex-1 flex items-center justify-center px-4">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, ease }} className="text-center max-w-md w-full">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, ease }} className="text-center max-w-3xl w-full">
               <div className="flex justify-center mb-4">
                 <div className={`flex h-20 w-20 items-center justify-center rounded-full ${percentage >= 60 ? "bg-emerald-500/10" : "bg-rose-500/10"}`}>
                   <Trophy className={`h-10 w-10 ${percentage >= 60 ? "text-emerald-600" : "text-rose-600"}`} />
@@ -144,7 +144,7 @@ export default function MockExams() {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-          <div className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
+          <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
             <button onClick={() => { setActiveExam(null); setCurrentQ(0); }} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
               <ArrowLeft className="h-4 w-4" /> Exit
             </button>
@@ -159,7 +159,7 @@ export default function MockExams() {
           </div>
         </nav>
 
-        <div className="flex-1 mx-auto max-w-2xl px-4 py-8">
+        <div className="flex-1 mx-auto max-w-5xl px-4 py-8">
           <motion.div key={currentQ} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease }}>
             <p className="text-xs text-muted-foreground mb-2">Question {currentQ + 1} of {total}</p>
             <h3 className="text-lg font-semibold text-foreground leading-relaxed mb-6">{q.question}</h3>
@@ -185,7 +185,7 @@ export default function MockExams() {
         </div>
 
         <div className="border-t border-border bg-background/80 backdrop-blur-xl">
-          <div className="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
+          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
             <button disabled={currentQ === 0} onClick={() => setCurrentQ((c) => c - 1)} className="rounded-xl border border-border/60 bg-card px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
               Previous
             </button>
@@ -237,9 +237,9 @@ export default function MockExams() {
         </div>
 
         {/* Exam cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {filteredExams.length === 0 && (
-            <div className="sm:col-span-2 lg:col-span-3 rounded-2xl border border-border/60 bg-card p-12 text-center">
+            <div className="sm:col-span-2 lg:col-span-4 rounded-2xl border border-border/60 bg-card p-12 text-center">
               <FileText className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
               <p className="text-muted-foreground">
                 {selectedSem !== null ? `No exams available for Semester ${selectedSem} yet.` : "No exams available yet."}

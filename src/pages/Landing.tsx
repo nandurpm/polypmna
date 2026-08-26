@@ -263,7 +263,8 @@ export default function Landing() {
               <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-primary/[0.05] blur-3xl" />
               <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-primary/[0.04] blur-3xl" />
             </div>
-            <div className="relative">
+            <div className="relative grid items-center gap-8 sm:grid-cols-[minmax(0,1.2fr)_minmax(250px,0.8fr)]">
+              <div>
               <p className="text-sm font-medium text-primary/80 mb-1.5">{greeting()}, Student</p>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
                 Your Polytechnic Study Space
@@ -302,6 +303,32 @@ export default function Landing() {
                   ))}
                 </div>
               )}
+              </div>
+              <aside className="hidden sm:block rounded-2xl border border-primary/10 bg-card/80 p-5 shadow-sm backdrop-blur-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary/70">Directory at a glance</p>
+                    <h2 className="mt-1 text-lg font-semibold">Three revision pathways</h2>
+                  </div>
+                  <GitBranch className="h-5 w-5 text-primary/70" />
+                </div>
+                <div className="mt-5 space-y-2">
+                  {[
+                    ["2026", "Current curriculum", "2,485 subjects"],
+                    ["2021", "Full archive", "44 departments"],
+                    ["2015", "Official archive", "21 departments"],
+                  ].map(([year, label, count]) => (
+                    <div key={year} className="flex items-center gap-3 rounded-xl bg-muted/50 px-3 py-2.5">
+                      <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{year}</span>
+                      <span className="min-w-0 flex-1 text-xs font-medium text-foreground">{label}</span>
+                      <span className="text-[11px] text-muted-foreground">{count}</span>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => navigate("/curriculum")} className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80">
+                  Explore every department <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              </aside>
             </div>
           </section>
 

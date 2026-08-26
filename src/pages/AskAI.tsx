@@ -103,7 +103,7 @@ export default function AskAI() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
@@ -137,13 +137,13 @@ export default function AskAI() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 py-6">
+        <div className="mx-auto max-w-6xl px-4 py-6">
           {messages.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease }}
-              className="flex flex-col items-center justify-center py-16 text-center"
+              className="flex flex-col items-center justify-center py-8 sm:py-12 text-center"
             >
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500/15 to-orange-500/10 border border-amber-500/15 mb-4">
                 <Bot className="h-8 w-8 text-amber-600" />
@@ -151,11 +151,11 @@ export default function AskAI() {
               <h2 className="text-xl font-bold text-foreground">
                 Welcome to POLY AI
               </h2>
-              <p className="mt-2 text-sm text-muted-foreground max-w-md leading-relaxed">
+              <p className="mt-2 text-sm text-muted-foreground max-w-2xl leading-relaxed">
                 Your personal AI study assistant for Kerala Polytechnic. Ask doubts, understand concepts,
                 get explanations in simple language, and prepare for exams.
               </p>
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2 w-full max-w-3xl">
                 {quickPrompts.map((prompt) => (
                   <button
                     key={prompt}
@@ -184,10 +184,10 @@ export default function AskAI() {
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-md"
-                    : "bg-card border border-border/60 text-foreground rounded-bl-md"
+                    ? "ml-auto max-w-[92%] bg-primary text-primary-foreground rounded-br-md"
+                    : "flex-1 min-w-0 w-full max-w-5xl bg-card border border-border/60 text-foreground rounded-bl-md"
                 }`}
               >
                 <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -220,7 +220,7 @@ export default function AskAI() {
 
       {/* Input */}
       <div className="border-t border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-3xl px-4 py-3">
+        <div className="mx-auto max-w-6xl px-4 py-3">
           <div className="flex items-end gap-2 rounded-2xl border border-border/60 bg-card px-4 py-2 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10 transition-all">
             <textarea
               ref={inputRef}
