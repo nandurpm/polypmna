@@ -13,6 +13,16 @@ export function isLeakedPolyAiResponse(response: string): boolean {
   return /thinking\s+process|analyze\s+user\s+input|determine\s+response\s+style|let\s+(?:me\s+)?draft/i.test(response);
 }
 
+export function isGenericPolyAiResponse(response: string): boolean {
+  return /exam preparation strategy|that's a great question|i can help (?:with|explain) kerala polytechnic|what specific topic would you like me to explain|please include the subject name or topic/i.test(response);
+}
+
+export function isFocusedPolyAiQuery(query: string): boolean {
+  const q = query.toLowerCase();
+  return isCurriculumDatabaseQuery(query)
+    || /\b(ohm|binary\s+tree|sql|nosql|transistor|bjt|mosfet|diode|pn\s*junction|zener|rectifier|led|amplifier|op\s*-?amp|capacitor|inductor|resistor|kcl|kvl|kirchhoff|bending\s+moment|shear\s+force|four\s+stroke|data\s+structure|stack|queue|linked\s+list)\b/.test(q);
+}
+
 export function sanitizePolyAiResponse(response: string): string {
   let cleaned = response.trim();
   const heading = /(?:^|\n|\*\*)\s*(?:let\s+(?:me\s+)?draft|final\s+answer|answer)\s*:\s*\**/im.exec(cleaned);
