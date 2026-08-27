@@ -25,7 +25,7 @@ const providers = {
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
     models: csvModels(
       process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL,
-      "openrouter/free,nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free",
+      "nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free",
     ),
     headers: {
       "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",

@@ -203,7 +203,7 @@ export const chatCompletion = action({
         apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
         endpoint: "https://openrouter.ai/api/v1/chat/completions",
         models: Array.from(new Set(
-          (process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL || "openrouter/free,nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free")
+          (process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free")
             .split(",")
             .map((model) => model.trim())
             .filter(Boolean)
