@@ -26,6 +26,8 @@ jobs:
           node-version: 22
 
       - name: Measure NVIDIA and OpenRouter latency
+        id: latency
+        continue-on-error: true
         env:
           NVIDIA_API_KEY: ${{ secrets.NVDIA_API || secrets.NVIDIA_API || secrets.NVIDIA_API_KEY }}
           NVIDIA_MODEL: nvidia/nemotron-3.5-lightning-30b-a3b
@@ -45,3 +47,9 @@ jobs:
           else
             echo "OpenRouter usage check skipped: no OpenRouter secret is configured."
           fi
+
+      - name: Preserve latency alert status
+        if: steps.latency.outcome == 'failure'
+        run: |
+          echo "Provider latency monitor detected one or more provider failures; inspect the latency output above." >> "$GITHUB_STEP_SUMMARY"
+          exit 1

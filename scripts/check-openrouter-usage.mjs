@@ -4,7 +4,9 @@ const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API;
 const freeDailyLimit = Number(process.env.OPENROUTER_FREE_DAILY_LIMIT || 50);
 
 if (!apiKey) {
-  console.error("OpenRouter usage check skipped: set OPENROUTER_API_KEY in the local environment.");
+  console.error(
+    "OpenRouter usage check skipped: set OPENROUTER_API_KEY in the local environment.",
+  );
   process.exit(2);
 }
 

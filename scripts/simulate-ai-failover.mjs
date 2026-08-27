@@ -4,17 +4,34 @@ const scenarios = [
   {
     name: "rate-limit then NVIDIA success",
     providers: [
-      { name: "OpenRouter (cohere/north-mini-code:free)", status: 429, retryAfter: "2" },
+      {
+        name: "OpenRouter (cohere/north-mini-code:free)",
+        status: 429,
+        retryAfter: "2",
+      },
       { name: "OpenRouter (google/gemma-4-31b-it:free)", status: 503 },
-      { name: "NVIDIA (nvidia/nemotron-3.5-lightning-30b-a3b)", status: 200, content: "KVL states that the algebraic sum of voltages around a closed loop is zero." },
+      {
+        name: "NVIDIA (nvidia/nemotron-3.5-lightning-30b-a3b)",
+        status: 200,
+        content:
+          "KVL states that the algebraic sum of voltages around a closed loop is zero.",
+      },
     ],
     expectedProvider: "NVIDIA (nvidia/nemotron-3.5-lightning-30b-a3b)",
   },
   {
     name: "all providers unavailable then offline answer",
     providers: [
-      { name: "OpenRouter (cohere/north-mini-code:free)", status: 429, retryAfter: "1" },
-      { name: "OpenRouter (google/gemma-4-31b-it:free)", status: 429, retryAfter: "1" },
+      {
+        name: "OpenRouter (cohere/north-mini-code:free)",
+        status: 429,
+        retryAfter: "1",
+      },
+      {
+        name: "OpenRouter (google/gemma-4-31b-it:free)",
+        status: 429,
+        retryAfter: "1",
+      },
       { name: "NVIDIA (nvidia/nemotron-3.5-lightning-30b-a3b)", status: 504 },
     ],
     expectedProvider: "OFFLINE_FALLBACK",
@@ -50,7 +67,8 @@ async function runScenario(scenario) {
   return {
     selected: "OFFLINE_FALLBACK",
     attempts,
-    content: "Offline technical fallback answer selected after all configured providers failed.",
+    content:
+      "Offline technical fallback answer selected after all configured providers failed.",
   };
 }
 
@@ -61,4 +79,6 @@ for (const scenario of scenarios) {
   if (!passed) process.exitCode = 1;
 }
 
-console.log("Simulation complete. No network request, API key, or provider quota was used.");
+console.log(
+  "Simulation complete. No network request, API key, or provider quota was used.",
+);
