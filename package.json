@@ -13,6 +13,8 @@
     "test:run": "vitest run",
     "test:watch": "vitest",
     "check:resources": "node scripts/check-public-resources.mjs",
+    "check:openrouter-usage": "node scripts/check-openrouter-usage.mjs",
+    "simulate:ai-failover": "node scripts/simulate-ai-failover.mjs",
     "monitor:ai": "node scripts/monitor-ai-providers.mjs both",
     "report:ai": "node scripts/generate-ai-health-report.mjs"
   },
