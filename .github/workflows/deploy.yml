@@ -52,6 +52,15 @@ jobs:
             cp dist/index.html "dist/$route/index.html"
           done
 
+      # The build keeps /polypmna/ as its canonical asset base for GitHub's
+      # project site. Mirror the generated assets and public files there too,
+      # so the same artifact also works at a custom-domain root (/).
+      - name: Mirror project-base assets for custom domain
+        run: |
+          mkdir -p dist/polypmna
+          find dist -maxdepth 1 -type f -exec cp -f {} dist/polypmna/ \;
+          if [ -d dist/assets ]; then cp -a dist/assets dist/polypmna/; fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

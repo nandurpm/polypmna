@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router";
+import { getRuntimeBasePath } from "../lib/siteBase";
 
 type SeoConfig = {
   title: string;
@@ -101,7 +102,8 @@ export default function SeoHead() {
 
   useEffect(() => {
     const seo = getSeo(location.pathname);
-    const canonicalUrl = new URL(`${import.meta.env.BASE_URL.replace(/\/$/, "")}${location.pathname}${location.search}`, window.location.origin).toString();
+    const basePath = getRuntimeBasePath().replace(/\/$/, "");
+    const canonicalUrl = new URL(`${basePath}${location.pathname}${location.search}`, window.location.origin).toString();
 
     document.title = seo.title;
     setMeta("description", seo.description);

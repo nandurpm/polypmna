@@ -5,6 +5,7 @@ import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import SeoHead from "./components/SeoHead";
+import { getRuntimeBasePath } from "./lib/siteBase";
 import "./index.css";
 
 // Lazy load route components for better code splitting
@@ -66,15 +67,16 @@ class RootErrorBoundary extends React.Component<
 
 function normalizeLegacyHashRoute() {
   if (!window.location.hash.startsWith("#/")) return;
-  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const base = getRuntimeBasePath().replace(/\/$/, "");
   const target = window.location.hash.slice(1);
   window.history.replaceState(null, "", `${base}${target}`);
 }
 
-normalizeLegacyHashRoute();
-
 // Static builds must provide their own backend URL. Do not silently connect
 // forks or alternate deployments to the POLY PMNA production database.
+const runtimeBasePath = getRuntimeBasePath();
+normalizeLegacyHashRoute();
+
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 if (!convexUrl) {
   throw new Error("VITE_CONVEX_URL is required for this deployment");
@@ -121,7 +123,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RootErrorBoundary>
       <ConvexAuthProvider client={convex}>
-        <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <BrowserRouter basename={runtimeBasePath}>
           <RouteSyncer />
           <SeoHead />
           <Suspense fallback={<RouteLoading />}>
