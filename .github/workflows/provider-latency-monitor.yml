@@ -32,5 +32,5 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API || secrets.OPENROUTER_API_KEY }}
           OPENROUTER_MODELS: ${{ vars.OPENROUTER_MODELS || secrets.OPENROUTER_MODELS }}
           POLY_AI_SITE_URL: https://nandurpm.github.io/polypmna/
-          AI_MONITOR_TIMEOUT_MS: 120000
+          AI_MONITOR_TIMEOUT_MS: 30000
         run: node scripts/monitor-ai-providers.mjs both

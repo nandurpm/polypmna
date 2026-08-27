@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 const requested = process.argv[2] || "both";
-const timeoutMs = Number(process.env.AI_MONITOR_TIMEOUT_MS || 120_000);
+const configuredTimeoutMs = Number(process.env.AI_MONITOR_TIMEOUT_MS || 30_000);
+const timeoutMs = Number.isFinite(configuredTimeoutMs) ? Math.min(Math.max(configuredTimeoutMs, 5_000), 120_000) : 30_000;
 const query = "In two sentences, explain binary search complexity for a Kerala Polytechnic student.";
 const system = "You are POLY AI. Answer accurately and concisely for Kerala Polytechnic students.";
 
