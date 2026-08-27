@@ -89,11 +89,14 @@ type Provider = {
   name: string;
   apiKey: string | undefined;
   endpoint: string;
-  model: string;
+  model?: string;
+  models?: string[];
   headers?: Record<string, string>;
+  providerOptions?: Record<string, unknown>;
 };
 
 type CompletionResponse = {
+  model?: string;
   choices?: Array<{
     message?: {
       content?: string | Array<{ text?: string }>;
@@ -108,7 +111,7 @@ function extractContent(payload: CompletionResponse): string {
   return "";
 }
 
-async function callProvider(provider: Provider, messages: Array<{ role: "user" | "assistant" | "system"; content: string }>): Promise<string> {
+async function callProvider(provider: Provider, messages: Array<{ role: "user" | "assistant" | "system"; content: string }>): Promise<{ content: string; model?: string }> {
   if (!provider.apiKey) throw new Error(`${provider.name} is not configured`);
 
   const response = await fetch(provider.endpoint, {
@@ -119,7 +122,8 @@ async function callProvider(provider: Provider, messages: Array<{ role: "user" |
       ...provider.headers,
     },
     body: JSON.stringify({
-      model: provider.model,
+      ...(provider.model ? { model: provider.model } : {}),
+      ...(provider.models ? { models: provider.models } : {}),
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "system", content: ANSWER_QUALITY_PROMPT },
@@ -128,6 +132,7 @@ async function callProvider(provider: Provider, messages: Array<{ role: "user" |
       max_tokens: 2400,
       temperature: 0.35,
       stream: false,
+      ...(provider.providerOptions ? { provider: provider.providerOptions } : {}),
     }),
   });
 
@@ -136,9 +141,10 @@ async function callProvider(provider: Provider, messages: Array<{ role: "user" |
     throw new Error(`${provider.name} API error (${response.status}): ${details}`);
   }
 
-  const content = extractContent((await response.json()) as CompletionResponse);
+  const payload = (await response.json()) as CompletionResponse;
+  const content = extractContent(payload);
   if (!content) throw new Error(`${provider.name} returned an empty response`);
-  return content;
+  return { content, model: payload.model };
 }
 
 export const chatCompletion = action({
@@ -178,9 +184,18 @@ export const chatCompletion = action({
         name: "OpenRouter",
         apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
         endpoint: "https://openrouter.ai/api/v1/chat/completions",
-        model: process.env.OPENROUTER_MODEL || "openrouter/free",
+        models: Array.from(new Set(
+          (process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL || "openrouter/free,nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free")
+            .split(",")
+            .map((model) => model.trim())
+            .filter(Boolean)
+        )),
+        providerOptions: {
+          allow_fallbacks: true,
+        },
         headers: {
           "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
+          "X-OpenRouter-Title": "POLY PMNA Study Materials",
           "X-Title": "POLY PMNA Study Materials",
         },
       },
@@ -193,7 +208,14 @@ export const chatCompletion = action({
         continue;
       }
       try {
-        return await callProvider(provider, args.messages);
+        const startedAt = Date.now();
+        const result = await callProvider(provider, args.messages);
+        console.info("[POLY AI] provider_success", {
+          provider: provider.name,
+          model: result.model || provider.model || provider.models?.[0] || "unknown",
+          durationMs: Date.now() - startedAt,
+        });
+        return result.content;
       } catch (error) {
         const msg = error instanceof Error ? error.message : `${provider.name} request failed`;
         errors.push(msg);

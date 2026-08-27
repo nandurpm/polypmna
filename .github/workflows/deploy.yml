@@ -87,10 +87,14 @@ jobs:
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API || secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODELS: ${{ vars.OPENROUTER_MODELS || secrets.OPENROUTER_MODELS }}
           NVIDIA_API_KEY: ${{ secrets.NVDIA_API || secrets.NVIDIA_API || secrets.NVIDIA_API_KEY }}
         run: |
           if [ -n "$OPENROUTER_API_KEY" ]; then
             printf '%s' "$OPENROUTER_API_KEY" | bunx convex env set --prod OPENROUTER_API_KEY
+          fi
+          if [ -n "$OPENROUTER_MODELS" ]; then
+            printf '%s' "$OPENROUTER_MODELS" | bunx convex env set --prod OPENROUTER_MODELS
           fi
           if [ -n "$NVIDIA_API_KEY" ]; then
             printf '%s' "$NVIDIA_API_KEY" | bunx convex env set --prod NVIDIA_API_KEY
