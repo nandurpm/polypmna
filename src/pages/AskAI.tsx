@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
+const AI_PROVIDER_TIMEOUT_MS = 100_000;
 
 const quickPrompts = [
   "Explain Ohm's Law in simple terms",
@@ -141,7 +142,7 @@ export default function AskAI() {
       } else try {
         const providerRawAnswer = await Promise.race<string>([
           chatCompletion({ messages: [...historyMessages, { role: "user", content }] }),
-          new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out")), 18000)),
+          new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out after 100 seconds")), AI_PROVIDER_TIMEOUT_MS)),
         ]);
         const providerAnswer = sanitizePolyAiResponse(providerRawAnswer);
         if (!providerAnswer || isLeakedPolyAiResponse(providerAnswer)) {

@@ -41,8 +41,21 @@ describe("POLY AI scope guard", () => {
     "Explain the history of the transistor.",
     "Explain stress concentration in structural analysis.",
     "Who invented the transistor?",
+    "Explain why a transformer requires alternating current.",
+    "Explain how a boiler works.",
+    "What is a heat exchanger used for?",
   ])("does not refuse a broad but valid technical question: %j", (prompt) => {
     expect(isPolyAiQueryInScope(prompt)).toBe(true);
     expect(generatePolyAiResponse(prompt)).not.toBe(POLY_AI_SCOPE_RESPONSE);
+  });
+
+  it.each([
+    ["Explain why a transformer requires alternating current.", "Transformer working principle"],
+    ["Explain how a boiler works.", "Boiler working principle"],
+    ["What is a heat exchanger used for?", "Heat exchanger"],
+  ])("provides a substantive offline answer for %j", (prompt, heading) => {
+    const answer = generatePolyAiResponse(prompt);
+    expect(answer).toContain(`## ${heading}`);
+    expect(answer.length).toBeGreaterThan(200);
   });
 });

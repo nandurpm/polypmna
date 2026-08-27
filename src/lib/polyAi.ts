@@ -95,6 +95,35 @@ function localAnswerForUnknownQuery(query: string): string {
     const total = n * (n + 1) / 2;
     return markdown(`## Sum of the first ${n} natural numbers`, `For the first **${n}** natural numbers, use **S = n(n + 1) / 2**.`, `| n | Calculation | Result |\n|---:|---|---:|\n| ${n} | ${n} × (${n} + 1) / 2 | ${total} |`, "```text\nS = n(n + 1) / 2\n```", "This formula assumes the sequence 1, 2, 3, …, n. If your sequence starts at another value, provide the first and last terms.");
   }
+  if (/\btransformer\b/.test(q)) {
+    return markdown(
+      "## Transformer working principle",
+      "A transformer is a static electrical device that transfers alternating-current power between windings through mutual electromagnetic induction. An alternating primary current creates a changing magnetic flux in the core, which induces an EMF in the secondary winding.",
+      ["```text", "V₂ / V₁ = N₂ / N₁", "", "V₁, V₂ = primary and secondary RMS voltages", "N₁, N₂ = primary and secondary turns", "```"].join("\n"),
+      "| Part | Function |\n|---|---|\n| Laminated iron core | Provides a low-reluctance magnetic path and reduces eddy-current loss |\n| Primary winding | Receives the AC input |\n| Secondary winding | Delivers the transformed AC output |\n| Insulation and tank | Provides electrical isolation, cooling, and safety |",
+      "```mermaid\nflowchart LR\n  AC[AC supply] --> Primary[Primary winding N₁]\n  Primary --> Flux[Changing core flux Φ]\n  Flux --> Secondary[Secondary winding N₂]\n  Secondary --> Load[Electrical load]\n```",
+      "A transformer requires changing flux, so ordinary DC cannot sustain transformer action after the switching transient. For a step-up transformer N₂ > N₁; for a step-down transformer N₂ < N₁. In practice, check insulation, frequency, VA rating, regulation, cooling, and protection.",
+    );
+  }
+  if (/\bboiler\b/.test(q)) {
+    return markdown(
+      "## Boiler working principle",
+      "A boiler converts the chemical or electrical energy supplied to a heat source into thermal energy in water, producing hot water or steam at a controlled pressure. The steam can drive a turbine, provide process heat, or support heating systems.",
+      "| Main part | Function |\n|---|---|\n| Furnace or heating element | Supplies heat |\n| Water tubes or shell | Transfers heat to water |\n| Steam drum | Separates steam from water in drum-type boilers |\n| Safety valve | Releases pressure if it exceeds the safe limit |\n| Feed pump | Supplies treated water at the required pressure |",
+      ["```mermaid", "flowchart LR", "  Fuel[Fuel or electrical heat] --> Furnace[Heat release]", "  Feed[Feed-water pump] --> Boiler[Boiler heat-transfer surfaces]", "  Furnace --> Boiler", "  Boiler --> Steam[Steam generation]", "  Steam --> Process[Process heat or turbine]", "```"].join("\n"),
+      "Important checks include feed-water treatment, level control, pressure control, blowdown, combustion efficiency, and safety-valve testing. Never operate a pressurized boiler without approved protection and trained supervision.",
+    );
+  }
+  if (/\bheat\s+exchanger\b/.test(q)) {
+    return markdown(
+      "## Heat exchanger",
+      "A heat exchanger transfers thermal energy between two fluids at different temperatures, normally without allowing them to mix. Heat flows from the hot fluid to the cold fluid through a separating wall.",
+      ["```text", "Q = U A ΔTₗₘ", "", "Q       = heat-transfer rate", "U       = overall heat-transfer coefficient", "A       = heat-transfer area", "ΔTₗₘ    = log-mean temperature difference", "```"].join("\n"),
+      "| Type | Flow arrangement | Typical feature |\n|---|---|---|\n| Parallel flow | Both fluids enter from the same end | Large initial temperature difference |\n| Counterflow | Fluids move in opposite directions | Usually better temperature effectiveness |\n| Shell-and-tube | Tubes inside a shell | Common in industrial service |\n| Plate | Thin plates form alternating channels | Compact and easy to expand |",
+      ["```mermaid", "flowchart LR", "  HotIn[Hot fluid in] --> Wall[Conducting wall] --> HotOut[Hot fluid out]", "  ColdIn[Cold fluid in] --> Wall --> ColdOut[Cold fluid out]", "```"].join("\n"),
+      "Design checks include fouling resistance, pressure drop, material compatibility, leakage, thermal expansion, and the required outlet temperatures.",
+    );
+  }
   if (/\bemi\s*filter|electromagnetic\s+interference/.test(q)) {
     return markdown(
       "## EMI filter",
