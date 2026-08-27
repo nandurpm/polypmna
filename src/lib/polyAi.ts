@@ -11,8 +11,10 @@ I’m POLY AI, a Kerala Polytechnic study assistant. I can help with Polytechnic
 
 Please ask a Polytechnic-related question.`;
 
-const BLOCKED_SCOPE_PATTERN = /\b(politic|politician|election|news|current\s+affairs|celebrity|movie|film|entertainment|music|song|sport|cricket|football|history|geography|life\s+advice|porn|pornography|sexual|sex|nude|nudity|crime|criminal|murder|weapon|terror|offen[cs]e)\b/i;
-const POLYTECHNIC_CONTEXT_PATTERN = /\b(kerala\s+polytechnic|polytechnic|diploma|curriculum|syllabus|revision\s*(?:2026|2021|2015)?|semester|subject|course|model\s*paper|question\s*paper|exam|laboratory|lab\s*work|engineering|technical|circuit|algorithm|programming|program|code|database|sql|data\s+structure|electronics?|electrical|mechanical|civil|automobile|instrumentation|communication|computer|physics|chemistry|mathematics|calculus|integral|derivative|trigonometry|matrix|formula|numerical|student\s+marks?|marks\s+calculator|average\s+calculation|grade|kirchhoff|voltage\s+law|current\s+law|resistor|resistance|series|parallel|equivalent\s+resistance|diode|transistor|mosfet|amplifier|op\s*-?amp|kcl|kvl|buck\s+converter|emi\s+filter|bending\s+moment|four\s*stroke|thermodynamics?|fluid\s+mechanics?|strength\s+of\s+materials?|materials?\s+science|manufacturing|workshop|machine\s+design|engineering\s+drawing|surveying|construction|statics|dynamics|kinematics|kinetics|force|torque|stress|strain|welding|lathe|cnc|cad|robotics|renewable\s+energy|solar|power\s+electronics|transformer|motor|generator|relay|plc|microprocessor|microcontroller|control\s+system|signals?\s+and\s+systems|digital\s+logic|analog|semiconductor|telecommunication|operating\s+system|computer\s+network|networking|cybersecurity|embedded|linux|object[-\s]+oriented|compiler|html|css|javascript|java|python|c\+\+|machine\s+learning|internet\s+of\s+things|iot)\b/i;
+const HARD_BLOCKED_SCOPE_PATTERN = /\b(politic|politician|election|news|current\s+affairs|celebrity|movie|film|entertainment|music|song|sport|cricket|football|porn|pornographic|pornography|sexual|sexually|nude|nudity|murder|terror|terrorism|weapon|offen[cs]e|crime|criminal)\b/i;
+const CONTEXTUAL_BLOCKED_SCOPE_PATTERN = /\b(history|geography|life\s+advice)\b/i;
+const GENERAL_KNOWLEDGE_PATTERN = /\b(?:who\s+is|who\s+was|what\s+is\s+the\s+(?:capital|currency|national\s+animal|national\s+flower)|which\s+(?:country|planet|state|ocean|river)|how\s+many\s+continents|largest\s+state|smallest\s+state|fastest\s+land\s+animal|highest\s+mountain|first\s+person\s+to\s+walk\s+on\s+the\s+moon|invented\s+the\s+telephone)\b/i;
+const POLYTECHNIC_CONTEXT_PATTERN = /\b(kerala\s+polytechnic|polytechnic|diploma|curriculum|syllabus|revision\s*(?:2026|2021|2015)?|semester|subject|course|model\s*paper|question\s*paper|exam|laboratory|lab\s*work|engineering|technical|circuit|algorithm|programming|program|code|database|sql|data\s+structure|electronics?|electrical|mechanical|civil|automobile|instrumentation|communication|computer|physics|chemistry|mathematics|calculus|integral|derivative|trigonometry|matrix|formula|numerical|student\s+marks?|marks\s+calculator|average\s+calculation|grade|kirchhoff|voltage\s+law|current\s+law|resistor|resistance|series|parallel|equivalent\s+resistance|diode|transistor|mosfet|amplifier|op\s*-?amp|kcl|kvl|buck\s+converter|emi\s+filter|bending\s+moment|four\s*stroke|thermodynamics?|boiler|heat\s+exchanger|turbine|pump|compressor|refrigeration|hvac|fluid\s+mechanics?|hydraulics?|strength\s+of\s+materials?|materials?\s+science|manufacturing|workshop|machine\s+design|gear|bearing|casting|forging|nuclear|engineering\s+drawing|surveying|construction|statics|dynamics|kinematics|kinetics|force|torque|stress|strain|welding|lathe|cnc|cad|robotics|renewable\s+energy|solar|power\s+electronics|transformer|motor|generator|relay|plc|microprocessor|microcontroller|control\s+system|signals?\s+and\s+systems|digital\s+logic|analog|semiconductor|telecommunication|operating\s+system|computer\s+network|networking|cybersecurity|embedded|linux|object[-\s]+oriented|compiler|html|css|javascript|java|python|c\+\+|machine\s+learning|internet\s+of\s+things|iot)\b/i;
 const GREETING_PATTERN = /^\s*(?:hi|hello|hey|namaste|good\s+(?:morning|afternoon|evening))[.!? ]*$/i;
 const THANKS_PATTERN = /^\s*(?:thanks?|thank\s+you|thankyou)[.!? ]*$/i;
 const BASIC_ARITHMETIC_PATTERN = /^\s*(?:what\s+is\s+)?(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)\s*[?!. ]*$/i;
@@ -23,9 +25,20 @@ export function isPolyAiUtilityQuery(query: string): boolean {
 
 export function isPolyAiQueryInScope(query: string): boolean {
   const q = query.trim();
-  if (!q || BLOCKED_SCOPE_PATTERN.test(q)) return false;
+  if (!q || HARD_BLOCKED_SCOPE_PATTERN.test(q)) return false;
   if (isPolyAiUtilityQuery(q)) return true;
-  return POLYTECHNIC_CONTEXT_PATTERN.test(q);
+
+  // A clear Polytechnic context takes precedence over incidental words such as
+  // “history” in “history of the transistor.” The server prompt remains the
+  // final scope authority for ambiguous requests.
+  if (POLYTECHNIC_CONTEXT_PATTERN.test(q)) return true;
+  if (CONTEXTUAL_BLOCKED_SCOPE_PATTERN.test(q) || GENERAL_KNOWLEDGE_PATTERN.test(q)) return false;
+  return true;
+}
+
+export function isPolyAiLocalFallbackAllowed(query: string): boolean {
+  const q = query.trim();
+  return isPolyAiUtilityQuery(q) || POLYTECHNIC_CONTEXT_PATTERN.test(q);
 }
 
 export function isCurriculumDatabaseQuery(query: string): boolean {
@@ -46,23 +59,6 @@ export function isFocusedPolyAiQuery(query: string): boolean {
   const q = query.toLowerCase();
   return isCurriculumDatabaseQuery(query)
     || /\b(ohm|binary\s+tree|sql|nosql|transistor|bjt|mosfet|diode|pn\s*junction|zener|rectifier|led|amplifier|op\s*-?amp|capacitor|inductor|resistor|kcl|kvl|kirchhoff|bending\s+moment|shear\s+force|four\s+stroke|data\s+structure|stack|queue|linked\s+list)\b/.test(q);
-}
-
-export function isStructuredPolyAiResponse(response: string): boolean {
-  return /^\s*#{1,4}\s+\S/m.test(response) || /```[\w+-]*\n[\s\S]*```/.test(response) || /(^|\n)\s*\|[^\n]+\|/.test(response);
-}
-
-export function isRichPolyAiRequest(query: string): boolean {
-  return /\b(table|tabular|flow\s*chart|diagram|program|programming|code|sql|schema|compare|comparison)\b/i.test(query);
-}
-
-export function isRichPolyAiResponseForQuery(query: string, response: string): boolean {
-  if (!isStructuredPolyAiResponse(response)) return false;
-  const q = query.toLowerCase();
-  if (/\b(table|tabular)\b/.test(q) && !/(^|\n)\s*\|[^\n]+\|/.test(response)) return false;
-  if (/\b(flow\s*chart|diagram)\b/.test(q) && !/```(?:mermaid|flowchart)\b/i.test(response)) return false;
-  if (/\b(program|programming|code)\b/.test(q) && !/```(?:c|cpp|python|javascript|typescript|java|sql)\b/i.test(response)) return false;
-  return true;
 }
 
 export function sanitizePolyAiResponse(response: string): string {
@@ -156,7 +152,7 @@ export function generatePolyAiResponse(query: string): string {
     const result = operator === "+" ? left + right : operator === "-" ? left - right : operator === "*" ? left * right : left / right;
     return markdown("## Arithmetic result", `**${left} ${operator} ${right} = ${result}**`, "This quick calculation is handled locally so the chat responds immediately.");
   }
-  if (!isPolyAiQueryInScope(query)) return POLY_AI_SCOPE_RESPONSE;
+  if (!isPolyAiLocalFallbackAllowed(query)) return POLY_AI_SCOPE_RESPONSE;
 
   if (/\b(ohm'?s?\s*law|ohms?\s*law)\b/.test(q)) {
     const includeProgram = /\b(program|programming|code|c\s*language)\b/.test(q);

@@ -1,4 +1,3 @@
-import { vlyPlugin } from "@vly-ai/integrations";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -9,14 +8,12 @@ export default defineConfig({
   // Freebuff serves at the domain root; GitHub Pages builds pass
   // VITE_BASE_PATH=/polypmna/ for the repository subpath.
   base: process.env.VITE_BASE_PATH || '/',
-  plugins: [react(), vlyPlugin(), tailwindcss()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    // Force a single copy of React across all packages (including vlyPlugin).
-    // Without this, @vly-ai/integrations can resolve its own React copy, which
-    // triggers "Invalid hook call" errors at runtime.
+    // Keep one React copy across the application and its dependencies.
     dedupe: ["react", "react/jsx-runtime", "react-dom", "react-dom/client"],
   },
   build: {

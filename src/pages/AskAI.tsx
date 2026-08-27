@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { PolyAiMessage } from "@/components/PolyAiMessage";
-import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isPolyAiQueryInScope, isRichPolyAiRequest, isRichPolyAiResponseForQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isPolyAiQueryInScope, sanitizePolyAiResponse } from "@/lib/polyAi";
 import { clearPolyAiState, loadPolyAiState, savePolyAiState } from "@/lib/polyAiStorage";
 import {
   Send,
@@ -28,7 +28,7 @@ const quickPrompts = [
 ];
 
 export default function AskAI() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const [input, setInput] = useState(() => loadPolyAiState().preferences.draft);
   const [isSending, setIsSending] = useState(false);
@@ -125,7 +125,8 @@ export default function AskAI() {
 
   const handleSend = async (text?: string) => {
     const content = (text ?? input).trim();
-    if (!content || isSending) return;
+    if (!content || isSending || isAuthLoading) return;
+    setProviderError(null);
     setInput("");
     setIsSending(true);
     try {
@@ -143,14 +144,14 @@ export default function AskAI() {
           new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out")), 18000)),
         ]);
         const providerAnswer = sanitizePolyAiResponse(providerRawAnswer);
-        if (!providerAnswer || isGenericPolyAiResponse(providerAnswer) || (isRichPolyAiRequest(content) && !isRichPolyAiResponseForQuery(content, providerAnswer))) {
-          throw new Error("Provider returned an unsuitable answer format");
+        if (!providerAnswer || isLeakedPolyAiResponse(providerAnswer)) {
+          throw new Error("Provider returned an unusable answer");
         }
         response = providerAnswer;
         responseSource = "provider";
       } catch (providerError) {
         console.warn("External POLY AI provider unavailable; using deterministic fallback:", providerError);
-        setProviderError(providerError instanceof Error ? providerError.message : "AI provider unavailable");
+        setProviderError("The external AI provider did not respond. This answer was generated offline; please retry shortly.");
         response = sanitizePolyAiResponse(generatePolyAiResponse(content));
       }
 
@@ -256,7 +257,7 @@ export default function AskAI() {
         <div className="w-full px-3 py-4 sm:px-5 sm:py-5 lg:px-8">
           {providerError && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-              <p className="font-semibold">AI provider unavailable — using local fallback</p>
+              <p className="font-semibold">External AI unavailable — showing an offline answer</p>
               <p className="mt-1 opacity-80">{providerError}</p>
               <p className="mt-1 opacity-80">The request reached Convex, but the configured provider did not return an answer. Your API keys remain server-side; check the Convex production logs for provider status or retry after the provider quota resets.</p>
             </div>
@@ -283,6 +284,7 @@ export default function AskAI() {
                   <button
                     key={prompt}
                     onClick={() => handleSend(prompt)}
+                    disabled={isAuthLoading || isSending}
                     className="text-left rounded-xl border border-border/60 bg-card px-4 py-3 text-xs text-muted-foreground
                              hover:border-primary/20 hover:text-foreground hover:bg-card/80 transition-all cursor-pointer"
                   >
@@ -329,7 +331,7 @@ export default function AskAI() {
                 {msg.role === "assistant" && (
                   <div className="mb-2 flex items-center justify-between gap-3 border-b border-slate-100 pb-2">
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
-                      <Sparkles className="h-3 w-3" /> POLY AI · {msg.source === "provider" ? "provider answer" : msg.source === "local" ? "formatted locally" : "answer"}
+                      <Sparkles className="h-3 w-3" /> POLY AI · {msg.source === "provider" ? "AI answer" : msg.source === "local" ? "offline answer" : "answer"}
                     </span>
                     <button
                       onClick={() => handleCopy(msg._id, msg.content)}
@@ -384,15 +386,15 @@ export default function AskAI() {
             />
             <button
               onClick={() => handleSend()}
-              disabled={!input.trim() || isSending}
+              disabled={!input.trim() || isSending || isAuthLoading}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground
                        hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
               <Send className="h-4 w-4" />
             </button>
           </div>
-          <p className="text-[11px] text-muted-foreground/60 text-center mt-2">
-            POLY AI is an educational assistant. Verify important information with your textbooks.
+              <p className="text-[11px] text-muted-foreground/60 text-center mt-2">
+            {isAuthLoading ? "Preparing a secure session…" : "POLY AI is an educational assistant. Verify important information with your textbooks."}
           </p>
         </div>
       </div>

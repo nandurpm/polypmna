@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Test
+        run: bun run test:run
+
       - name: Build
         env:
           VITE_BASE_PATH: /polypmna/
