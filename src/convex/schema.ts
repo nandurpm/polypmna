@@ -53,23 +53,36 @@ const schema = defineSchema(
     materials: defineTable({
       title: v.string(),
       subjectId: v.id("subjects"),
-      type: v.union(v.literal("notes"), v.literal("syllabus"), v.literal("paper")),
+      type: v.union(
+        v.literal("notes"),
+        v.literal("syllabus"),
+        v.literal("paper"),
+      ),
       description: v.optional(v.string()),
       pageCount: v.optional(v.number()),
       stars: v.number(),
       fileUrl: v.optional(v.string()),
       createdAt: v.number(),
-    }).index("by_subject", ["subjectId"]).index("by_type", ["type"]).index("by_created", ["createdAt"]),
+    })
+      .index("by_subject", ["subjectId"])
+      .index("by_type", ["type"])
+      .index("by_created", ["createdAt"]),
 
     // ── Question Papers ──
     questionPapers: defineTable({
       title: v.string(),
       subjectId: v.id("subjects"),
       year: v.number(),
-      examType: v.union(v.literal("mid"), v.literal("end"), v.literal("supply")),
+      examType: v.union(
+        v.literal("mid"),
+        v.literal("end"),
+        v.literal("supply"),
+      ),
       fileUrl: v.optional(v.string()),
       createdAt: v.number(),
-    }).index("by_subject", ["subjectId"]).index("by_year", ["year"]),
+    })
+      .index("by_subject", ["subjectId"])
+      .index("by_year", ["year"]),
 
     // ── Mock Exams ──
     mockExams: defineTable({
@@ -78,13 +91,17 @@ const schema = defineSchema(
       semester: v.number(),
       questionCount: v.number(),
       durationMinutes: v.number(),
-      questions: v.array(v.object({
-        question: v.string(),
-        options: v.array(v.string()),
-        correctIndex: v.number(),
-        explanation: v.optional(v.string()),
-      })),
-    }).index("by_subject", ["subjectId"]).index("by_semester", ["semester"]),
+      questions: v.array(
+        v.object({
+          question: v.string(),
+          options: v.array(v.string()),
+          correctIndex: v.number(),
+          explanation: v.optional(v.string()),
+        }),
+      ),
+    })
+      .index("by_subject", ["subjectId"])
+      .index("by_semester", ["semester"]),
 
     // ── Mock Exam Attempts ──
     mockExamAttempts: defineTable({
@@ -94,7 +111,9 @@ const schema = defineSchema(
       score: v.number(),
       totalQuestions: v.number(),
       completedAt: v.number(),
-    }).index("by_user", ["userId"]).index("by_exam", ["mockExamId"]),
+    })
+      .index("by_user", ["userId"])
+      .index("by_exam", ["mockExamId"]),
 
     // ── Chat Messages (Ask POLY AI) ──
     chatMessages: defineTable({
@@ -109,9 +128,20 @@ const schema = defineSchema(
       createdAt: v.number(),
     }).index("by_user_time", ["userId", "createdAt"]),
 
+    providerQuota: defineTable({
+      provider: v.string(),
+      window: v.union(v.literal("minute"), v.literal("day")),
+      windowStart: v.number(),
+      requestCount: v.number(),
+    }).index("by_provider_window", ["provider", "window"]),
+
     aiStreams: defineTable({
       userId: v.id("users"),
-      status: v.union(v.literal("streaming"), v.literal("completed"), v.literal("failed")),
+      status: v.union(
+        v.literal("streaming"),
+        v.literal("completed"),
+        v.literal("failed"),
+      ),
       content: v.string(),
       provider: v.optional(v.string()),
       model: v.optional(v.string()),
@@ -135,7 +165,9 @@ const schema = defineSchema(
       subjectId: v.id("subjects"),
       materialsViewed: v.array(v.id("materials")),
       lastViewedAt: v.number(),
-    }).index("by_user", ["userId"]).index("by_user_subject", ["userId", "subjectId"]),
+    })
+      .index("by_user", ["userId"])
+      .index("by_user_subject", ["userId", "subjectId"]),
   },
   {
     schemaValidation: true,

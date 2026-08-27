@@ -49,18 +49,25 @@ async function simulatedRequest(provider) {
 
 async function runScenario(scenario) {
   const attempts = [];
+  let openRouterRateLimited = false;
   for (const provider of scenario.providers) {
+    if (openRouterRateLimited && provider.name.startsWith("OpenRouter")) {
+      attempts.push({ provider: provider.name, status: "skipped_after_openrouter_429" });
+      continue;
+    }
     try {
       const result = await simulatedRequest(provider);
       attempts.push({ provider: provider.name, status: "success" });
       return { selected: provider.name, attempts, content: result.content };
     } catch (error) {
+      const rateLimited = error.status === 429;
       attempts.push({
         provider: provider.name,
-        status: error.status === 429 ? "rate_limited" : "failed",
+        status: rateLimited ? "rate_limited" : "failed",
         httpStatus: error.status,
         retryAfterSeconds: error.retryAfter ? Number(error.retryAfter) : null,
       });
+      if (rateLimited && provider.name.startsWith("OpenRouter")) openRouterRateLimited = true;
     }
   }
   attempts.push({ provider: "OFFLINE_FALLBACK", status: "selected" });

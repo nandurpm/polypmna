@@ -21,3 +21,11 @@ Source: https://docs.convex.dev/production/state/limits
 The repository script `scripts/simulate-ai-failover.mjs` uses deterministic mock responses only. It simulates an OpenRouter free-model HTTP 429, a second free-model HTTP 503, successful NVIDIA fallback, and a scenario where all configured providers fail and the offline fallback is selected. It never calls a network endpoint and never reads a real API key.
 
 The repository script `scripts/check-openrouter-usage.mjs` calls the OpenRouter key endpoint only when the user explicitly runs it with a local `OPENROUTER_API_KEY` or `OPENROUTER_API` environment variable. It prints only non-secret usage fields and never prints the key itself.
+
+## Quota-efficient routing controls
+
+The production deployment now reserves a shared `openrouter-free` request budget in Convex before a free-model request is sent. The configured headroom is 18 requests/minute and 45 requests/day, below OpenRouter's documented 20 RPM and 50 RPD no-credit limits. The reservation is atomic across both windows, so a request is rejected before network inference when either budget is exhausted.
+
+When a free OpenRouter request receives HTTP 429, the current request skips remaining OpenRouter free models and moves directly to NVIDIA. The provider health record places OpenRouter in a one-minute cooldown for subsequent requests. A successful health record clears the prior failure timestamp. Mid-stream SSE errors with an error payload or `finish_reason: "error"` are now treated as failures rather than successful partial answers.
+
+The relevant production variables are `POLY_AI_OPENROUTER_RPM_LIMIT=18`, `POLY_AI_OPENROUTER_DAILY_LIMIT=45`, and `POLY_AI_PROVIDER_COOLDOWN_MS=60000`. All are bounded server-side and can be adjusted only through the deployment configuration.

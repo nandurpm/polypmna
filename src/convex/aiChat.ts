@@ -110,58 +110,100 @@ type CompletionResponse = {
 function extractContent(payload: CompletionResponse): string {
   const content = payload.choices?.[0]?.message?.content;
   if (typeof content === "string") return content.trim();
-  if (Array.isArray(content)) return content.map((part) => part.text ?? "").join("").trim();
+  if (Array.isArray(content))
+    return content
+      .map((part) => part.text ?? "")
+      .join("")
+      .trim();
   return "";
 }
 
 type StreamChunk = {
   model?: string;
-  choices?: Array<{ delta?: { content?: string | null } }>;
+  error?: { code?: number | string; message?: string };
+  choices?: Array<{
+    delta?: { content?: string | null };
+    finish_reason?: string | null;
+  }>;
 };
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
-async function callProvider(provider: Provider, messages: ChatMessage[]): Promise<{ content: string; model?: string }> {
+class ProviderRequestError extends Error {
+  readonly status?: number;
+  readonly retryAfterMs?: number;
+
+  constructor(message: string, status?: number, retryAfterMs?: number) {
+    super(message);
+    this.name = "ProviderRequestError";
+    this.status = status;
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+function parseRetryAfterMs(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, Math.round(seconds * 1_000));
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp)
+    ? Math.max(0, timestamp - Date.now())
+    : undefined;
+}
+
+async function callProvider(
+  provider: Provider,
+  messages: ChatMessage[],
+): Promise<{ content: string; model?: string }> {
   if (!provider.apiKey) throw new Error(`${provider.name} is not configured`);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), provider.timeoutMs);
   try {
     const response = await fetch(provider.endpoint, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${provider.apiKey}`,
-      "Content-Type": "application/json",
-      ...provider.headers,
-    },
-    body: JSON.stringify({
-      ...(provider.model ? { model: provider.model } : {}),
-      ...(provider.models ? { models: provider.models } : {}),
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "system", content: ANSWER_QUALITY_PROMPT },
-        ...messages.slice(-20),
-      ],
-      max_tokens: provider.maxTokens,
-      temperature: 0.35,
-      stream: false,
-      ...(provider.providerOptions ? { provider: provider.providerOptions } : {}),
-    }),
-    signal: controller.signal,
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${provider.apiKey}`,
+        "Content-Type": "application/json",
+        ...provider.headers,
+      },
+      body: JSON.stringify({
+        ...(provider.model ? { model: provider.model } : {}),
+        ...(provider.models ? { models: provider.models } : {}),
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: ANSWER_QUALITY_PROMPT },
+          ...messages.slice(-20),
+        ],
+        max_tokens: provider.maxTokens,
+        temperature: 0.35,
+        stream: false,
+        ...(provider.providerOptions
+          ? { provider: provider.providerOptions }
+          : {}),
+      }),
+      signal: controller.signal,
     });
 
-  if (!response.ok) {
-    const details = (await response.text()).slice(0, 300);
-    throw new Error(`${provider.name} API error (${response.status}): ${details}`);
-  }
+    if (!response.ok) {
+      const details = (await response.text()).slice(0, 300);
+      throw new ProviderRequestError(
+        `${provider.name} API error (${response.status}): ${details}`,
+        response.status,
+        parseRetryAfterMs(response.headers.get("retry-after")),
+      );
+    }
 
     const payload = (await response.json()) as CompletionResponse;
     const content = extractContent(payload);
-    if (!content) throw new Error(`${provider.name} returned an empty response`);
+    if (!content)
+      throw new Error(`${provider.name} returned an empty response`);
     return { content, model: payload.model };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error(`${provider.name} timed out after ${provider.timeoutMs}ms`);
+      throw new Error(
+        `${provider.name} timed out after ${provider.timeoutMs}ms`,
+      );
     }
     throw error;
   } finally {
@@ -197,16 +239,23 @@ async function callStreamingProvider(
         max_tokens: provider.maxTokens,
         temperature: 0.35,
         stream: true,
-        ...(provider.providerOptions ? { provider: provider.providerOptions } : {}),
+        ...(provider.providerOptions
+          ? { provider: provider.providerOptions }
+          : {}),
       }),
       signal: controller.signal,
     });
 
     if (!response.ok) {
       const details = (await response.text()).slice(0, 300);
-      throw new Error(`${provider.name} API error (${response.status}): ${details}`);
+      throw new ProviderRequestError(
+        `${provider.name} API error (${response.status}): ${details}`,
+        response.status,
+        parseRetryAfterMs(response.headers.get("retry-after")),
+      );
     }
-    if (!response.body) throw new Error(`${provider.name} returned no streaming body`);
+    if (!response.body)
+      throw new Error(`${provider.name} returned no streaming body`);
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -229,6 +278,20 @@ async function callStreamingProvider(
         } catch {
           continue;
         }
+        if (chunk.error) {
+          const errorCode =
+            typeof chunk.error.code === "number" ? chunk.error.code : undefined;
+          throw new ProviderRequestError(
+            `${provider.name} stream error (${chunk.error.code ?? "unknown"}): ${chunk.error.message ?? "provider error"}`,
+            errorCode,
+          );
+        }
+        const finishReason = chunk.choices?.[0]?.finish_reason;
+        if (finishReason === "error") {
+          throw new ProviderRequestError(
+            `${provider.name} stream ended with an error`,
+          );
+        }
         model = chunk.model || model;
         const delta = chunk.choices?.[0]?.delta?.content;
         if (typeof delta === "string" && delta) {
@@ -247,11 +310,17 @@ async function callStreamingProvider(
       if (done) break;
     }
     if (buffer.trim()) await processEvent(buffer);
-    if (!content.trim()) throw new Error(`${provider.name} returned an empty streamed response`);
-    return { content: content.trim(), model: model || provider.model || provider.models?.[0] };
+    if (!content.trim())
+      throw new Error(`${provider.name} returned an empty streamed response`);
+    return {
+      content: content.trim(),
+      model: model || provider.model || provider.models?.[0],
+    };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error(`${provider.name} timed out after ${provider.timeoutMs}ms`);
+      throw new Error(
+        `${provider.name} timed out after ${provider.timeoutMs}ms`,
+      );
     }
     throw error;
   } finally {
@@ -259,25 +328,71 @@ async function callStreamingProvider(
   }
 }
 
+function isFreeOpenRouterProvider(provider: Provider): boolean {
+  return (
+    provider.name.startsWith("OpenRouter") &&
+    provider.model?.endsWith(":free") === true
+  );
+}
+
+function getFreeOpenRouterLimits(): { minute: number; day: number } {
+  const minute = Math.min(
+    Math.max(Number(process.env.POLY_AI_OPENROUTER_RPM_LIMIT || 18), 1),
+    20,
+  );
+  const day = Math.min(
+    Math.max(Number(process.env.POLY_AI_OPENROUTER_DAILY_LIMIT || 45), 1),
+    1_000,
+  );
+  return { minute, day };
+}
+
+function getUtcDayStart(timestamp: number): number {
+  const date = new Date(timestamp);
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
 function getProviders(): Provider[] {
-  const nvidiaApiKey = process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API;
+  const nvidiaApiKey =
+    process.env.NVIDIA_API_KEY ||
+    process.env.NVIDIA_API ||
+    process.env.NVDIA_API;
   const configuredNvidiaModel = process.env.NVIDIA_MODEL;
-  const nvidiaTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_NVIDIA_TIMEOUT_MS || 10_000), 5_000), 10_000);
-  const openRouterTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_PROVIDER_TIMEOUT_MS || 25_000), 10_000), 50_000);
-  const maxTokens = Math.min(Math.max(Number(process.env.POLY_AI_MAX_TOKENS || 1_600), 400), 2_400);
-  const nvidiaModels = Array.from(new Set([
-    configuredNvidiaModel || "nvidia/nemotron-3.5-lightning-30b-a3b",
-    "nvidia/nemotron-3.5-lightning-30b-a3b",
-    "deepseek-ai/deepseek-v4-flash-0731",
-  ].filter((model): model is string => Boolean(model))));
+  const nvidiaTimeoutMs = Math.min(
+    Math.max(Number(process.env.POLY_AI_NVIDIA_TIMEOUT_MS || 10_000), 5_000),
+    10_000,
+  );
+  const openRouterTimeoutMs = Math.min(
+    Math.max(Number(process.env.POLY_AI_PROVIDER_TIMEOUT_MS || 25_000), 10_000),
+    50_000,
+  );
+  const maxTokens = Math.min(
+    Math.max(Number(process.env.POLY_AI_MAX_TOKENS || 1_600), 400),
+    2_400,
+  );
+  const nvidiaModels = Array.from(
+    new Set(
+      [
+        configuredNvidiaModel || "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "deepseek-ai/deepseek-v4-flash-0731",
+      ].filter((model): model is string => Boolean(model)),
+    ),
+  );
 
   const freeFirst = process.env.POLY_AI_FREE_FIRST !== "false";
-  const openRouterModels = Array.from(new Set(
-    (process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL || "cohere/north-mini-code:free,google/gemma-4-31b-it:free,nvidia/nemotron-3.5-lightning:free")
-      .split(",")
-      .map((model) => model.trim())
-      .filter(Boolean)
-  ));
+  const openRouterModels = Array.from(
+    new Set(
+      (
+        process.env.OPENROUTER_MODELS ||
+        process.env.OPENROUTER_MODEL ||
+        "cohere/north-mini-code:free,google/gemma-4-31b-it:free,nvidia/nemotron-3.5-lightning:free"
+      )
+        .split(",")
+        .map((model) => model.trim())
+        .filter(Boolean),
+    ),
+  );
   const openRouterBase = {
     apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
@@ -289,7 +404,8 @@ function getProviders(): Provider[] {
     timeoutMs: openRouterTimeoutMs,
     maxTokens,
     headers: {
-      "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
+      "HTTP-Referer":
+        process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
       "X-OpenRouter-Title": "POLY PMNA Study Materials",
       "X-Title": "POLY PMNA Study Materials",
     },
@@ -318,9 +434,13 @@ export const startChatStream = action({
   args: {
     messages: v.array(
       v.object({
-        role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+        role: v.union(
+          v.literal("user"),
+          v.literal("assistant"),
+          v.literal("system"),
+        ),
         content: v.string(),
-      })
+      }),
     ),
   },
   handler: async (ctx, args): Promise<Id<"aiStreams">> => {
@@ -333,7 +453,10 @@ export const startChatStream = action({
       limit: 20,
     });
 
-    const streamId: Id<"aiStreams"> = await ctx.runMutation(internal.chat.createAiStream, { userId });
+    const streamId: Id<"aiStreams"> = await ctx.runMutation(
+      internal.chat.createAiStream,
+      { userId },
+    );
     await ctx.scheduler.runAfter(0, internal.aiChat.runChatStream, {
       streamId,
       userId,
@@ -349,33 +472,78 @@ export const runChatStream = internalAction({
     userId: v.id("users"),
     messages: v.array(
       v.object({
-        role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+        role: v.union(
+          v.literal("user"),
+          v.literal("assistant"),
+          v.literal("system"),
+        ),
         content: v.string(),
-      })
+      }),
     ),
   },
   handler: async (ctx, args) => {
     const configuredProviders = getProviders();
-    const providerHealth = await ctx.runQuery(internal.chat.getProviderHealth, {});
-    const recentHealth = providerHealth.filter((item) => Date.now() - item.updatedAt <= 15 * 60_000);
-    const nvidiaDegraded = recentHealth.some((item) => item.provider.startsWith("NVIDIA") && item.consecutiveFailures >= 1);
-    const openRouterHealth = recentHealth.filter((item) => item.provider.startsWith("OpenRouter"));
-    const openRouterDegraded = openRouterHealth.length > 0 && openRouterHealth.every((item) => item.consecutiveFailures >= 2);
-    const openRouterProviders = configuredProviders.filter((provider) => provider.name.startsWith("OpenRouter"));
-    const nvidiaProviders = configuredProviders.filter((provider) => provider.name.startsWith("NVIDIA"));
-    const providers = nvidiaDegraded && !openRouterDegraded
-      ? [...openRouterProviders, ...nvidiaProviders]
-      : openRouterDegraded && !nvidiaDegraded
-        ? [...nvidiaProviders, ...openRouterProviders]
-        : configuredProviders;
-    console.info("[POLY AI] provider_order", {
-      mode: nvidiaDegraded && !openRouterDegraded
-        ? "openrouter_first"
+    const providerHealth = await ctx.runQuery(
+      internal.chat.getProviderHealth,
+      {},
+    );
+    const now = Date.now();
+    const recentHealth = providerHealth.filter(
+      (item) => now - item.updatedAt <= 15 * 60_000,
+    );
+    const providerCooldownMs = Math.min(
+      Math.max(
+        Number(process.env.POLY_AI_PROVIDER_COOLDOWN_MS || 60_000),
+        30_000,
+      ),
+      300_000,
+    );
+    const openRouterCoolingDown = recentHealth.some(
+      (item) =>
+        item.provider.startsWith("OpenRouter") &&
+        item.lastFailureAt !== undefined &&
+        now - item.lastFailureAt < providerCooldownMs,
+    );
+    const availableProviders = openRouterCoolingDown
+      ? configuredProviders.filter(
+          (provider) => !provider.name.startsWith("OpenRouter"),
+        )
+      : configuredProviders;
+    const nvidiaDegraded = recentHealth.some(
+      (item) =>
+        item.provider.startsWith("NVIDIA") && item.consecutiveFailures >= 1,
+    );
+    const openRouterHealth = recentHealth.filter((item) =>
+      item.provider.startsWith("OpenRouter"),
+    );
+    const openRouterDegraded =
+      openRouterHealth.length > 0 &&
+      openRouterHealth.every((item) => item.consecutiveFailures >= 2);
+    const openRouterProviders = availableProviders.filter((provider) =>
+      provider.name.startsWith("OpenRouter"),
+    );
+    const nvidiaProviders = availableProviders.filter((provider) =>
+      provider.name.startsWith("NVIDIA"),
+    );
+    const providers =
+      nvidiaDegraded && !openRouterDegraded
+        ? [...openRouterProviders, ...nvidiaProviders]
         : openRouterDegraded && !nvidiaDegraded
-          ? "nvidia_first"
-          : configuredProviders[0]?.name.startsWith("OpenRouter") ? "openrouter_first" : "nvidia_first",
+          ? [...nvidiaProviders, ...openRouterProviders]
+          : availableProviders;
+    console.info("[POLY AI] provider_order", {
+      mode:
+        nvidiaDegraded && !openRouterDegraded
+          ? "openrouter_first"
+          : openRouterDegraded && !nvidiaDegraded
+            ? "nvidia_first"
+            : configuredProviders[0]?.name.startsWith("OpenRouter")
+              ? "openrouter_first"
+              : "nvidia_first",
       nvidiaDegraded,
       openRouterDegraded,
+      openRouterCoolingDown,
+      providerCooldownMs,
     });
     let pendingDelta = "";
     let flushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -415,21 +583,66 @@ export const runChatStream = internalAction({
     };
 
     const errors: string[] = [];
-    const overallTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_STREAM_TIMEOUT_MS || 90_000), 30_000), 95_000);
+    const overallTimeoutMs = Math.min(
+      Math.max(Number(process.env.POLY_AI_STREAM_TIMEOUT_MS || 90_000), 30_000),
+      95_000,
+    );
     const overallDeadline = Date.now() + overallTimeoutMs;
+    const freeLimits = getFreeOpenRouterLimits();
+    let openRouterRateLimitedForRequest = false;
+    let openRouterBudgetExhausted = false;
     for (const provider of providers) {
+      if (
+        (openRouterRateLimitedForRequest || openRouterBudgetExhausted) &&
+        provider.name.startsWith("OpenRouter")
+      ) {
+        console.info(
+          "[POLY AI] skipping OpenRouter model after free-tier exhaustion",
+          { provider: provider.name },
+        );
+        continue;
+      }
       if (!provider.apiKey) {
         errors.push(`${provider.name}: API key not configured`);
         continue;
       }
+      if (isFreeOpenRouterProvider(provider)) {
+        const now = Date.now();
+        try {
+          await ctx.runMutation(internal.chat.reserveProviderRequest, {
+            provider: "openrouter-free",
+            minuteStart: Math.floor(now / 60_000) * 60_000,
+            dayStart: getUtcDayStart(now),
+            minuteLimit: freeLimits.minute,
+            dayLimit: freeLimits.day,
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "OpenRouter free-tier budget reached";
+          errors.push(message);
+          openRouterBudgetExhausted = true;
+          console.warn("[POLY AI] skipping free OpenRouter request", {
+            reason: message,
+          });
+          continue;
+        }
+      }
       const remainingMs = overallDeadline - Date.now();
       if (remainingMs <= 0) {
-        errors.push(`POLY AI stream deadline reached after ${overallTimeoutMs}ms`);
+        errors.push(
+          `POLY AI stream deadline reached after ${overallTimeoutMs}ms`,
+        );
         break;
       }
       const startedAt = Date.now();
       try {
-        const result = await callStreamingProvider({ ...provider, timeoutMs: Math.min(provider.timeoutMs, remainingMs) }, args.messages, onDelta);
+        const result = await callStreamingProvider(
+          { ...provider, timeoutMs: Math.min(provider.timeoutMs, remainingMs) },
+          args.messages,
+          onDelta,
+        );
         await flushRemaining();
         await ctx.runMutation(internal.chat.recordProviderHealth, {
           provider: provider.name,
@@ -445,7 +658,8 @@ export const runChatStream = internalAction({
         });
         console.info("[POLY AI] provider_success", {
           provider: provider.name,
-          model: result.model || provider.model || provider.models?.[0] || "unknown",
+          model:
+            result.model || provider.model || provider.models?.[0] || "unknown",
           durationMs: Date.now() - startedAt,
           streaming: true,
         });
@@ -457,10 +671,23 @@ export const runChatStream = internalAction({
           ok: false,
           durationMs: Date.now() - startedAt,
         });
-        await ctx.runMutation(internal.chat.resetAiStream, { streamId: args.streamId, userId: args.userId });
-        const message = error instanceof Error ? error.message : `${provider.name} request failed`;
+        await ctx.runMutation(internal.chat.resetAiStream, {
+          streamId: args.streamId,
+          userId: args.userId,
+        });
+        const message =
+          error instanceof Error
+            ? error.message
+            : `${provider.name} request failed`;
+        const rateLimited =
+          error instanceof ProviderRequestError && error.status === 429;
+        if (rateLimited && provider.name.startsWith("OpenRouter"))
+          openRouterRateLimitedForRequest = true;
         errors.push(message);
-        console.warn(`[POLY AI] ${message}`);
+        console.warn(
+          `[POLY AI] ${message}`,
+          rateLimited ? { retryAfterMs: error.retryAfterMs } : undefined,
+        );
       }
     }
 
@@ -476,9 +703,13 @@ export const chatCompletion = action({
   args: {
     messages: v.array(
       v.object({
-        role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+        role: v.union(
+          v.literal("user"),
+          v.literal("assistant"),
+          v.literal("system"),
+        ),
         content: v.string(),
-      })
+      }),
     ),
   },
   handler: async (ctx, args) => {
@@ -494,28 +725,77 @@ export const chatCompletion = action({
     const providers = getProviders();
 
     const errors: string[] = [];
+    const freeLimits = getFreeOpenRouterLimits();
+    let openRouterBudgetExhausted = false;
     for (const provider of providers) {
-      if (!provider.apiKey) {
-        errors.push(`${provider.name}: API key not set (checked ${Object.keys(process.env).filter(k => k.toUpperCase().includes(provider.name.toUpperCase().slice(0,5))).join(", ") || "no matching env vars"})`);
+      if (openRouterBudgetExhausted && provider.name.startsWith("OpenRouter")) {
+        console.info(
+          "[POLY AI] skipping OpenRouter model after free-tier exhaustion",
+          { provider: provider.name },
+        );
         continue;
+      }
+      if (!provider.apiKey) {
+        errors.push(
+          `${provider.name}: API key not set (checked ${
+            Object.keys(process.env)
+              .filter((k) =>
+                k
+                  .toUpperCase()
+                  .includes(provider.name.toUpperCase().slice(0, 5)),
+              )
+              .join(", ") || "no matching env vars"
+          })`,
+        );
+        continue;
+      }
+      if (isFreeOpenRouterProvider(provider)) {
+        const now = Date.now();
+        try {
+          await ctx.runMutation(internal.chat.reserveProviderRequest, {
+            provider: "openrouter-free",
+            minuteStart: Math.floor(now / 60_000) * 60_000,
+            dayStart: getUtcDayStart(now),
+            minuteLimit: freeLimits.minute,
+            dayLimit: freeLimits.day,
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "OpenRouter free-tier budget reached";
+          errors.push(message);
+          openRouterBudgetExhausted = true;
+          console.warn("[POLY AI] skipping free OpenRouter request", {
+            reason: message,
+          });
+          continue;
+        }
       }
       try {
         const startedAt = Date.now();
         const result = await callProvider(provider, args.messages);
         console.info("[POLY AI] provider_success", {
           provider: provider.name,
-          model: result.model || provider.model || provider.models?.[0] || "unknown",
+          model:
+            result.model || provider.model || provider.models?.[0] || "unknown",
           durationMs: Date.now() - startedAt,
         });
         return result.content;
       } catch (error) {
-        const msg = error instanceof Error ? error.message : `${provider.name} request failed`;
+        const msg =
+          error instanceof Error
+            ? error.message
+            : `${provider.name} request failed`;
         errors.push(msg);
         console.warn(`[POLY AI] ${msg}`);
       }
     }
 
-    const detail = errors.length > 0 ? errors.join(" | ") : "No provider API keys configured";
+    const detail =
+      errors.length > 0
+        ? errors.join(" | ")
+        : "No provider API keys configured";
     throw new Error(detail);
   },
 });
