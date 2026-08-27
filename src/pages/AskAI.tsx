@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { PolyAiMessage } from "@/components/PolyAiMessage";
 import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isPolyAiQueryInScope, sanitizePolyAiResponse } from "@/lib/polyAi";
 import { clearPolyAiState, loadPolyAiState, savePolyAiState } from "@/lib/polyAiStorage";
@@ -17,7 +18,6 @@ import {
 } from "lucide-react";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
-const AI_PROVIDER_TIMEOUT_MS = 100_000;
 
 const quickPrompts = [
   "Explain Ohm's Law in simple terms",
@@ -46,12 +46,18 @@ export default function AskAI() {
   );
   const storeMessages = useMutation(api.chat.storeMessages);
   const clearHistory = useMutation(api.chat.clearHistory);
-  const chatCompletion = useAction(api.aiChat.chatCompletion);
+  const startChatStream = useAction(api.aiChat.startChatStream);
   const nextId = useRef(0);
+  const [activeStreamId, setActiveStreamId] = useState<Id<"aiStreams"> | null>(null);
+  const activeStreamRef = useRef<{ streamId: Id<"aiStreams">; messageId: string; userContent: string } | null>(null);
+  const streamState = useQuery(
+    api.chat.getAiStream,
+    activeStreamId ? { streamId: activeStreamId } : "skip",
+  );
   const allMessages = useMemo(() => {
     const visible: { _id: string; role: "user" | "assistant"; content: string; source?: "provider" | "local" }[] = [];
     const mergedMessages = [
-      ...(chatHistory ?? []).map((message) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content, source: undefined as "provider" | "local" | undefined })),
+      ...(chatHistory ?? []).map((message: { _id: string; role: string; content: string }) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content, source: undefined as "provider" | "local" | undefined })),
       ...localMessages,
     ];
     const seenExchanges = new Set<string>();
@@ -124,64 +130,110 @@ export default function AskAI() {
     });
   }, [input, localMessages]);
 
+  useEffect(() => {
+    const active = activeStreamRef.current;
+    if (!active || !streamState) return;
+    const streamedContent = sanitizePolyAiResponse(streamState.content);
+    if (streamedContent) {
+      setLocalMessages((current) => current.map((message) => (
+        message._id === active.messageId
+          ? { ...message, content: streamedContent, source: "provider" }
+          : message
+      )));
+    }
+    if (streamState.status === "completed") {
+      const finalContent = streamedContent || sanitizePolyAiResponse(generatePolyAiResponse(active.userContent));
+      setLocalMessages((current) => current.map((message) => (
+        message._id === active.messageId
+          ? { ...message, content: finalContent, source: "provider" }
+          : message
+      )));
+      setProviderError(null);
+      setIsSending(false);
+      activeStreamRef.current = null;
+      setActiveStreamId(null);
+      void Promise.race([
+        storeMessages({ userContent: active.userContent, assistantContent: finalContent }),
+        new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("Chat history save timed out")), 5000)),
+      ]).catch((persistError) => console.warn("Could not persist streamed chat history; local answer remains visible:", persistError));
+      inputRef.current?.focus();
+    } else if (streamState.status === "failed") {
+      const fallback = sanitizePolyAiResponse(generatePolyAiResponse(active.userContent));
+      setLocalMessages((current) => current.map((message) => (
+        message._id === active.messageId
+          ? { ...message, content: fallback, source: "local" }
+          : message
+      )));
+      setProviderError("The external AI provider did not finish streaming. This answer was generated offline; please retry shortly.");
+      setIsSending(false);
+      activeStreamRef.current = null;
+      setActiveStreamId(null);
+      void Promise.race([
+        storeMessages({ userContent: active.userContent, assistantContent: fallback }),
+        new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("Chat history save timed out")), 5000)),
+      ]).catch((persistError) => console.warn("Could not persist fallback chat history; local answer remains visible:", persistError));
+      inputRef.current?.focus();
+    }
+  }, [streamState, storeMessages]);
+
   const handleSend = async (text?: string) => {
     const content = (text ?? input).trim();
     if (!content || isSending || isAuthLoading) return;
     setProviderError(null);
     setInput("");
     setIsSending(true);
-    try {
-      const historyMessages = messages.slice(-8).map((message) => ({
-        role: message.role as "user" | "assistant",
-        content: (message.role === "user" ? message.content : sanitizePolyAiResponse(message.content)).slice(-5000),
-      }));
-      let response: string;
-      let responseSource: "provider" | "local" = "local";
-      if (!isPolyAiQueryInScope(content)) {
-        response = POLY_AI_SCOPE_RESPONSE;
-      } else try {
-        const providerRawAnswer = await Promise.race<string>([
-          chatCompletion({ messages: [...historyMessages, { role: "user", content }] }),
-          new Promise<string>((_, reject) => window.setTimeout(() => reject(new Error("AI provider timed out after 100 seconds")), AI_PROVIDER_TIMEOUT_MS)),
-        ]);
-        const providerAnswer = sanitizePolyAiResponse(providerRawAnswer);
-        if (!providerAnswer || isLeakedPolyAiResponse(providerAnswer)) {
-          throw new Error("Provider returned an unusable answer");
-        }
-        response = providerAnswer;
-        responseSource = "provider";
-      } catch (providerError) {
-        console.warn("External POLY AI provider unavailable; using deterministic fallback:", providerError);
-        setProviderError("The external AI provider did not respond. This answer was generated offline; please retry shortly.");
-        response = sanitizePolyAiResponse(generatePolyAiResponse(content));
-      }
+    nextId.current += 1;
+    const id = String(nextId.current);
+    const messageId = `${id}-assistant`;
+    const userMessage = { _id: `${id}-user`, role: "user" as const, content };
 
-      nextId.current += 1;
-      const id = String(nextId.current);
-      setLocalMessages((current) => [
-        ...current,
-        { _id: `${id}-user`, role: "user", content },
-        { _id: `${id}-assistant`, role: "assistant", content: response, source: responseSource },
-      ]);
-
+    if (!isPolyAiQueryInScope(content)) {
+      const response = POLY_AI_SCOPE_RESPONSE;
+      setLocalMessages((current) => [...current, userMessage, { _id: messageId, role: "assistant" as const, content: response, source: "local" as const }]);
+      setIsSending(false);
+      inputRef.current?.focus();
       if (user) {
         void Promise.race([
           storeMessages({ userContent: content, assistantContent: response }),
           new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("Chat history save timed out")), 5000)),
         ]).catch((persistError) => console.warn("Could not persist chat history; local answer remains visible:", persistError));
       }
-    } catch (error) {
-      console.warn("Chat error:", error);
-      nextId.current += 1;
-      const id = String(nextId.current);
-      setLocalMessages((current) => [
-        ...current,
-        { _id: `${id}-user`, role: "user", content },
-        { _id: `${id}-assistant`, role: "assistant", content: sanitizePolyAiResponse(generatePolyAiResponse(content)), source: "local" },
+      return;
+    }
+
+    setLocalMessages((current) => [...current, userMessage, {
+      _id: messageId,
+      role: "assistant" as const,
+      content: "Receiving the first streamed tokens…",
+      source: "provider" as const,
+    }]);
+
+    try {
+      const historyMessages = messages.slice(-8).map((message) => ({
+        role: message.role as "user" | "assistant",
+        content: (message.role === "user" ? message.content : sanitizePolyAiResponse(message.content)).slice(-5000),
+      }));
+      const streamId = await Promise.race<Id<"aiStreams">>([
+        startChatStream({ messages: [...historyMessages, { role: "user", content }] }),
+        new Promise<Id<"aiStreams">>((_, reject) => window.setTimeout(() => reject(new Error("AI stream could not start")), 10_000)),
       ]);
-    } finally {
+      activeStreamRef.current = { streamId, messageId, userContent: content };
+      setActiveStreamId(streamId);
+    } catch (error) {
+      console.warn("Could not start streamed POLY AI response; using deterministic fallback:", error);
+      const fallback = sanitizePolyAiResponse(generatePolyAiResponse(content));
+      setLocalMessages((current) => current.map((message) => (
+        message._id === messageId ? { ...message, content: fallback, source: "local" } : message
+      )));
+      setProviderError("The external AI stream could not start. This answer was generated offline; please retry shortly.");
       setIsSending(false);
       inputRef.current?.focus();
+      if (user) {
+        void Promise.race([
+          storeMessages({ userContent: content, assistantContent: fallback }),
+          new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("Chat history save timed out")), 5000)),
+        ]).catch((persistError) => console.warn("Could not persist fallback chat history; local answer remains visible:", persistError));
+      }
     }
   };
 

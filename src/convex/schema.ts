@@ -109,6 +109,17 @@ const schema = defineSchema(
       createdAt: v.number(),
     }).index("by_user_time", ["userId", "createdAt"]),
 
+    aiStreams: defineTable({
+      userId: v.id("users"),
+      status: v.union(v.literal("streaming"), v.literal("completed"), v.literal("failed")),
+      content: v.string(),
+      provider: v.optional(v.string()),
+      model: v.optional(v.string()),
+      error: v.optional(v.string()),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    }).index("by_user_updated", ["userId", "updatedAt"]),
+
     // ── User Progress ──
     userProgress: defineTable({
       userId: v.id("users"),

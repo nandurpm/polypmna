@@ -1,8 +1,9 @@
 "use node";
 
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { action } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 
 const SYSTEM_PROMPT = `
@@ -113,7 +114,14 @@ function extractContent(payload: CompletionResponse): string {
   return "";
 }
 
-async function callProvider(provider: Provider, messages: Array<{ role: "user" | "assistant" | "system"; content: string }>): Promise<{ content: string; model?: string }> {
+type StreamChunk = {
+  model?: string;
+  choices?: Array<{ delta?: { content?: string | null } }>;
+};
+
+type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
+
+async function callProvider(provider: Provider, messages: ChatMessage[]): Promise<{ content: string; model?: string }> {
   if (!provider.apiKey) throw new Error(`${provider.name} is not configured`);
 
   const controller = new AbortController();
@@ -161,6 +169,274 @@ async function callProvider(provider: Provider, messages: Array<{ role: "user" |
   }
 }
 
+async function callStreamingProvider(
+  provider: Provider,
+  messages: ChatMessage[],
+  onDelta: (delta: string) => Promise<void>,
+): Promise<{ content: string; model?: string }> {
+  if (!provider.apiKey) throw new Error(`${provider.name} is not configured`);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), provider.timeoutMs);
+  try {
+    const response = await fetch(provider.endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${provider.apiKey}`,
+        "Content-Type": "application/json",
+        ...provider.headers,
+      },
+      body: JSON.stringify({
+        ...(provider.model ? { model: provider.model } : {}),
+        ...(provider.models ? { models: provider.models } : {}),
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: ANSWER_QUALITY_PROMPT },
+          ...messages.slice(-20),
+        ],
+        max_tokens: provider.maxTokens,
+        temperature: 0.35,
+        stream: true,
+        ...(provider.providerOptions ? { provider: provider.providerOptions } : {}),
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const details = (await response.text()).slice(0, 300);
+      throw new Error(`${provider.name} API error (${response.status}): ${details}`);
+    }
+    if (!response.body) throw new Error(`${provider.name} returned no streaming body`);
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let content = "";
+    let model: string | undefined;
+    let finished = false;
+
+    const processEvent = async (event: string) => {
+      for (const line of event.split(/\r?\n/)) {
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if (!data || data === "[DONE]") {
+          if (data === "[DONE]") finished = true;
+          continue;
+        }
+        let chunk: StreamChunk;
+        try {
+          chunk = JSON.parse(data) as StreamChunk;
+        } catch {
+          continue;
+        }
+        model = chunk.model || model;
+        const delta = chunk.choices?.[0]?.delta?.content;
+        if (typeof delta === "string" && delta) {
+          content += delta;
+          await onDelta(delta);
+        }
+      }
+    };
+
+    while (!finished) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+      const events = buffer.split(/\r?\n\r?\n/);
+      buffer = events.pop() ?? "";
+      for (const event of events) await processEvent(event);
+      if (done) break;
+    }
+    if (buffer.trim()) await processEvent(buffer);
+    if (!content.trim()) throw new Error(`${provider.name} returned an empty streamed response`);
+    return { content: content.trim(), model: model || provider.model || provider.models?.[0] };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(`${provider.name} timed out after ${provider.timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function getProviders(): Provider[] {
+  const nvidiaApiKey = process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API;
+  const configuredNvidiaModel = process.env.NVIDIA_MODEL;
+  const providerTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_PROVIDER_TIMEOUT_MS || 25_000), 10_000), 50_000);
+  const maxTokens = Math.min(Math.max(Number(process.env.POLY_AI_MAX_TOKENS || 1_600), 400), 2_400);
+  const nvidiaModels = Array.from(new Set([
+    configuredNvidiaModel || "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "deepseek-ai/deepseek-v4-flash-0731",
+  ].filter((model): model is string => Boolean(model))));
+
+  const openRouterModels = Array.from(new Set(
+    (process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL || "cohere/north-mini-code:free,google/gemma-4-31b-it:free,nvidia/nemotron-3.5-lightning:free")
+      .split(",")
+      .map((model) => model.trim())
+      .filter(Boolean)
+  ));
+  const openRouterBase = {
+    apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
+    endpoint: "https://openrouter.ai/api/v1/chat/completions",
+    providerOptions: {
+      allow_fallbacks: true,
+      sort: { by: "latency", partition: "none" },
+      preferred_max_latency: { p90: 8 },
+    },
+    timeoutMs: providerTimeoutMs,
+    maxTokens,
+    headers: {
+      "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
+      "X-OpenRouter-Title": "POLY PMNA Study Materials",
+      "X-Title": "POLY PMNA Study Materials",
+    },
+  };
+
+  return [
+    ...nvidiaModels.map((model) => ({
+      name: `NVIDIA (${model})`,
+      apiKey: nvidiaApiKey,
+      endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
+      model,
+      timeoutMs: providerTimeoutMs,
+      maxTokens,
+    })),
+    ...openRouterModels.map((model) => ({
+      ...openRouterBase,
+      name: `OpenRouter (${model})`,
+      model,
+    })),
+  ];
+}
+
+export const startChatStream = action({
+  args: {
+    messages: v.array(
+      v.object({
+        role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+        content: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args): Promise<Id<"aiStreams">> => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Authentication required");
+    await ctx.runMutation(internal.chat.reserveAiRequest, {
+      userId,
+      windowStart: Date.now() - 60_000,
+      createdAt: Date.now(),
+      limit: 20,
+    });
+
+    const streamId: Id<"aiStreams"> = await ctx.runMutation(internal.chat.createAiStream, { userId });
+    await ctx.scheduler.runAfter(0, internal.aiChat.runChatStream, {
+      streamId,
+      userId,
+      messages: args.messages,
+    });
+    return streamId;
+  },
+});
+
+export const runChatStream = internalAction({
+  args: {
+    streamId: v.id("aiStreams"),
+    userId: v.id("users"),
+    messages: v.array(
+      v.object({
+        role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+        content: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const providers = getProviders();
+    let pendingDelta = "";
+    let flushTimer: ReturnType<typeof setTimeout> | null = null;
+    let flushPromise = Promise.resolve();
+
+    const flush = async () => {
+      const delta = pendingDelta;
+      pendingDelta = "";
+      if (!delta) return;
+      flushPromise = flushPromise.then(async () => {
+        await ctx.runMutation(internal.chat.appendAiStream, {
+          streamId: args.streamId,
+          userId: args.userId,
+          delta,
+        });
+      });
+      await flushPromise;
+    };
+
+    const onDelta = async (delta: string) => {
+      pendingDelta += delta;
+      if (flushTimer === null) {
+        flushTimer = setTimeout(() => {
+          flushTimer = null;
+          void flush();
+        }, 250);
+      }
+    };
+
+    const flushRemaining = async () => {
+      if (flushTimer !== null) {
+        clearTimeout(flushTimer);
+        flushTimer = null;
+      }
+      await flush();
+      await flushPromise;
+    };
+
+    const errors: string[] = [];
+    const overallTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_STREAM_TIMEOUT_MS || 90_000), 30_000), 95_000);
+    const overallDeadline = Date.now() + overallTimeoutMs;
+    for (const provider of providers) {
+      if (!provider.apiKey) {
+        errors.push(`${provider.name}: API key not configured`);
+        continue;
+      }
+      const remainingMs = overallDeadline - Date.now();
+      if (remainingMs <= 0) {
+        errors.push(`POLY AI stream deadline reached after ${overallTimeoutMs}ms`);
+        break;
+      }
+      try {
+        const startedAt = Date.now();
+        const result = await callStreamingProvider({ ...provider, timeoutMs: Math.min(provider.timeoutMs, remainingMs) }, args.messages, onDelta);
+        await flushRemaining();
+        await ctx.runMutation(internal.chat.finishAiStream, {
+          streamId: args.streamId,
+          userId: args.userId,
+          content: result.content,
+          provider: provider.name,
+          model: result.model || provider.model || provider.models?.[0],
+        });
+        console.info("[POLY AI] provider_success", {
+          provider: provider.name,
+          model: result.model || provider.model || provider.models?.[0] || "unknown",
+          durationMs: Date.now() - startedAt,
+          streaming: true,
+        });
+        return;
+      } catch (error) {
+        await flushRemaining();
+        await ctx.runMutation(internal.chat.resetAiStream, { streamId: args.streamId, userId: args.userId });
+        const message = error instanceof Error ? error.message : `${provider.name} request failed`;
+        errors.push(message);
+        console.warn(`[POLY AI] ${message}`);
+      }
+    }
+
+    await ctx.runMutation(internal.chat.failAiStream, {
+      streamId: args.streamId,
+      userId: args.userId,
+      error: errors.join(" | ") || "No provider API keys configured",
+    });
+  },
+});
+
 export const chatCompletion = action({
   args: {
     messages: v.array(
@@ -180,48 +456,7 @@ export const chatCompletion = action({
       limit: 20,
     });
 
-    const nvidiaApiKey = process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API;
-    const configuredNvidiaModel = process.env.NVIDIA_MODEL;
-    const providerTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_PROVIDER_TIMEOUT_MS || 25_000), 10_000), 50_000);
-    const maxTokens = Math.min(Math.max(Number(process.env.POLY_AI_MAX_TOKENS || 1_600), 400), 2_400);
-    const nvidiaModels = Array.from(new Set([
-      configuredNvidiaModel || "nvidia/nemotron-3.5-lightning-30b-a3b",
-      "nvidia/nemotron-3.5-lightning-30b-a3b",
-      "deepseek-ai/deepseek-v4-flash-0731",
-    ].filter((model): model is string => Boolean(model))));
-    const providers: Provider[] = [
-      ...nvidiaModels.map((model) => ({
-        name: `NVIDIA (${model})`,
-        apiKey: nvidiaApiKey,
-        endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
-        model,
-        timeoutMs: providerTimeoutMs,
-        maxTokens,
-      })),
-      {
-        name: "OpenRouter",
-        apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
-        endpoint: "https://openrouter.ai/api/v1/chat/completions",
-        models: Array.from(new Set(
-          (process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free")
-            .split(",")
-            .map((model) => model.trim())
-            .filter(Boolean)
-        )),
-        providerOptions: {
-          allow_fallbacks: true,
-          sort: { by: "latency", partition: "none" },
-          preferred_max_latency: { p90: 8 },
-        },
-        timeoutMs: providerTimeoutMs,
-        maxTokens,
-        headers: {
-          "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
-          "X-OpenRouter-Title": "POLY PMNA Study Materials",
-          "X-Title": "POLY PMNA Study Materials",
-        },
-      },
-    ];
+    const providers = getProviders();
 
     const errors: string[] = [];
     for (const provider of providers) {

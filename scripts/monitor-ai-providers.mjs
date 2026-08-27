@@ -10,6 +10,11 @@ function csvModels(value, fallback) {
   return Array.from(new Set((value || fallback).split(",").map((item) => item.trim()).filter(Boolean)));
 }
 
+const openRouterModels = csvModels(
+  process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL,
+  "cohere/north-mini-code:free,google/gemma-4-31b-it:free,nvidia/nemotron-3.5-lightning:free",
+);
+
 const providers = {
   nvidia: {
     label: "NVIDIA",
@@ -20,20 +25,17 @@ const providers = {
     body: (provider) => ({ model: provider.model }),
   },
   openrouter: {
-    label: "OpenRouter",
+    label: `OpenRouter (${openRouterModels[0]})`,
     key: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
-    models: csvModels(
-      process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL,
-      "nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free",
-    ),
+    model: openRouterModels[0],
     headers: {
       "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
       "X-OpenRouter-Title": "POLY PMNA latency monitor",
       "X-Title": "POLY PMNA latency monitor",
     },
     body: (provider) => ({
-      models: provider.models,
+      model: provider.model,
       provider: {
         allow_fallbacks: true,
         sort: { by: "latency", partition: "none" },

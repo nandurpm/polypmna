@@ -51,6 +51,23 @@ export const storeMessages = mutation({
   },
 });
 
+export const getAiStream = query({
+  args: { streamId: v.id("aiStreams") },
+  handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
+    const stream = await ctx.db.get(args.streamId);
+    if (!stream || stream.userId !== userId) throw new Error("Stream not found");
+    return {
+      status: stream.status,
+      content: stream.content,
+      provider: stream.provider,
+      model: stream.model,
+      error: stream.error,
+      updatedAt: stream.updatedAt,
+    };
+  },
+});
+
 export const clearHistory = mutation({
   args: {},
   handler: async (ctx) => {
@@ -60,6 +77,100 @@ export const clearHistory = mutation({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     for (const msg of messages) await ctx.db.delete(msg._id);
+  },
+});
+
+export const createAiStream = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const staleStreams = await ctx.db
+      .query("aiStreams")
+      .withIndex("by_user_updated", (q) => q.eq("userId", args.userId).lt("updatedAt", now - 86_400_000))
+      .take(20);
+    for (const stream of staleStreams) await ctx.db.delete(stream._id);
+    return await ctx.db.insert("aiStreams", {
+      userId: args.userId,
+      status: "streaming",
+      content: "",
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const appendAiStream = internalMutation({
+  args: {
+    streamId: v.id("aiStreams"),
+    userId: v.id("users"),
+    delta: v.string(),
+    provider: v.optional(v.string()),
+    model: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const stream = await ctx.db.get(args.streamId);
+    if (!stream || stream.userId !== args.userId || stream.status !== "streaming") return;
+    await ctx.db.patch(args.streamId, {
+      content: stream.content + args.delta,
+      provider: args.provider ?? stream.provider,
+      model: args.model ?? stream.model,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const resetAiStream = internalMutation({
+  args: {
+    streamId: v.id("aiStreams"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const stream = await ctx.db.get(args.streamId);
+    if (!stream || stream.userId !== args.userId || stream.status !== "streaming") return;
+    await ctx.db.patch(args.streamId, {
+      content: "",
+      provider: undefined,
+      model: undefined,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const finishAiStream = internalMutation({
+  args: {
+    streamId: v.id("aiStreams"),
+    userId: v.id("users"),
+    content: v.string(),
+    provider: v.optional(v.string()),
+    model: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const stream = await ctx.db.get(args.streamId);
+    if (!stream || stream.userId !== args.userId) return;
+    await ctx.db.patch(args.streamId, {
+      status: "completed",
+      content: args.content,
+      provider: args.provider ?? stream.provider,
+      model: args.model ?? stream.model,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const failAiStream = internalMutation({
+  args: {
+    streamId: v.id("aiStreams"),
+    userId: v.id("users"),
+    error: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const stream = await ctx.db.get(args.streamId);
+    if (!stream || stream.userId !== args.userId) return;
+    await ctx.db.patch(args.streamId, {
+      status: "failed",
+      error: args.error,
+      updatedAt: Date.now(),
+    });
   },
 });
 

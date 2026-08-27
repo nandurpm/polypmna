@@ -12,7 +12,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:watch": "vitest",
-    "monitor:ai": "node scripts/monitor-ai-providers.mjs both"
+    "monitor:ai": "node scripts/monitor-ai-providers.mjs both",
+    "report:ai": "node scripts/generate-ai-health-report.mjs"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.90",

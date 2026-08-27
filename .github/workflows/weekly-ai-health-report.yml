@@ -1,0 +1,45 @@
+name: Weekly AI provider health report
+
+on:
+  schedule:
+    # Monday 09:00 Asia/Kolkata (03:30 UTC)
+    - cron: "30 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-ai-provider-health
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate provider health report
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVDIA_API || secrets.NVIDIA_API || secrets.NVIDIA_API_KEY }}
+          NVIDIA_MODEL: nvidia/nemotron-3.5-lightning-30b-a3b
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API || secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODELS: ${{ vars.OPENROUTER_MODELS || secrets.OPENROUTER_MODELS }}
+          POLY_AI_SITE_URL: https://nandurpm.github.io/polypmna/
+          AI_MONITOR_TIMEOUT_MS: 30000
+        run: node scripts/generate-ai-health-report.mjs
+
+      - name: Upload weekly report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-provider-health-report-${{ github.run_number }}
+          path: reports/ai-provider-health-*.md
+          if-no-files-found: error
+          retention-days: 90

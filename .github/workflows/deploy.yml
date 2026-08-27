@@ -96,13 +96,14 @@ jobs:
           if [ -n "$OPENROUTER_API_KEY" ]; then
             printf '%s' "$OPENROUTER_API_KEY" | bunx convex env set --prod OPENROUTER_API_KEY
           fi
-          openrouter_models="${OPENROUTER_MODELS:-nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free}"
+          openrouter_models="${OPENROUTER_MODELS:-cohere/north-mini-code:free,google/gemma-4-31b-it:free,nvidia/nemotron-3.5-lightning:free}"
           printf '%s' "$openrouter_models" | bunx convex env set --prod OPENROUTER_MODELS
           if [ -n "$NVIDIA_API_KEY" ]; then
             printf '%s' "$NVIDIA_API_KEY" | bunx convex env set --prod NVIDIA_API_KEY
           fi
           printf '%s' "nvidia/nemotron-3.5-lightning-30b-a3b" | bunx convex env set --prod NVIDIA_MODEL
           printf '%s' "25000" | bunx convex env set --prod POLY_AI_PROVIDER_TIMEOUT_MS
+          printf '%s' "90000" | bunx convex env set --prod POLY_AI_STREAM_TIMEOUT_MS
           printf '%s' "1600" | bunx convex env set --prod POLY_AI_MAX_TOKENS
           printf '%s' "https://nandurpm.github.io/polypmna/" | bunx convex env set --prod POLY_AI_SITE_URL
           printf '%s' "https://nandurpm.github.io/polypmna/" | bunx convex env set --prod SITE_URL
