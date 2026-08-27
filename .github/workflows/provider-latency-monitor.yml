@@ -34,3 +34,14 @@ jobs:
           POLY_AI_SITE_URL: https://nandurpm.github.io/polypmna/
           AI_MONITOR_TIMEOUT_MS: 30000
         run: node scripts/monitor-ai-providers.mjs both
+
+      - name: Check OpenRouter usage
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API || secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_FREE_DAILY_LIMIT: ${{ vars.OPENROUTER_FREE_DAILY_LIMIT || '50' }}
+        run: |
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            node scripts/check-openrouter-usage.mjs
+          else
+            echo "OpenRouter usage check skipped: no OpenRouter secret is configured."
+          fi
