@@ -1,5 +1,5 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 const MAX_HISTORY_MESSAGES = 120;
@@ -175,6 +175,47 @@ export const failAiStream = internalMutation({
 });
 
 /** Internal-only atomic reservation used by the AI action for a per-user sliding-window limit. */
+export const getProviderHealth = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("providerHealth").collect();
+  },
+});
+
+export const recordProviderHealth = internalMutation({
+  args: {
+    provider: v.string(),
+    ok: v.boolean(),
+    durationMs: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("providerHealth")
+      .withIndex("by_provider", (q) => q.eq("provider", args.provider))
+      .unique();
+    if (args.ok) {
+      const patch = {
+        consecutiveFailures: 0,
+        lastSuccessAt: now,
+        lastDurationMs: args.durationMs,
+        updatedAt: now,
+      };
+      if (existing) await ctx.db.patch(existing._id, patch);
+      else await ctx.db.insert("providerHealth", { provider: args.provider, ...patch });
+      return;
+    }
+    const patch = {
+      consecutiveFailures: (existing?.consecutiveFailures ?? 0) + 1,
+      lastFailureAt: now,
+      lastDurationMs: args.durationMs,
+      updatedAt: now,
+    };
+    if (existing) await ctx.db.patch(existing._id, patch);
+    else await ctx.db.insert("providerHealth", { provider: args.provider, ...patch });
+  },
+});
+
 export const reserveAiRequest = internalMutation({
   args: {
     userId: v.id("users"),

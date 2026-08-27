@@ -120,6 +120,15 @@ const schema = defineSchema(
       updatedAt: v.number(),
     }).index("by_user_updated", ["userId", "updatedAt"]),
 
+    providerHealth: defineTable({
+      provider: v.string(),
+      consecutiveFailures: v.number(),
+      lastFailureAt: v.optional(v.number()),
+      lastSuccessAt: v.optional(v.number()),
+      lastDurationMs: v.optional(v.number()),
+      updatedAt: v.number(),
+    }).index("by_provider", ["provider"]),
+
     // ── User Progress ──
     userProgress: defineTable({
       userId: v.id("users"),

@@ -262,7 +262,8 @@ async function callStreamingProvider(
 function getProviders(): Provider[] {
   const nvidiaApiKey = process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API;
   const configuredNvidiaModel = process.env.NVIDIA_MODEL;
-  const providerTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_PROVIDER_TIMEOUT_MS || 25_000), 10_000), 50_000);
+  const nvidiaTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_NVIDIA_TIMEOUT_MS || 10_000), 5_000), 10_000);
+  const openRouterTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_PROVIDER_TIMEOUT_MS || 25_000), 10_000), 50_000);
   const maxTokens = Math.min(Math.max(Number(process.env.POLY_AI_MAX_TOKENS || 1_600), 400), 2_400);
   const nvidiaModels = Array.from(new Set([
     configuredNvidiaModel || "nvidia/nemotron-3.5-lightning-30b-a3b",
@@ -284,7 +285,7 @@ function getProviders(): Provider[] {
       sort: { by: "latency", partition: "none" },
       preferred_max_latency: { p90: 8 },
     },
-    timeoutMs: providerTimeoutMs,
+    timeoutMs: openRouterTimeoutMs,
     maxTokens,
     headers: {
       "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
@@ -299,7 +300,7 @@ function getProviders(): Provider[] {
       apiKey: nvidiaApiKey,
       endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
       model,
-      timeoutMs: providerTimeoutMs,
+      timeoutMs: nvidiaTimeoutMs,
       maxTokens,
     })),
     ...openRouterModels.map((model) => ({
@@ -351,7 +352,22 @@ export const runChatStream = internalAction({
     ),
   },
   handler: async (ctx, args) => {
-    const providers = getProviders();
+    const configuredProviders = getProviders();
+    const providerHealth = await ctx.runQuery(internal.chat.getProviderHealth, {});
+    const recentHealth = providerHealth.filter((item) => Date.now() - item.updatedAt <= 15 * 60_000);
+    const nvidiaDegraded = recentHealth.some((item) => item.provider.startsWith("NVIDIA") && item.consecutiveFailures >= 1);
+    const openRouterHealth = recentHealth.filter((item) => item.provider.startsWith("OpenRouter"));
+    const openRouterDegraded = openRouterHealth.length > 0 && openRouterHealth.every((item) => item.consecutiveFailures >= 2);
+    const openRouterProviders = configuredProviders.filter((provider) => provider.name.startsWith("OpenRouter"));
+    const nvidiaProviders = configuredProviders.filter((provider) => provider.name.startsWith("NVIDIA"));
+    const providers = nvidiaDegraded && !openRouterDegraded
+      ? [...openRouterProviders, ...nvidiaProviders]
+      : configuredProviders;
+    console.info("[POLY AI] provider_order", {
+      mode: nvidiaDegraded && !openRouterDegraded ? "openrouter_first" : "nvidia_first",
+      nvidiaDegraded,
+      openRouterDegraded,
+    });
     let pendingDelta = "";
     let flushTimer: ReturnType<typeof setTimeout> | null = null;
     let flushPromise = Promise.resolve();
@@ -402,10 +418,15 @@ export const runChatStream = internalAction({
         errors.push(`POLY AI stream deadline reached after ${overallTimeoutMs}ms`);
         break;
       }
+      const startedAt = Date.now();
       try {
-        const startedAt = Date.now();
         const result = await callStreamingProvider({ ...provider, timeoutMs: Math.min(provider.timeoutMs, remainingMs) }, args.messages, onDelta);
         await flushRemaining();
+        await ctx.runMutation(internal.chat.recordProviderHealth, {
+          provider: provider.name,
+          ok: true,
+          durationMs: Date.now() - startedAt,
+        });
         await ctx.runMutation(internal.chat.finishAiStream, {
           streamId: args.streamId,
           userId: args.userId,
@@ -422,6 +443,11 @@ export const runChatStream = internalAction({
         return;
       } catch (error) {
         await flushRemaining();
+        await ctx.runMutation(internal.chat.recordProviderHealth, {
+          provider: provider.name,
+          ok: false,
+          durationMs: Date.now() - startedAt,
+        });
         await ctx.runMutation(internal.chat.resetAiStream, { streamId: args.streamId, userId: args.userId });
         const message = error instanceof Error ? error.message : `${provider.name} request failed`;
         errors.push(message);

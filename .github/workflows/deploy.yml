@@ -102,6 +102,7 @@ jobs:
             printf '%s' "$NVIDIA_API_KEY" | bunx convex env set --prod NVIDIA_API_KEY
           fi
           printf '%s' "nvidia/nemotron-3.5-lightning-30b-a3b" | bunx convex env set --prod NVIDIA_MODEL
+          printf '%s' "10000" | bunx convex env set --prod POLY_AI_NVIDIA_TIMEOUT_MS
           printf '%s' "25000" | bunx convex env set --prod POLY_AI_PROVIDER_TIMEOUT_MS
           printf '%s' "90000" | bunx convex env set --prod POLY_AI_STREAM_TIMEOUT_MS
           printf '%s' "1600" | bunx convex env set --prod POLY_AI_MAX_TOKENS
