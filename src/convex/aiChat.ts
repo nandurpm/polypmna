@@ -93,6 +93,8 @@ type Provider = {
   models?: string[];
   headers?: Record<string, string>;
   providerOptions?: Record<string, unknown>;
+  timeoutMs: number;
+  maxTokens: number;
 };
 
 type CompletionResponse = {
@@ -114,7 +116,10 @@ function extractContent(payload: CompletionResponse): string {
 async function callProvider(provider: Provider, messages: Array<{ role: "user" | "assistant" | "system"; content: string }>): Promise<{ content: string; model?: string }> {
   if (!provider.apiKey) throw new Error(`${provider.name} is not configured`);
 
-  const response = await fetch(provider.endpoint, {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), provider.timeoutMs);
+  try {
+    const response = await fetch(provider.endpoint, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${provider.apiKey}`,
@@ -129,22 +134,31 @@ async function callProvider(provider: Provider, messages: Array<{ role: "user" |
         { role: "system", content: ANSWER_QUALITY_PROMPT },
         ...messages.slice(-20),
       ],
-      max_tokens: 2400,
+      max_tokens: provider.maxTokens,
       temperature: 0.35,
       stream: false,
       ...(provider.providerOptions ? { provider: provider.providerOptions } : {}),
     }),
-  });
+    signal: controller.signal,
+    });
 
   if (!response.ok) {
     const details = (await response.text()).slice(0, 300);
     throw new Error(`${provider.name} API error (${response.status}): ${details}`);
   }
 
-  const payload = (await response.json()) as CompletionResponse;
-  const content = extractContent(payload);
-  if (!content) throw new Error(`${provider.name} returned an empty response`);
-  return { content, model: payload.model };
+    const payload = (await response.json()) as CompletionResponse;
+    const content = extractContent(payload);
+    if (!content) throw new Error(`${provider.name} returned an empty response`);
+    return { content, model: payload.model };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(`${provider.name} timed out after ${provider.timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export const chatCompletion = action({
@@ -168,10 +182,12 @@ export const chatCompletion = action({
 
     const nvidiaApiKey = process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API;
     const configuredNvidiaModel = process.env.NVIDIA_MODEL;
+    const providerTimeoutMs = Math.min(Math.max(Number(process.env.POLY_AI_PROVIDER_TIMEOUT_MS || 25_000), 10_000), 50_000);
+    const maxTokens = Math.min(Math.max(Number(process.env.POLY_AI_MAX_TOKENS || 1_600), 400), 2_400);
     const nvidiaModels = Array.from(new Set([
-      configuredNvidiaModel,
-      "deepseek-ai/deepseek-v4-flash-0731",
+      configuredNvidiaModel || "nvidia/nemotron-3.5-lightning-30b-a3b",
       "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "deepseek-ai/deepseek-v4-flash-0731",
     ].filter((model): model is string => Boolean(model))));
     const providers: Provider[] = [
       ...nvidiaModels.map((model) => ({
@@ -179,6 +195,8 @@ export const chatCompletion = action({
         apiKey: nvidiaApiKey,
         endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
         model,
+        timeoutMs: providerTimeoutMs,
+        maxTokens,
       })),
       {
         name: "OpenRouter",
@@ -192,7 +210,11 @@ export const chatCompletion = action({
         )),
         providerOptions: {
           allow_fallbacks: true,
+          sort: { by: "latency", partition: "none" },
+          preferred_max_latency: { p90: 8 },
         },
+        timeoutMs: providerTimeoutMs,
+        maxTokens,
         headers: {
           "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
           "X-OpenRouter-Title": "POLY PMNA Study Materials",

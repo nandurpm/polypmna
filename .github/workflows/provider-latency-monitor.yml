@@ -1,0 +1,36 @@
+name: Monitor AI provider latency
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: provider-latency-monitor
+  cancel-in-progress: true
+
+jobs:
+  latency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Measure NVIDIA and OpenRouter latency
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVDIA_API || secrets.NVIDIA_API || secrets.NVIDIA_API_KEY }}
+          NVIDIA_MODEL: nvidia/nemotron-3.5-lightning-30b-a3b
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API || secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODELS: ${{ vars.OPENROUTER_MODELS || secrets.OPENROUTER_MODELS }}
+          POLY_AI_SITE_URL: https://nandurpm.github.io/polypmna/
+          AI_MONITOR_TIMEOUT_MS: 120000
+        run: node scripts/monitor-ai-providers.mjs both

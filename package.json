@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "monitor:ai": "node scripts/monitor-ai-providers.mjs both"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.90",
