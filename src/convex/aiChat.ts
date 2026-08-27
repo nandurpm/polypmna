@@ -271,6 +271,7 @@ function getProviders(): Provider[] {
     "deepseek-ai/deepseek-v4-flash-0731",
   ].filter((model): model is string => Boolean(model))));
 
+  const freeFirst = process.env.POLY_AI_FREE_FIRST !== "false";
   const openRouterModels = Array.from(new Set(
     (process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL || "cohere/north-mini-code:free,google/gemma-4-31b-it:free,nvidia/nemotron-3.5-lightning:free")
       .split(",")
@@ -294,21 +295,23 @@ function getProviders(): Provider[] {
     },
   };
 
-  return [
-    ...nvidiaModels.map((model) => ({
-      name: `NVIDIA (${model})`,
-      apiKey: nvidiaApiKey,
-      endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
-      model,
-      timeoutMs: nvidiaTimeoutMs,
-      maxTokens,
-    })),
-    ...openRouterModels.map((model) => ({
-      ...openRouterBase,
-      name: `OpenRouter (${model})`,
-      model,
-    })),
-  ];
+  const nvidiaProviders = nvidiaModels.map((model) => ({
+    name: `NVIDIA (${model})`,
+    apiKey: nvidiaApiKey,
+    endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
+    model,
+    timeoutMs: nvidiaTimeoutMs,
+    maxTokens,
+  }));
+  const openRouterProviders = openRouterModels.map((model) => ({
+    ...openRouterBase,
+    name: `OpenRouter (${model})`,
+    model,
+  }));
+
+  return freeFirst
+    ? [...openRouterProviders, ...nvidiaProviders]
+    : [...nvidiaProviders, ...openRouterProviders];
 }
 
 export const startChatStream = action({
@@ -362,9 +365,15 @@ export const runChatStream = internalAction({
     const nvidiaProviders = configuredProviders.filter((provider) => provider.name.startsWith("NVIDIA"));
     const providers = nvidiaDegraded && !openRouterDegraded
       ? [...openRouterProviders, ...nvidiaProviders]
-      : configuredProviders;
+      : openRouterDegraded && !nvidiaDegraded
+        ? [...nvidiaProviders, ...openRouterProviders]
+        : configuredProviders;
     console.info("[POLY AI] provider_order", {
-      mode: nvidiaDegraded && !openRouterDegraded ? "openrouter_first" : "nvidia_first",
+      mode: nvidiaDegraded && !openRouterDegraded
+        ? "openrouter_first"
+        : openRouterDegraded && !nvidiaDegraded
+          ? "nvidia_first"
+          : configuredProviders[0]?.name.startsWith("OpenRouter") ? "openrouter_first" : "nvidia_first",
       nvidiaDegraded,
       openRouterDegraded,
     });
