@@ -44,6 +44,8 @@ describe("POLY AI scope guard", () => {
     "Explain why a transformer requires alternating current.",
     "Explain how a boiler works.",
     "What is a heat exchanger used for?",
+    "What are the properties of a binary tree?",
+    "Explain stack and queue data structures.",
   ])("does not refuse a broad but valid technical question: %j", (prompt) => {
     expect(isPolyAiQueryInScope(prompt)).toBe(true);
     expect(generatePolyAiResponse(prompt)).not.toBe(POLY_AI_SCOPE_RESPONSE);
@@ -53,6 +55,7 @@ describe("POLY AI scope guard", () => {
     ["Explain why a transformer requires alternating current.", "Transformer working principle"],
     ["Explain how a boiler works.", "Boiler working principle"],
     ["What is a heat exchanger used for?", "Heat exchanger"],
+    ["What are the properties of a binary tree?", "Binary tree properties"],
   ])("provides a substantive offline answer for %j", (prompt, heading) => {
     const answer = generatePolyAiResponse(prompt);
     expect(answer).toContain(`## ${heading}`);
