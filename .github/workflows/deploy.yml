@@ -47,6 +47,7 @@ jobs:
       - name: Prepare SPA route fallbacks
         run: |
           cp dist/index.html dist/404.html
+          cp dist/index.html dist/ask-poly.html
           for route in auth dashboard ask-ai mock-exams question-papers student-tools pdf lesson resources curriculum subject; do
             mkdir -p "dist/$route"
             cp dist/index.html "dist/$route/index.html"
@@ -115,7 +116,6 @@ jobs:
           printf '%s' "25000" | bunx convex env set --prod POLY_AI_PROVIDER_TIMEOUT_MS
           printf '%s' "90000" | bunx convex env set --prod POLY_AI_STREAM_TIMEOUT_MS
           printf '%s' "1600" | bunx convex env set --prod POLY_AI_MAX_TOKENS
-          printf '%s' "true" | bunx convex env set --prod POLY_AI_FREE_FIRST
           printf '%s' "60000" | bunx convex env set --prod POLY_AI_PROVIDER_COOLDOWN_MS
           printf '%s' "18" | bunx convex env set --prod POLY_AI_OPENROUTER_RPM_LIMIT
           printf '%s' "45" | bunx convex env set --prod POLY_AI_OPENROUTER_DAILY_LIMIT

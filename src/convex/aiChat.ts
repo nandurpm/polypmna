@@ -380,7 +380,6 @@ function getProviders(): Provider[] {
     ),
   );
 
-  const freeFirst = process.env.POLY_AI_FREE_FIRST !== "false";
   const openRouterModels = Array.from(
     new Set(
       (
@@ -425,9 +424,9 @@ function getProviders(): Provider[] {
     model,
   }));
 
-  return freeFirst
-    ? [...openRouterProviders, ...nvidiaProviders]
-    : [...nvidiaProviders, ...openRouterProviders];
+  // Keep failover deterministic: NVIDIA first, then OpenRouter. The client
+  // supplies the final offline fallback if every server provider fails.
+  return [...nvidiaProviders, ...openRouterProviders];
 }
 
 export const startChatStream = action({
@@ -694,7 +693,9 @@ export const runChatStream = internalAction({
     await ctx.runMutation(internal.chat.failAiStream, {
       streamId: args.streamId,
       userId: args.userId,
-      error: errors.join(" | ") || "No provider API keys configured",
+      // Provider diagnostics may contain upstream response bodies. Keep those
+      // in server logs and expose only a stable, non-sensitive client message.
+      error: "External AI providers are temporarily unavailable",
     });
   },
 });
@@ -792,10 +793,6 @@ export const chatCompletion = action({
       }
     }
 
-    const detail =
-      errors.length > 0
-        ? errors.join(" | ")
-        : "No provider API keys configured";
-    throw new Error(detail);
+    throw new Error("External AI providers are temporarily unavailable");
   },
 });
