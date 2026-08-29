@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: CurriculumBrowser.tsx
+ * PURPOSE: Lets students filter, search, paginate, and open revision-specific curriculum subjects.
+ * ============================================================
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {

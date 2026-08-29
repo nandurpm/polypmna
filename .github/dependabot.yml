@@ -1,3 +1,8 @@
+# ============================================================
+# FILE: dependabot.yml
+# PURPOSE: Schedules dependency update checks for the Bun/npm dependency ecosystem and GitHub Actions.
+# ============================================================
+
 version: 2
 updates:
   - package-ecosystem: npm

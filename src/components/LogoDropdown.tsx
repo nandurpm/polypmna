@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: LogoDropdown.tsx
+ * PURPOSE: Renders the signed-in navigation menu attached to the POLY PMNA logo.
+ * ============================================================
+ */
+
 // simple logo dropdown component that can be used to go to the landing page or sign out for the user
 
 import { Button } from "@/components/ui/button";

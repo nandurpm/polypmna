@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: polyAiStorage.ts
+ * PURPOSE: Loads, saves, and clears versioned local POLY AI history and preference state.
+ * ============================================================
+ */
+
 export type LocalPolyAiMessage = {
   _id: string;
   role: "user" | "assistant";

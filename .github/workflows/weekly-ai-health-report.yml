@@ -1,3 +1,8 @@
+# ============================================================
+# FILE: weekly-ai-health-report.yml
+# PURPOSE: Generates and retains a weekly AI-provider health report as a workflow artifact.
+# ============================================================
+
 name: Weekly AI provider health report
 
 on:

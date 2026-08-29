@@ -1,3 +1,8 @@
+# ============================================================
+# FILE: datadog-synthetics.yml
+# PURPOSE: Runs optional Datadog synthetic checks only when repository credentials are configured.
+# ============================================================
+
 # This workflow will trigger Datadog Synthetic tests within your Datadog organisation
 # For more information on running Synthetic tests within your GitHub workflows see: https://docs.datadoghq.com/synthetics/cicd_integrations/github_actions/
 

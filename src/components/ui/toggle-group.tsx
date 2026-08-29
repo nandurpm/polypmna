@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: toggle-group.tsx
+ * PURPOSE: Provides the reusable toggle-group UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group"
 import { type VariantProps } from "class-variance-authority"

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: button-group.tsx
+ * PURPOSE: Provides the reusable button-group UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 

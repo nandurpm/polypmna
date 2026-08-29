@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: empty.tsx
+ * PURPOSE: Provides the reusable empty UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"

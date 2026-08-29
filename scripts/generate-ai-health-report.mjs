@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/*
+ * ============================================================
+ * FILE: generate-ai-health-report.mjs
+ * PURPOSE: Runs provider monitoring and writes a timestamped Markdown health report for CI artifacts.
+ * ============================================================
+ */
+
 import { mkdir, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: use-mobile.ts
+ * PURPOSE: Tracks whether the viewport is below the shared mobile breakpoint.
+ * ============================================================
+ */
+
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768

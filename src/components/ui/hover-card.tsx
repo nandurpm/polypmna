@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: hover-card.tsx
+ * PURPOSE: Provides the reusable hover-card UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

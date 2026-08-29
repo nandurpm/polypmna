@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: polyAi.ts
+ * PURPOSE: Enforces POLY AI topic scope, sanitizes provider output, and produces deterministic offline educational answers.
+ * ============================================================
+ */
+
 /**
  * Public fallback for static hosting. Convex remains the preferred persistence
  * path, but a visitor should never lose a response because anonymous auth is

@@ -1,3 +1,8 @@
+# ============================================================
+# FILE: codeql.yml
+# PURPOSE: Runs scheduled and change-triggered CodeQL analysis for JavaScript and TypeScript.
+# ============================================================
+
 name: CodeQL security scan
 
 on:

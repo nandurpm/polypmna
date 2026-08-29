@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: tooltip.tsx
+ * PURPOSE: Provides the reusable tooltip UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

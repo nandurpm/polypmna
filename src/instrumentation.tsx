@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: instrumentation.tsx
+ * PURPOSE: Captures browser errors, reports sanitized diagnostics to the hosting integration, and presents recoverable error details.
+ * ============================================================
+ */
+
 import { Dialog } from "@radix-ui/react-dialog";
 import { AlertTriangle, ChevronDown, ExternalLink } from "lucide-react";
 import React, { useEffect, useState } from "react";

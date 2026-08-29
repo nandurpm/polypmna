@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: dialog.tsx
+ * PURPOSE: Provides the reusable dialog UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: sidebar.tsx
+ * PURPOSE: Provides the reusable sidebar UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

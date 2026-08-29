@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: check-public-resources.mjs
+ * PURPOSE: Validates curriculum manifests and representative public lesson, PDF, and question-paper URLs.
+ * ============================================================
+ */
+
 const SOURCES = {
   notes: "https://raw.githubusercontent.com/nandurpm/poly-pmna-pdf-files/main/manifests/notes-2026.json",
   papers: "https://raw.githubusercontent.com/nandurpm/poly-pmna-pdf-files/main/manifests/sitttr-2026.json",

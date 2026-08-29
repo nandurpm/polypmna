@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: global.d.ts
+ * PURPOSE: Declares application-wide browser and build-time type augmentations.
+ * ============================================================
+ */
+
 declare global {
   interface Window {
     /**

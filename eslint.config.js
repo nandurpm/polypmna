@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: eslint.config.js
+ * PURPOSE: Configures TypeScript, React Hooks, React Refresh, and Prettier-compatible lint rules.
+ * ============================================================
+ */
+
 import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";

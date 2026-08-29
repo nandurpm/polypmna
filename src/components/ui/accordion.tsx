@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: accordion.tsx
+ * PURPOSE: Provides the reusable accordion UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDownIcon } from "lucide-react"

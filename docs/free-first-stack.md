@@ -23,7 +23,7 @@ OpenRouter documents a 20 requests/minute free-model limit. Its daily free-model
 
 ## Maintenance commands
 
-Run `npm run test:run` for the unit suite, `npm run check:resources` to verify the public curriculum manifests and representative resources, and `npm run build` to validate the production bundle. The scheduled resource-health workflow is intentionally deterministic and does not call NVIDIA or OpenRouter.
+Run `bun run test:run` for the unit suite, `bun run check:resources` to verify the public curriculum manifests and representative resources, and `bun run build` to validate the production bundle. The scheduled resource-health workflow is intentionally deterministic and does not call NVIDIA or OpenRouter.
 
 ## When to consider a migration
 

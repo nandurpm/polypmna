@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: alert.tsx
+ * PURPOSE: Provides the reusable alert UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 

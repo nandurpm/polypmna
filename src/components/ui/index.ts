@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: index.ts
+ * PURPOSE: Re-exports selected shared UI primitives from one stable import surface.
+ * ============================================================
+ */
+
 /**
  * UI Component Registry
  *

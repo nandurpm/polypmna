@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: emailOtp.ts
+ * PURPOSE: Defines the email one-time-password provider and secure verification-code generation.
+ * ============================================================
+ */
+
 import { Email } from "@convex-dev/auth/providers/Email";
 import axios from "axios";
 import { RandomReader, generateRandomString } from "@oslojs/crypto/random";

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: users.ts
+ * PURPOSE: Returns the authenticated user profile and exposes a reusable backend current-user helper.
+ * ============================================================
+ */
+
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { query, QueryCtx } from "./_generated/server";
 

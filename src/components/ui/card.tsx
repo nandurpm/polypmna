@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: card.tsx
+ * PURPOSE: Provides the reusable card UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

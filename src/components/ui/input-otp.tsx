@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: input-otp.tsx
+ * PURPOSE: Provides the reusable input-otp UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import { OTPInput, OTPInputContext } from "input-otp"
 import { MinusIcon } from "lucide-react"

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: scroll-area.tsx
+ * PURPOSE: Provides the reusable scroll-area UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

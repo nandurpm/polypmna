@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: label.tsx
+ * PURPOSE: Provides the reusable label UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

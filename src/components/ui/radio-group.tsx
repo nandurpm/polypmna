@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: radio-group.tsx
+ * PURPOSE: Provides the reusable radio-group UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

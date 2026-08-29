@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: QuestionPapers.tsx
+ * PURPOSE: Searches and filters public question-paper manifests and exposes their PDF resources.
+ * ============================================================
+ */
+
 import { useState, useMemo, useEffect, useCallback, useDeferredValue } from "react";
 import { Link, useNavigate } from "react-router";
 import {

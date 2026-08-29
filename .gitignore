@@ -6,3 +6,7 @@ node_modules
 dist
 .convex/
 convex/.env.local
+coverage/
+reports/
+*.log
+.DS_Store

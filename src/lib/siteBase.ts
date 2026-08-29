@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: siteBase.ts
+ * PURPOSE: Resolves runtime base paths for both GitHub Pages subpaths and custom-domain hosting.
+ * ============================================================
+ */
+
 const configuredBasePath = (import.meta.env.BASE_URL || "/").replace(/\/+$/, "") || "/";
 
 /**

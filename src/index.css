@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: index.css
+ * PURPOSE: Defines Tailwind theme tokens, global typography, layout defaults, animations, and light/dark presentation rules.
+ * ============================================================
+ */
+
 /* DO NOT CHANGE */
 @import "tailwindcss";
 @import "tw-animate-css";

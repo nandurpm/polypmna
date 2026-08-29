@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: generate-convex-auth-keys.mjs
+ * PURPOSE: Generates an RSA private key and matching JWKS payload for Convex Auth deployment setup.
+ * ============================================================
+ */
+
 import { generateKeyPairSync } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

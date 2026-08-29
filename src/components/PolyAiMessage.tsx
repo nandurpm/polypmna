@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: PolyAiMessage.tsx
+ * PURPOSE: Parses and renders POLY AI Markdown, code, tables, and simple flowcharts without external rendering services.
+ * ============================================================
+ */
+
 import { Fragment, type ReactNode } from "react";
 
 type MessageBlock =

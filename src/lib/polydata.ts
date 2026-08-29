@@ -1,4 +1,11 @@
 /*
+ * ============================================================
+ * FILE: polydata.ts
+ * PURPOSE: Normalizes curriculum, PDF, question-paper, and programme manifests from the project’s public educational sources.
+ * ============================================================
+ */
+
+/*
  * Polydata — fetches real subject and document data directly from the
  * maintained diploma-notes and poly-pmna-pdf-files manifests.
  */

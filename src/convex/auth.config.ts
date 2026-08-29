@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: auth.config.ts
+ * PURPOSE: Configures local Convex Auth tokens and federated Freebuff JWT validation.
+ * ============================================================
+ */
+
 import type { AuthConfig } from "convex/server";
 
 // Freebuff-signed federated tokens (see freebuff web's

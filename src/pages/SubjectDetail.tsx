@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: SubjectDetail.tsx
+ * PURPOSE: Combines subject metadata with revision-aware lessons, syllabi, model papers, notes, and question papers.
+ * ============================================================
+ */
+
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: carousel.tsx
+ * PURPOSE: Provides the reusable carousel UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,

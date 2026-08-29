@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: materials.ts
+ * PURPOSE: Queries searchable and featured learning materials and provides the internal material seeder.
+ * ============================================================
+ */
+
 import { query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 

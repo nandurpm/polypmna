@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: departments.ts
+ * PURPOSE: Exposes Convex queries for listing departments and looking them up by abbreviation.
+ * ============================================================
+ */
+
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: authRedirect.ts
+ * PURPOSE: Validates post-authentication return targets so redirects remain on the same application origin.
+ * ============================================================
+ */
+
 /** Resolve an auth redirect without allowing protocol-relative or cross-origin URLs. */
 export function resolveAuthRedirect(
   returnTo: string | null,

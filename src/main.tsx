@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: main.tsx
+ * PURPOSE: Bootstraps the React application, Convex authentication provider, lazy routes, SEO synchronization, and root error handling.
+ * ============================================================
+ */
+
 import { Toaster } from "@/components/ui/sonner";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";

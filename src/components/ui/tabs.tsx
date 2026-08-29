@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: tabs.tsx
+ * PURPOSE: Provides the reusable tabs UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

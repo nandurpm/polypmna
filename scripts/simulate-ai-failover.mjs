@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/*
+ * ============================================================
+ * FILE: simulate-ai-failover.mjs
+ * PURPOSE: Exercises deterministic provider-failure scenarios without making network requests or reading credentials.
+ * ============================================================
+ */
+
 const scenarios = [
   {
     name: "rate-limit then NVIDIA success",

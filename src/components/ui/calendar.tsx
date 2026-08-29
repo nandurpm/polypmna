@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: calendar.tsx
+ * PURPOSE: Provides the reusable calendar UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

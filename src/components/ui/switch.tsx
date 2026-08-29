@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: switch.tsx
+ * PURPOSE: Provides the reusable switch UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: alert-dialog.tsx
+ * PURPOSE: Provides the reusable alert-dialog UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 

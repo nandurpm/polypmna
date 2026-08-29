@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/*
+ * ============================================================
+ * FILE: check-openrouter-usage.mjs
+ * PURPOSE: Reads non-secret OpenRouter quota metadata and fails when configured free-tier headroom is exhausted.
+ * ============================================================
+ */
+
 const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API;
 const freeDailyLimit = Number(process.env.OPENROUTER_FREE_DAILY_LIMIT || 50);
 

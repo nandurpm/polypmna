@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: NotFound.tsx
+ * PURPOSE: Displays the animated fallback page for unmatched application routes.
+ * ============================================================
+ */
+
 import { motion } from "framer-motion";
 
 export default function NotFound() {

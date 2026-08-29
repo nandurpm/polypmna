@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: slider.tsx
+ * PURPOSE: Provides the reusable slider UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

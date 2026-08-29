@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: SeoHead.tsx
+ * PURPOSE: Keeps document titles, descriptions, canonical links, and social metadata synchronized with the active route.
+ * ============================================================
+ */
+
 import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { getRuntimeBasePath } from "../lib/siteBase";

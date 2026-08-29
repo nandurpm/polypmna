@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: seed.ts
+ * PURPOSE: Imports curriculum manifests from GitHub and seeds normalized departments, subjects, and materials into Convex.
+ * ============================================================
+ */
+
 import { internalMutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 

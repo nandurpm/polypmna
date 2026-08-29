@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: progress.tsx
+ * PURPOSE: Provides the reusable progress UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import * as ProgressPrimitive from "@radix-ui/react-progress"
 

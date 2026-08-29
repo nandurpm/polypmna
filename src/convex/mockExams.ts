@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: mockExams.ts
+ * PURPOSE: Queries mock exams, validates authenticated submissions, and persists student attempts.
+ * ============================================================
+ */
+
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { query, mutation, internalMutation } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";

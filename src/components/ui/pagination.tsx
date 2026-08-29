@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: pagination.tsx
+ * PURPOSE: Provides the reusable pagination UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import {
   ChevronLeftIcon,

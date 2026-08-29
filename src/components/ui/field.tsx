@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: field.tsx
+ * PURPOSE: Provides the reusable field UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import { useMemo } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 

@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/*
+ * ============================================================
+ * FILE: test-ai-providers.mjs
+ * PURPOSE: Performs opt-in smoke requests against selected AI providers and prints bounded, non-secret results.
+ * ============================================================
+ */
+
 const query = process.argv.slice(3).join(" ") ||
   "Explain how to count curriculum subjects by revision, department, and semester, including duplicate course codes and unavailable resources.";
 const requested = process.argv[2] || "both";

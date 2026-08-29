@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: collapsible.tsx
+ * PURPOSE: Provides the reusable collapsible UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
 
 function Collapsible({

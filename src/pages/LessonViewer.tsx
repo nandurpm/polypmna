@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: LessonViewer.tsx
+ * PURPOSE: Loads revision-aware HTML lessons in an embedded viewer with loading and recovery states.
+ * ============================================================
+ */
+
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ArrowLeft, ExternalLink, BookOpen, Loader2, AlertCircle } from "lucide-react";

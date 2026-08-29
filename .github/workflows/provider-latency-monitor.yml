@@ -1,3 +1,8 @@
+# ============================================================
+# FILE: provider-latency-monitor.yml
+# PURPOSE: Measures AI-provider latency on a schedule and records failures without exposing provider keys.
+# ============================================================
+
 name: Monitor AI provider latency
 
 on:

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: menubar.tsx
+ * PURPOSE: Provides the reusable menubar UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import * as MenubarPrimitive from "@radix-ui/react-menubar"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"

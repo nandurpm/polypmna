@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: sheet.tsx
+ * PURPOSE: Provides the reusable sheet UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"

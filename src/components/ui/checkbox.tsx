@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: checkbox.tsx
+ * PURPOSE: Provides the reusable checkbox UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

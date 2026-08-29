@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: command.tsx
+ * PURPOSE: Provides the reusable command UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 import { SearchIcon } from "lucide-react"

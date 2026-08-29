@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: chat.ts
+ * PURPOSE: Persists authenticated chat history, streaming chunks, provider health, and request-budget reservations.
+ * ============================================================
+ */
+
 import { getAuthUserId } from "@convex-dev/auth/server";
 import {
   query,
@@ -8,6 +15,10 @@ import {
 import { v } from "convex/values";
 
 const MAX_HISTORY_MESSAGES = 120;
+
+// ============================================================
+// AUTHENTICATED CHAT HISTORY
+// ============================================================
 
 async function requireUserId(ctx: {
   auth: Parameters<typeof getAuthUserId>[0]["auth"];
@@ -91,6 +102,10 @@ export const clearHistory = mutation({
     for (const msg of messages) await ctx.db.delete(msg._id);
   },
 });
+
+// ============================================================
+// STREAM RECORD LIFECYCLE
+// ============================================================
 
 export const createAiStream = internalMutation({
   args: { userId: v.id("users") },
@@ -198,7 +213,11 @@ export const failAiStream = internalMutation({
   },
 });
 
-/** Internal-only atomic reservation used by the AI action for a per-user sliding-window limit. */
+// ============================================================
+// PROVIDER HEALTH AND SHARED QUOTAS
+// ============================================================
+
+/** Internal-only provider-health records used to order and cool down adapters. */
 export const getProviderHealth = internalQuery({
   args: {},
   handler: async (ctx) => {
@@ -325,6 +344,10 @@ export const reserveAiRequest = internalMutation({
     });
   },
 });
+
+// ============================================================
+// PERSISTED PROVIDER EXCHANGES
+// ============================================================
 
 export const persistProviderExchange = internalMutation({
   args: {

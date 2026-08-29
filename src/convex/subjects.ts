@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: subjects.ts
+ * PURPOSE: Provides subject listing, search, lookup, and internal seeding operations.
+ * ============================================================
+ */
+
 import { query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 

@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/*
+ * ============================================================
+ * FILE: monitor-ai-providers.mjs
+ * PURPOSE: Measures configured NVIDIA and OpenRouter chat-provider availability and latency without exposing credentials.
+ * ============================================================
+ */
+
 const requested = process.argv[2] || "both";
 const configuredTimeoutMs = Number(process.env.AI_MONITOR_TIMEOUT_MS || 30_000);
 const timeoutMs = Number.isFinite(configuredTimeoutMs) ? Math.min(Math.max(configuredTimeoutMs, 5_000), 120_000) : 30_000;

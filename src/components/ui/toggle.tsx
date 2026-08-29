@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: toggle.tsx
+ * PURPOSE: Provides the reusable toggle UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import * as TogglePrimitive from "@radix-ui/react-toggle"
 import { cva, type VariantProps } from "class-variance-authority"

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: polyAi.scope.test.ts
+ * PURPOSE: Verifies POLY AI scope classification, sanitization, and deterministic fallback behavior.
+ * ============================================================
+ */
+
 import { describe, expect, it } from "vitest";
 import {
   generatePolyAiResponse,

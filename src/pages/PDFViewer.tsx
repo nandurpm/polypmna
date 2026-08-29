@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: PDFViewer.tsx
+ * PURPOSE: Displays selected educational PDFs and provides external-open and download recovery options.
+ * ============================================================
+ */
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {

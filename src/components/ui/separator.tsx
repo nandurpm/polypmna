@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: separator.tsx
+ * PURPOSE: Provides the reusable separator UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: ResourceHub.tsx
+ * PURPOSE: Groups official, project, study, archive, and utility links in the student resource hub.
+ * ============================================================
+ */
+
 import { ExternalLink, ArrowLeft, BookOpen, Archive, Brain, Calendar, FileText, HelpCircle, ShieldCheck, Wrench } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 

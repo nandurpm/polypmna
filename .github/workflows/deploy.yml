@@ -1,3 +1,8 @@
+# ============================================================
+# FILE: deploy.yml
+# PURPOSE: Tests and builds the GitHub Pages site and optionally deploys Convex functions and server-only provider settings.
+# ============================================================
+
 name: Deploy to GitHub Pages
 
 on:

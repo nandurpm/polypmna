@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: authRedirect.test.ts
+ * PURPOSE: Verifies that authentication redirects accept local routes and reject unsafe external targets.
+ * ============================================================
+ */
+
 import { describe, expect, it } from "vitest";
 import { resolveAuthRedirect } from "../src/lib/authRedirect";
 

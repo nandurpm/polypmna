@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: MockExams.tsx
+ * PURPOSE: Lists Convex-backed mock exams, runs attempts, and records authenticated student results.
+ * ============================================================
+ */
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";

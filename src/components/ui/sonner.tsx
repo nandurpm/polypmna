@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: sonner.tsx
+ * PURPOSE: Provides the reusable sonner UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import {
   CircleCheckIcon,
   InfoIcon,

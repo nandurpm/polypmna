@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: aiChat.ts
+ * PURPOSE: Orchestrates authenticated, rate-limited POLY AI requests, streaming, provider failover, health tracking, and safe persistence.
+ * ============================================================
+ */
+
 "use node";
 
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -5,6 +12,10 @@ import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
+
+// ============================================================
+// EDUCATIONAL PROMPTS AND PROVIDER CONTRACTS
+// ============================================================
 
 const SYSTEM_PROMPT = `
 You are POLY AI, a Kerala Polytechnic academic study assistant with broad engineering knowledge.
@@ -150,6 +161,10 @@ function parseRetryAfterMs(value: string | null): number | undefined {
     ? Math.max(0, timestamp - Date.now())
     : undefined;
 }
+
+// ============================================================
+// PROVIDER REQUEST AND STREAMING ADAPTERS
+// ============================================================
 
 async function callProvider(
   provider: Provider,
@@ -328,6 +343,10 @@ async function callStreamingProvider(
   }
 }
 
+// ============================================================
+// PROVIDER CONFIGURATION, HEALTH, AND QUOTA POLICY
+// ============================================================
+
 function isFreeOpenRouterProvider(provider: Provider): boolean {
   return (
     provider.name.startsWith("OpenRouter") &&
@@ -428,6 +447,10 @@ function getProviders(): Provider[] {
   // supplies the final offline fallback if every server provider fails.
   return [...nvidiaProviders, ...openRouterProviders];
 }
+
+// ============================================================
+// AUTHENTICATED STREAMING ACTIONS
+// ============================================================
 
 export const startChatStream = action({
   args: {
@@ -699,6 +722,10 @@ export const runChatStream = internalAction({
     });
   },
 });
+
+// ============================================================
+// NON-STREAMING COMPATIBILITY ACTION
+// ============================================================
 
 export const chatCompletion = action({
   args: {

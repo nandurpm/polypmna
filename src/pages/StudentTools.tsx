@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: StudentTools.tsx
+ * PURPOSE: Provides browser-local CGPA, attendance, timetable, and study-planning utilities.
+ * ============================================================
+ */
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";

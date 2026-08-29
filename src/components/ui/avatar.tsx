@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: avatar.tsx
+ * PURPOSE: Provides the reusable avatar UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: vite.config.ts
+ * PURPOSE: Configures the React/Tailwind build, base paths, aliases, vendor chunks, and development server.
+ * ============================================================
+ */
+
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";

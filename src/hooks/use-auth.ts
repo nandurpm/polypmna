@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: use-auth.ts
+ * PURPOSE: Combines Convex authentication state, current-user data, and sign-in/sign-out actions into the client authentication hook.
+ * ============================================================
+ */
+
 import { useEffect, useRef } from "react";
 import { api } from "@/convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";

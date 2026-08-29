@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: schema.ts
+ * PURPOSE: Defines the Convex database schema, authentication tables, roles, educational content, chat, health, and rate-limit records.
+ * ============================================================
+ */
+
 import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { Infer, v } from "convex/values";

@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: table.tsx
+ * PURPOSE: Provides the reusable table UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

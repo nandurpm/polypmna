@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: Auth.tsx
+ * PURPOSE: Implements email-OTP and anonymous sign-in flows with safe post-authentication redirects.
+ * ============================================================
+ */
+
 import { Button } from "@/components/ui/button";
 import {
   Card,

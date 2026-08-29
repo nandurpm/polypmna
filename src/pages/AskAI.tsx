@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: AskAI.tsx
+ * PURPOSE: Implements the authenticated POLY AI chat workspace, streaming state, local fallback, persistence, and user controls.
+ * ============================================================
+ */
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,6 +36,10 @@ const quickPrompts = [
 ];
 
 export default function AskAI() {
+  // ============================================================
+  // AUTHENTICATION, LOCAL STATE, AND CONVEX STREAMS
+  // ============================================================
+
   const { user, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const [input, setInput] = useState(() => loadPolyAiState().preferences.draft);
@@ -119,6 +130,8 @@ export default function AskAI() {
   const hiddenMessageCount = Math.max(0, allMessages.length - 16);
   const messages = showOlderMessages ? allMessages : allMessages.slice(-16);
 
+  // Keep the visible transcript, browser persistence, and active Convex
+  // stream synchronized without losing a usable local fallback.
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -175,6 +188,10 @@ export default function AskAI() {
       inputRef.current?.focus();
     }
   }, [streamState, storeMessages]);
+
+  // ============================================================
+  // MESSAGE ACTIONS
+  // ============================================================
 
   const handleSend = async (text?: string) => {
     const content = (text ?? input).trim();
@@ -268,6 +285,10 @@ export default function AskAI() {
       }
     }
   };
+
+  // ============================================================
+  // CHAT WORKSPACE
+  // ============================================================
 
   return (
     <div className="h-[100svh] max-h-[100svh] overflow-hidden bg-background flex flex-col">

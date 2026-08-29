@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: RequireAuth.tsx
+ * PURPOSE: Protects authenticated routes and preserves a validated return location for signed-out visitors.
+ * ============================================================
+ */
+
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import type { ReactNode } from "react";

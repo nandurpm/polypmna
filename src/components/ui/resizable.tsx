@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: resizable.tsx
+ * PURPOSE: Provides the reusable resizable UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 import * as React from "react"
 import { GripVerticalIcon } from "lucide-react"
 import * as ResizablePrimitive from "react-resizable-panels"

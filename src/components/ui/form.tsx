@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: form.tsx
+ * PURPOSE: Provides the reusable form UI primitive used by POLY PMNA screens.
+ * ============================================================
+ */
+
 "use client"
 
 import * as React from "react"

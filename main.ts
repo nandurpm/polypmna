@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: main.ts
+ * PURPOSE: Provides the Hono/Deno static-file entry point used by compatible edge-hosting environments.
+ * ============================================================
+ */
+
 import { Hono } from "hono";
 import { serveStatic } from "hono/deno";
 

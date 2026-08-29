@@ -1,3 +1,10 @@
+/*
+ * ============================================================
+ * FILE: Landing.tsx
+ * PURPOSE: Presents the public POLY PMNA home page, curriculum statistics, departments, and primary resource navigation.
+ * ============================================================
+ */
+
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router";
 import {
@@ -81,6 +88,10 @@ const deptColors: Record<string, string> = {
 
 /* ─── Main ─── */
 export default function Landing() {
+  // ============================================================
+  // PUBLIC CURRICULUM DATA
+  // ============================================================
+
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -111,6 +122,10 @@ export default function Landing() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData(); }, [loadData]);
+
+  // ============================================================
+  // DERIVED DEPARTMENTS, FEATURES, AND SEARCH RESULTS
+  // ============================================================
 
   const departments = useMemo(() => {
     const main = [
@@ -153,6 +168,10 @@ export default function Landing() {
       )
       .slice(0, 20);
   }, [search, subjects]);
+
+  // ============================================================
+  // PUBLIC LANDING EXPERIENCE
+  // ============================================================
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground flex flex-col">
