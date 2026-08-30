@@ -135,6 +135,10 @@ createRoot(document.getElementById("root")!).render(
                 element={<AuthPage />}
               />
               <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              {/* POLY AI remains public and creates an anonymous Convex session
+                  when available; its offline fallback must work without auth. */}
+              <Route path="/ask-ai" element={<AskAI />} />
+              <Route path="/ask-poly.html" element={<AskAI />} />
               <Route path="/ask-ai" element={<RequireAuth><AskAI /></RequireAuth>} />
               <Route path="/mock-exams" element={<RequireAuth><MockExams /></RequireAuth>} />
               <Route path="/question-papers" element={<QuestionPapers />} />

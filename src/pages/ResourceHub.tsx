@@ -19,7 +19,7 @@ const resourceGroups = [
     icon: Brain,
     items: [
       { label: "Mock Exams", description: "Practice daily quizzes and mock examinations.", href: `${DPDNS_BASE}/daily-quiz.html` },
-      { label: "Ask POLY AI", description: "Find subjects, lessons, notes, and study guidance.", href: `${DPDNS_BASE}/ask-poly.html` },
+      { label: "Ask POLY AI", description: "Find subjects, lessons, notes, and study guidance.", href: "/ask-ai" },
       { label: "Student Tools", description: "Use the timetable, calculator, and academic utilities.", href: `${DPDNS_BASE}/tools.html` },
       { label: "Help and Contact", description: "Get help with the POLY PMNA study resources.", href: `${DPDNS_BASE}/contact.html` },
     ],
@@ -100,19 +100,22 @@ export default function ResourceHub() {
                   <h2 className="text-base font-semibold">{group.title}</h2>
                 </div>
                 <div className="grid gap-2">
-                  {group.items.map((item) => (
-                    <a
+                  {group.items.map((item) => item.href.startsWith("/") ? (
+                    <Link
                       key={item.label}
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-start justify-between gap-4 rounded-xl border border-border bg-card p-4 hover:border-primary/30 hover:bg-muted/30 transition-colors"
+                      to={item.href}
+                      className="group flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/30 hover:bg-muted/30"
                     >
                       <span className="min-w-0">
                         <span className="block text-sm font-medium group-hover:text-primary transition-colors">{item.label}</span>
                         <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{item.description}</span>
                       </span>
-                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <Brain className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+                    </Link>
+                  ) : (
+                    <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer" className="group flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/30 hover:bg-muted/30">
+                      <span className="min-w-0"><span className="block text-sm font-medium transition-colors group-hover:text-primary">{item.label}</span><span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{item.description}</span></span>
+                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
                     </a>
                   ))}
                 </div>

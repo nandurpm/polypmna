@@ -312,4 +312,4 @@ OPENROUTER_API_KEY='your-key-in-your-shell-only' \
   "Explain a revision-aware SQL GROUP BY query for subject counts by department and semester."
 ```
 
-For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, start the Vite app with `pnpm run dev`, and open `http://127.0.0.1:5173/polypmna/#/ask-ai`. The browser must not receive either provider key. Provider keys belong in Convex production environment variables; the static frontend uses the deterministic fallback when the backend action is unavailable.
+For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, start the Vite app with `bun run dev`, and open `http://127.0.0.1:5173/polypmna/ask-ai`. The legacy `/ask-poly.html` URL renders the same public page. The browser must not receive either provider key. Provider keys belong in Convex production environment variables; the static frontend uses the deterministic fallback when authentication, the backend action, or every provider is unavailable.
