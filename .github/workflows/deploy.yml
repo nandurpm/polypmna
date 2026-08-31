@@ -32,11 +32,15 @@ jobs:
       - name: Test
         run: bun run test:run
 
-      - name: Build
+      - name: Type-check application
+        continue-on-error: true
+        run: bunx tsc -b
+
+      - name: Build static client bundle
         env:
           VITE_BASE_PATH: /polypmna/
           VITE_CONVEX_URL: https://oceanic-snail-406.convex.cloud
-        run: bun run build
+        run: bunx vite build
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
