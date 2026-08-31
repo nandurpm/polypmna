@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   generatePolyAiResponse,
+  evaluateMathExpression,
+  isGenericPolyAiResponse,
   isPolyAiQueryInScope,
   POLY_AI_SCOPE_RESPONSE,
+  sanitizePolyAiResponse,
 } from "../src/lib/polyAi";
 
 const outOfScopePrompts = [
@@ -15,6 +18,34 @@ const outOfScopePrompts = [
 ] as const;
 
 describe("POLY AI scope guard", () => {
+  it("answers basic arithmetic locally instead of sending it to a scoped provider", () => {
+    expect(generatePolyAiResponse("2+2")).toContain("2 + 2 = 4");
+  });
+
+  it("recognizes provider scope refusals even when apostrophe styles differ", () => {
+    expect(isGenericPolyAiResponse("## POLY AI Scope\nI'm POLY AI. Please ask a Polytechnic-related question.")).toBe(true);
+  });
+
+  it("normalizes common provider LaTeX delimiters and functions", () => {
+    expect(sanitizePolyAiResponse(String.raw`\[ \sin 60^\circ = \frac{\sqrt{3}}{2} \]`))
+      .toBe("sin 60° = (√(3))/(2)");
+  });
+
+  it("calculates expressions locally with standard precedence", () => {
+    expect(evaluateMathExpression("(12 + 8) * 3 ^ 2 / 6")).toBe(30);
+    expect(generatePolyAiResponse("calculate (12 + 8) * 3 ^ 2 / 6")).toContain("= 30");
+    expect(generatePolyAiResponse("sqrt 81")).toContain("= 9");
+  });
+
+  it("answers website navigation questions with maintained links", () => {
+    expect(generatePolyAiResponse("Where can I find links on the website?"))
+      .toContain("https://gptcperinthalmanna.dpdns.org/question-papers");
+  });
+
+  it("removes raw HTML line breaks from provider table cells", () => {
+    expect(sanitizePolyAiResponse("Soft<br>Durable")).toBe("Soft · Durable");
+  });
+
   it.each(outOfScopePrompts)(
     "marks %j as outside the Kerala Polytechnic scope",
     (prompt) => {

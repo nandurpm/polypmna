@@ -280,6 +280,8 @@ GitHub Actions secrets alone are not runtime secrets for GitHub Pages. To let th
 
 Ask POLY AI formats responses in the browser through `src/components/PolyAiMessage.tsx`. This renderer is dependency-free and locally stored: headings, emphasis, lists, tables, fenced code blocks, language-coloured syntax, and Mermaid-style flowcharts are rendered without an external Markdown, diagram, or highlighting service. The provider prompt requests the same Markdown contract, and the browser rejects unsuitable rich-format responses and uses the local fallback instead.
 
+The chat keeps an optimistic copy of each submitted message visible while provider tokens stream into the answer. Greetings, website-navigation questions, and supported mathematical expressions are resolved locally for immediate responses even when Convex or both providers are unavailable. Provider answers are sanitized before rendering, including common LaTeX and HTML line-break syntax used inside generated tables.
+
 See the [Convex environment variable guide](https://docs.convex.dev/production/environment-variables), [Convex deploy-key guide](https://docs.convex.dev/cli/deploy-key-types), [OpenRouter chat-completions reference](https://openrouter.ai/docs/api/api-reference/chat/create-a-chat-completion), and [NVIDIA NIM API reference](https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html) for the provider and deployment conventions.
 
 
@@ -312,4 +314,8 @@ OPENROUTER_API_KEY='your-key-in-your-shell-only' \
   "Explain a revision-aware SQL GROUP BY query for subject counts by department and semester."
 ```
 
-For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, start the Vite app with `pnpm run dev`, and open `http://127.0.0.1:5173/polypmna/#/ask-ai`. The browser must not receive either provider key. Provider keys belong in Convex production environment variables; the static frontend uses the deterministic fallback when the backend action is unavailable.
+For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, start the Vite app with `bun run dev`, and open `http://127.0.0.1:5173/polypmna/ask-ai`. The legacy `/ask-poly.html` URL renders the same public page. The browser must not receive either provider key. Provider keys belong in Convex production environment variables; the static frontend uses the deterministic fallback when authentication, the backend action, or every provider is unavailable.
+
+## Static route metadata
+
+`bun run build` runs `scripts/prepare-static-routes.mjs` after Vite. It writes route-specific HTML entry points for the public pages so non-JavaScript crawlers and link-preview bots receive the correct title, description, canonical URL, Open Graph URL, and a small crawlable page summary. The custom domain in `CNAME` is the canonical origin; GitHub Pages is only the deployment transport. Keep `scripts/static-seo.mjs`, `src/components/SeoHead.tsx`, `public/sitemap.xml`, and `public/robots.txt` synchronized when adding an indexable route.

@@ -6,7 +6,7 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { PolyAiMessage } from "@/components/PolyAiMessage";
-import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isPolyAiQueryInScope, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isPolyAiQueryInScope, isPolyAiUtilityQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
 import { clearPolyAiState, loadPolyAiState, savePolyAiState } from "@/lib/polyAiStorage";
 import {
   Send,
@@ -16,6 +16,7 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
@@ -27,6 +28,8 @@ const quickPrompts = [
   "What is the Bending Moment Diagram?",
   "Explain the working of a 4-stroke engine",
 ];
+
+const STREAM_WATCHDOG_MS = 95_000;
 
 export default function AskAI() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -165,6 +168,7 @@ export default function AskAI() {
           : message
       )));
       setProviderError("The external AI provider did not finish streaming. This answer was generated offline; please retry shortly.");
+      toast.error("External AI failed, so an offline answer was used.");
       setIsSending(false);
       activeStreamRef.current = null;
       setActiveStreamId(null);
@@ -176,9 +180,36 @@ export default function AskAI() {
     }
   }, [streamState, storeMessages]);
 
+  useEffect(() => {
+    if (!activeStreamId) return;
+    const timeout = window.setTimeout(() => {
+      const active = activeStreamRef.current;
+      if (!active || active.streamId !== activeStreamId) return;
+
+      const fallback = sanitizePolyAiResponse(
+        generatePolyAiResponse(active.userContent),
+      );
+      setLocalMessages((current) => current.map((message) => (
+        message._id === active.messageId
+          ? { ...message, content: fallback, source: "local" }
+          : message
+      )));
+      setProviderError("The external AI request timed out. This answer was generated offline.");
+      setIsSending(false);
+      activeStreamRef.current = null;
+      setActiveStreamId(null);
+      toast.error("POLY AI timed out, so an offline answer was used.");
+      inputRef.current?.focus();
+    }, STREAM_WATCHDOG_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeStreamId]);
+
   const handleSend = async (text?: string) => {
     const content = (text ?? input).trim();
-    if (!content || isSending || isAuthLoading) return;
+    // The local responder must remain available even when Convex Auth is slow
+    // or unreachable. A provider request without a session safely falls back.
+    if (!content || isSending) return;
     setProviderError(null);
     setInput("");
     setIsSending(true);
@@ -186,6 +217,25 @@ export default function AskAI() {
     const id = String(nextId.current);
     const messageId = `${id}-assistant`;
     const userMessage = { _id: `${id}-user`, role: "user" as const, content };
+
+    // Scoped providers may reject even harmless arithmetic or greetings. These
+    // deterministic utilities should respond immediately without a network hop.
+    if (isPolyAiUtilityQuery(content)) {
+      const response = sanitizePolyAiResponse(generatePolyAiResponse(content));
+      setLocalMessages((current) => [...current, userMessage, {
+        _id: messageId,
+        role: "assistant" as const,
+        content: response,
+        source: "local" as const,
+      }]);
+      setIsSending(false);
+      inputRef.current?.focus();
+      if (user) {
+        void storeMessages({ userContent: content, assistantContent: response })
+          .catch((persistError) => console.warn("Could not persist utility response:", persistError));
+      }
+      return;
+    }
 
     if (!isPolyAiQueryInScope(content)) {
       const response = POLY_AI_SCOPE_RESPONSE;
@@ -226,6 +276,7 @@ export default function AskAI() {
         message._id === messageId ? { ...message, content: fallback, source: "local" } : message
       )));
       setProviderError("The external AI stream could not start. This answer was generated offline; please retry shortly.");
+      toast.error("External AI is unavailable, so an offline answer was used.");
       setIsSending(false);
       inputRef.current?.focus();
       if (user) {
@@ -251,6 +302,7 @@ export default function AskAI() {
       window.setTimeout(() => setCopiedId((current) => current === messageId ? null : current), 1600);
     } catch (error) {
       console.warn("Could not copy answer:", error);
+      toast.error("Could not copy the answer.");
     }
   };
 
@@ -273,7 +325,7 @@ export default function AskAI() {
     <div className="h-[100svh] max-h-[100svh] overflow-hidden bg-background flex flex-col">
       {/* Nav */}
       <nav className="flex-none border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="w-full flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-14 w-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
@@ -288,7 +340,7 @@ export default function AskAI() {
               <div>
                 <span className="text-sm font-semibold text-foreground">Ask POLY AI</span>
                 <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600 border border-emerald-200">
-                  Online
+                  Ready
                 </span>
               </div>
             </div>
@@ -307,7 +359,7 @@ export default function AskAI() {
 
       {/* Messages */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="w-full px-3 py-4 sm:px-5 sm:py-5 lg:px-8">
+        <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 sm:py-5 lg:px-8">
           {providerError && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
               <p className="font-semibold">External AI unavailable — showing an offline answer</p>
@@ -337,7 +389,7 @@ export default function AskAI() {
                   <button
                     key={prompt}
                     onClick={() => handleSend(prompt)}
-                    disabled={isAuthLoading || isSending}
+                    disabled={isSending}
                     className="text-left rounded-xl border border-border/60 bg-card px-4 py-3 text-xs text-muted-foreground
                              hover:border-primary/20 hover:text-foreground hover:bg-card/80 transition-all cursor-pointer"
                   >
@@ -395,7 +447,14 @@ export default function AskAI() {
                     </button>
                   </div>
                 )}
-                {msg.role === "assistant" ? <PolyAiMessage content={msg.content} /> : <p className="whitespace-pre-wrap">{msg.content}</p>}
+                {msg.role === "assistant" ? (
+                  <div>
+                    <PolyAiMessage content={msg.content} />
+                    {isSending && msg._id === activeStreamRef.current?.messageId && (
+                      <span className="mt-1 inline-block h-5 w-0.5 animate-pulse rounded-full bg-primary align-middle" aria-label="POLY AI is writing" />
+                    )}
+                  </div>
+                ) : <p className="whitespace-pre-wrap">{msg.content}</p>}
               </div>
               {msg.role === "user" && (
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary mt-1">
@@ -425,7 +484,7 @@ export default function AskAI() {
 
       {/* Input */}
       <div className="flex-none border-t border-border bg-background/80 backdrop-blur-xl">
-        <div className="w-full px-3 py-2.5 sm:px-5 sm:py-3 lg:px-8">
+        <div className="mx-auto w-full max-w-[1600px] px-3 py-2.5 sm:px-5 sm:py-3 lg:px-8">
           <div className="flex items-end gap-2 rounded-2xl border border-border/60 bg-card px-4 py-2 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10 transition-all">
             <textarea
               ref={inputRef}
@@ -439,7 +498,7 @@ export default function AskAI() {
             />
             <button
               onClick={() => handleSend()}
-              disabled={!input.trim() || isSending || isAuthLoading}
+              disabled={!input.trim() || isSending}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground
                        hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
@@ -447,7 +506,7 @@ export default function AskAI() {
             </button>
           </div>
               <p className="text-[11px] text-muted-foreground/60 text-center mt-2">
-            {isAuthLoading ? "Preparing a secure session…" : "POLY AI is an educational assistant. Verify important information with your textbooks."}
+            {isAuthLoading ? "Secure history is connecting; offline answers are ready." : "POLY AI is an educational assistant. Verify important information with your textbooks."}
           </p>
         </div>
       </div>
