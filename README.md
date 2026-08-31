@@ -334,3 +334,8 @@ Release signing material must never be committed. Configure these GitHub Actions
 - `ANDROID_KEY_PASSWORD`: signing-key password.
 
 Run the **Build signed Android APK** workflow to download a verified signed APK artifact. To publish the APK on GitHub Releases, create and push a tag such as `android-v1.0.0`; the workflow verifies the APK signature before release. Keep the original keystore and passwords securely backed up because every future update must use the same signing identity.
+## Canonical PDF archive integration
+
+POLY PMNA reads study-note and question-paper manifests directly from [`nandurpm/poly-pmna-pdf-files`](https://github.com/nandurpm/poly-pmna-pdf-files) through the `NOTES_BASE` constant in `src/lib/polydata.ts`. The PDF repository is the single source of truth; `polypmna` intentionally does not copy PDF binaries into its application bundle.
+
+The `sync-pdf-archive-reference.yml` workflow listens for `pdf-archive-updated` events and records the source commit, changed paths, manifest URLs, and published counts in [`docs/pdf-archive-sync.json`](docs/pdf-archive-sync.json). Runtime data continues to resolve from the canonical raw URLs, so archive changes are reflected automatically. Run the workflow manually to refresh the integration record after a missed event.
