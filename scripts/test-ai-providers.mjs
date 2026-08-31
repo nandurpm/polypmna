@@ -11,7 +11,7 @@ const providers = {
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
     model: process.env.OPENROUTER_MODEL || "openrouter/free",
     headers: {
-      "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
+      "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://gptcperinthalmanna.dpdns.org/",
       "X-Title": "POLY PMNA local provider test",
     },
   },

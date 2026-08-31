@@ -125,8 +125,8 @@ jobs:
           printf '%s' "60000" | bunx convex env set --prod POLY_AI_PROVIDER_COOLDOWN_MS
           printf '%s' "18" | bunx convex env set --prod POLY_AI_OPENROUTER_RPM_LIMIT
           printf '%s' "45" | bunx convex env set --prod POLY_AI_OPENROUTER_DAILY_LIMIT
-          printf '%s' "https://nandurpm.github.io/polypmna/" | bunx convex env set --prod POLY_AI_SITE_URL
-          printf '%s' "https://nandurpm.github.io/polypmna/" | bunx convex env set --prod SITE_URL
+          printf '%s' "https://gptcperinthalmanna.dpdns.org/" | bunx convex env set --prod POLY_AI_SITE_URL
+          printf '%s' "https://gptcperinthalmanna.dpdns.org/" | bunx convex env set --prod SITE_URL
           printf '%s' "https://freebuff.com" | bunx convex env set --prod VLY_CONVEX_AUTH_ISSUER
 
       - name: Ensure Convex Auth signing keys

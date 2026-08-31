@@ -30,7 +30,7 @@ const providers = {
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
     model: openRouterModels[0],
     headers: {
-      "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
+      "HTTP-Referer": process.env.POLY_AI_SITE_URL || "https://gptcperinthalmanna.dpdns.org/",
       "X-OpenRouter-Title": "POLY PMNA latency monitor",
       "X-Title": "POLY PMNA latency monitor",
     },

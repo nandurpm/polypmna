@@ -408,7 +408,7 @@ function getProviders(): Provider[] {
     maxTokens,
     headers: {
       "HTTP-Referer":
-        process.env.POLY_AI_SITE_URL || "https://nandurpm.github.io/polypmna/",
+        process.env.POLY_AI_SITE_URL || "https://gptcperinthalmanna.dpdns.org/",
       "X-OpenRouter-Title": "POLY PMNA Study Materials",
       "X-Title": "POLY PMNA Study Materials",
     },
