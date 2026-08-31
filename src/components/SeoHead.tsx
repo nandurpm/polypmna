@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router";
-import { getRuntimeBasePath } from "../lib/siteBase";
 
 type SeoConfig = {
   title: string;
@@ -14,8 +13,15 @@ const DEFAULT_SEO: SeoConfig = {
   index: true,
 };
 
+const CANONICAL_ORIGIN = "https://gptcperinthalmanna.dpdns.org";
+
 const SEO_BY_ROUTE: Record<string, SeoConfig> = {
   "/ask-ai": {
+    title: "Ask POLY AI — Kerala Polytechnic Study Assistant",
+    description: "Ask focused questions about Kerala Polytechnic subjects, engineering concepts, formulas, programming, practical topics, and exam preparation.",
+    index: true,
+  },
+  "/ask-poly.html": {
     title: "Ask POLY AI — Kerala Polytechnic Study Assistant",
     description: "Ask focused questions about Kerala Polytechnic subjects, engineering concepts, formulas, programming, practical topics, and exam preparation.",
     index: true,
@@ -102,8 +108,10 @@ export default function SeoHead() {
 
   useEffect(() => {
     const seo = getSeo(location.pathname);
-    const basePath = getRuntimeBasePath().replace(/\/$/, "");
-    const canonicalUrl = new URL(`${basePath}${location.pathname}${location.search}`, window.location.origin).toString();
+    const canonicalPath = location.pathname === "/ask-poly.html"
+      ? "/ask-ai"
+      : location.pathname;
+    const canonicalUrl = new URL(canonicalPath, CANONICAL_ORIGIN).toString();
 
     document.title = seo.title;
     setMeta("description", seo.description);

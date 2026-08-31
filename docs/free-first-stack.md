@@ -17,7 +17,7 @@ POLY PMNA is intentionally organized around services that have useful free allow
 
 ## AI free-tier safeguards
 
-The Convex action now defaults to free-first provider ordering through `POLY_AI_FREE_FIRST=true`. OpenRouter is configured with free model variants and provider fallback behavior. NVIDIA remains a secondary route and can be restored to first position by setting `POLY_AI_FREE_FIRST=false` if the user intentionally prefers it. The per-user sliding-window limit remains in place, and provider health records can reorder routes after failures.
+The Convex action uses a deterministic NVIDIA-to-OpenRouter provider chain. OpenRouter is configured with free model variants and provider fallback behavior, and the browser supplies the deterministic offline response only after the server-side providers fail. The per-user sliding-window limit remains in place, and recent provider health can temporarily prioritize the healthier configured provider.
 
 OpenRouter documents a 20 requests/minute free-model limit. Its daily free-model limit is 50 requests/day when fewer than 10 credits have ever been purchased and 1,000 requests/day after at least 10 credits have been purchased. These are provider limits, not guarantees of availability; the application must still handle upstream 429, 502, 503, timeout, and empty-response cases. [1]
 

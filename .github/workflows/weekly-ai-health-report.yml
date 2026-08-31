@@ -32,7 +32,7 @@ jobs:
           NVIDIA_MODEL: nvidia/nemotron-3.5-lightning-30b-a3b
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API || secrets.OPENROUTER_API_KEY }}
           OPENROUTER_MODELS: ${{ vars.OPENROUTER_MODELS || secrets.OPENROUTER_MODELS }}
-          POLY_AI_SITE_URL: https://nandurpm.github.io/polypmna/
+          POLY_AI_SITE_URL: https://gptcperinthalmanna.dpdns.org/
           AI_MONITOR_TIMEOUT_MS: 30000
         run: node scripts/generate-ai-health-report.mjs
 

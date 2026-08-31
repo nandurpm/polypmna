@@ -23,9 +23,70 @@ const POLYTECHNIC_CONTEXT_PATTERN = /\b(kerala\s+polytechnic|polytechnic|diploma
 const GREETING_PATTERN = /^\s*(?:hi|hello|hey|namaste|good\s+(?:morning|afternoon|evening))[.!? ]*$/i;
 const THANKS_PATTERN = /^\s*(?:thanks?|thank\s+you|thankyou)[.!? ]*$/i;
 const BASIC_ARITHMETIC_PATTERN = /^\s*(?:what\s+is\s+)?(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)\s*[?!. ]*$/i;
+const MATH_EXPRESSION_PATTERN = /^\s*(?:what\s+is|calculate|solve)?\s*([\d+\-*/^().\s]+)\??\s*$/i;
+const WEBSITE_QUERY_PATTERN = /\b(?:website|site|where\s+(?:can\s+i\s+)?find|(?:curriculum|question\s+papers?|mock\s+exams?|student\s+tools?|resource\s+hub)\s+(?:page|link|website))\b/i;
+
+const WEBSITE_LINKS = [
+  ["Curriculum", "https://gptcperinthalmanna.dpdns.org/curriculum"],
+  ["Question papers", "https://gptcperinthalmanna.dpdns.org/question-papers"],
+  ["Resource hub", "https://gptcperinthalmanna.dpdns.org/resources"],
+  ["Mock exams", "https://gptcperinthalmanna.dpdns.org/mock-exams"],
+  ["Student tools", "https://gptcperinthalmanna.dpdns.org/student-tools"],
+] as const;
 
 export function isPolyAiUtilityQuery(query: string): boolean {
-  return GREETING_PATTERN.test(query) || THANKS_PATTERN.test(query) || BASIC_ARITHMETIC_PATTERN.test(query);
+  return GREETING_PATTERN.test(query) || THANKS_PATTERN.test(query) || BASIC_ARITHMETIC_PATTERN.test(query) || MATH_EXPRESSION_PATTERN.test(query) || /^(?:what\s+is\s+)?(?:sin|cos|tan|sqrt)\s*\(?\s*-?\d+(?:\.\d+)?/i.test(query) || WEBSITE_QUERY_PATTERN.test(query);
+}
+
+export function evaluateMathExpression(expression: string): number | null {
+  const tokens = expression.match(/\d+(?:\.\d+)?|[()+\-*/^]/g);
+  if (!tokens || tokens.join("") !== expression.replace(/\s/g, "")) return null;
+  let position = 0;
+  let parseAdditive: () => number;
+  const parsePrimary = (): number => {
+    const token = tokens[position++];
+    if (token === "(") {
+      const value = parseAdditive();
+      if (tokens[position++] !== ")") throw new Error("Unclosed parenthesis");
+      return value;
+    }
+    if (token === "+") return parsePrimary();
+    if (token === "-") return -parsePrimary();
+    const value = Number(token);
+    if (!Number.isFinite(value)) throw new Error("Invalid number");
+    return value;
+  };
+  const parsePower = (): number => {
+    const left = parsePrimary();
+    return tokens[position] === "^"
+      ? (position++, left ** parsePower())
+      : left;
+  };
+  const parseMultiplicative = (): number => {
+    let value = parsePower();
+    while (tokens[position] === "*" || tokens[position] === "/") {
+      const operator = tokens[position++];
+      const right = parsePower();
+      if (operator === "/" && right === 0) throw new Error("Division by zero");
+      value = operator === "*" ? value * right : value / right;
+    }
+    return value;
+  };
+  parseAdditive = (): number => {
+    let value = parseMultiplicative();
+    while (tokens[position] === "+" || tokens[position] === "-") {
+      const operator = tokens[position++];
+      const right = parseMultiplicative();
+      value = operator === "+" ? value + right : value - right;
+    }
+    return value;
+  };
+  try {
+    const result = parseAdditive();
+    return position === tokens.length && Number.isFinite(result) ? result : null;
+  } catch {
+    return null;
+  }
 }
 
 export function isPolyAiQueryInScope(query: string): boolean {
@@ -57,7 +118,7 @@ export function isLeakedPolyAiResponse(response: string): boolean {
 }
 
 export function isGenericPolyAiResponse(response: string): boolean {
-  return /exam preparation strategy|that's a great question|i can help (?:with|explain) kerala polytechnic|what specific topic would you like me to explain|please include the subject name or topic|i received (?:your )?question|i received [“"]|add the exact topic|add the subject or topic|i['’]?m ready to explain it|for example, ask ['“]why does|here is a focused study answer for/i.test(response);
+  return /poly ai scope|please ask a polytechnic-related question|exam preparation strategy|that's a great question|i can help (?:with|explain) kerala polytechnic|what specific topic would you like me to explain|please include the subject name or topic|i received (?:your )?question|i received [“"]|add the exact topic|add the subject or topic|i['’]?m ready to explain it|for example, ask ['“]why does|here is a focused study answer for/i.test(response);
 }
 
 export function isFocusedPolyAiQuery(query: string): boolean {
@@ -73,13 +134,16 @@ export function sanitizePolyAiResponse(response: string): string {
   if (heading?.index !== undefined) cleaned = cleaned.slice(heading.index + heading[0].length).trim();
   else if (reasoningMarker) return "";
   return cleaned
+    .replace(/<br\s*\/?\s*>/gi, " · ")
     .replace(/^\s*(?:user|response)\s+safety\s*:\s*(?:safe|unsafe|unknown)\s*$/gim, "")
     .replace(/^\s*safety\s*:\s*(?:safe|unsafe|unknown)\s*$/gim, "")
-    .replace(/\\[()[\\]]/g, "")
+    .replace(/\\(?:\[|\]|\(|\))/g, "")
     .replace(/([A-Za-z])(?:_|\\*)\\{([^{}]+)\\}/g, "$1_$2")
     .replace(/\\+text\\{([^{}]+)\\}/g, "$1")
-    .replace(/\\+frac\\{([^{}]+)\\}\\{([^{}]+)\\}/g, "($1)/($2)")
-    .replace(/\\+sqrt\\{([^{}]+)\\}/g, "√($1)")
+    .replace(/\\+sqrt\{([^{}]+)\}/g, "√($1)")
+    .replace(/\\+frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
+    .replace(/\\+(sin|cos|tan|log|ln)\b/g, "$1")
+    .replace(/\^?\\+circ\b/g, "°")
     .replace(/\\+times/g, "×")
     .replace(/\\+cdot/g, "·")
     .replace(/\\+(?:dots|ldots)/g, "…")
@@ -87,7 +151,8 @@ export function sanitizePolyAiResponse(response: string): string {
     .replace(/\\,/g, " ")
     .replace(/\$\$?([\s\S]*?)\$\$?/g, "$1")
     .replace(/\b([A-Za-z])\*\{([A-Za-z0-9]+)\}/g, "$1_$2")
-    .replace(/\b([A-Za-z])\*(\d+)\b/g, "$1_$2");
+    .replace(/\b([A-Za-z])\*(\d+)\b/g, "$1_$2")
+    .trim();
 }
 
 function localAnswerForUnknownQuery(query: string): string {
@@ -177,6 +242,14 @@ export function generatePolyAiResponse(query: string): string {
   if (THANKS_PATTERN.test(clean)) {
     return markdown("## You’re welcome", "Keep revising from the syllabus, practise previous question papers, and use the curriculum directory to locate your subject resources. All the best for your exams!");
   }
+  if (WEBSITE_QUERY_PATTERN.test(clean)) {
+    return markdown(
+      "## POLY PMNA website links",
+      "Use these maintained pages to find content across the POLY PMNA website:",
+      WEBSITE_LINKS.map(([label, url]) => `- [${label}](${url})`).join("\n"),
+      "The curriculum browser organizes departments, semesters, and subjects. Open a subject from there for its available notes and lesson resources.",
+    );
+  }
   const arithmeticMatch = clean.match(BASIC_ARITHMETIC_PATTERN);
   if (arithmeticMatch) {
     const left = Number(arithmeticMatch[1]);
@@ -185,6 +258,20 @@ export function generatePolyAiResponse(query: string): string {
     if (operator === "/" && right === 0) return markdown("## Arithmetic", "Division by zero is undefined. Please provide a non-zero divisor.");
     const result = operator === "+" ? left + right : operator === "-" ? left - right : operator === "*" ? left * right : left / right;
     return markdown("## Arithmetic result", `**${left} ${operator} ${right} = ${result}**`, "This quick calculation is handled locally so the chat responds immediately.");
+  }
+  const trigMatch = clean.match(/^(?:what\s+is\s+)?(sin|cos|tan|sqrt)\s*\(?\s*(-?\d+(?:\.\d+)?)\s*(?:°|degrees?)?\s*\)?\??$/i);
+  if (trigMatch) {
+    const operation = trigMatch[1].toLowerCase();
+    const input = Number(trigMatch[2]);
+    const radians = input * Math.PI / 180;
+    const result = operation === "sqrt" ? Math.sqrt(input) : Math[operation as "sin" | "cos" | "tan"](radians);
+    if (!Number.isFinite(result)) return markdown("## Calculation error", "That calculation does not have a finite real-number result.");
+    return markdown("## Calculation result", `**${operation}(${input}${operation === "sqrt" ? "" : "°"}) = ${Number(result.toFixed(8))}**`, "This result was calculated locally without an AI provider.");
+  }
+  const expressionMatch = clean.match(MATH_EXPRESSION_PATTERN);
+  if (expressionMatch) {
+    const result = evaluateMathExpression(expressionMatch[1]);
+    if (result !== null) return markdown("## Calculation result", `**${expressionMatch[1].trim()} = ${Number(result.toFixed(10))}**`, "This expression was calculated locally using standard operator precedence.");
   }
   if (!isPolyAiLocalFallbackAllowed(query)) return POLY_AI_SCOPE_RESPONSE;
 

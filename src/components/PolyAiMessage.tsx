@@ -80,7 +80,7 @@ function parseBlocks(markdown: string): MessageBlock[] {
       blocks.push({ kind: "numbers", items });
       continue;
     }
-    if (line.includes("|") && index + 1 < lines.length && /^\s*\|?\s*:?-{3,}/.test(lines[index + 1])) {
+    if (line.includes("|") && index + 1 < lines.length && /^\s*\|?\s*:?-{3,}(?:\s*:?\s*\|\s*:?-{3,})+\s*\|?\s*$/.test(lines[index + 1])) {
       const splitRow = (row: string) => row.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
       const headers = splitRow(line);
       index += 2;
@@ -97,6 +97,7 @@ function parseBlocks(markdown: string): MessageBlock[] {
     while (index < lines.length && lines[index].trim()) {
       const next = lines[index];
       if (/^\s*(?:#{1,4}\s|```|>|[-*+]\s+|\d+[.)]\s+|---+|\*\*\*+)/.test(next)) break;
+      if (next.includes("|") && index + 1 < lines.length && /^\s*\|?\s*:?-{3,}/.test(lines[index + 1])) break;
       paragraph.push(next.trim());
       index += 1;
     }
@@ -204,4 +205,3 @@ export function PolyAiMessage({ content }: { content: string }) {
 }
 
 export default PolyAiMessage;
-
