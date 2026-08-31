@@ -23,42 +23,17 @@ export default defineConfig({
     // Optimize chunk splitting
     rollupOptions: {
       output: {
-        // Manual chunk splitting for better caching and lazy loading
-        manualChunks: {
-          // Vendor chunks for large libraries
-          'react-vendor': ['react', 'react-dom', 'react-router'],
-          'convex-vendor': ['convex'],
-          // Large UI library chunks
-          'radix-ui': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group',
-            '@radix-ui/react-tooltip',
-          ],
-          // Heavy optional libraries - separate chunks for better lazy loading
-          'framer-motion': ['framer-motion'],
-          'charts': ['recharts'],
-          'forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+        // Manual chunk splitting for better caching and lazy loading.
+        // Vite 8 / Rolldown requires the function form here.
+        manualChunks(id) {
+          if (!id.includes('/node_modules/')) return undefined;
+          if (['/react/', '/react-dom/', '/react-router/'].some((part) => id.includes(`/node_modules${part}`))) return 'react-vendor';
+          if (id.includes('/node_modules/convex/')) return 'convex-vendor';
+          if (id.includes('/node_modules/@radix-ui/')) return 'radix-ui';
+          if (id.includes('/node_modules/framer-motion/')) return 'framer-motion';
+          if (id.includes('/node_modules/recharts/')) return 'charts';
+          if (['/react-hook-form/', '/@hookform/resolvers/', '/zod/'].some((part) => id.includes(`/node_modules${part}`))) return 'forms';
+          return undefined;
         },
         // Optimize chunk size
         chunkFileNames: 'assets/[name]-[hash].js',

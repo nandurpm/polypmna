@@ -326,6 +326,7 @@ export default function AskAI() {
       {/* Nav */}
       <nav className="flex-none border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 w-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
@@ -360,6 +361,7 @@ export default function AskAI() {
       {/* Messages */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 sm:py-5 lg:px-8">
+        <div className="mx-auto w-full max-w-5xl px-3 py-4 sm:px-5 sm:py-5 lg:px-8">
           {providerError && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
               <p className="font-semibold">External AI unavailable — showing an offline answer</p>
@@ -485,6 +487,7 @@ export default function AskAI() {
       {/* Input */}
       <div className="flex-none border-t border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto w-full max-w-[1600px] px-3 py-2.5 sm:px-5 sm:py-3 lg:px-8">
+        <div className="mx-auto w-full max-w-5xl px-3 py-2.5 sm:px-5 sm:py-3 lg:px-8">
           <div className="flex items-end gap-2 rounded-2xl border border-border/60 bg-card px-4 py-2 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10 transition-all">
             <textarea
               ref={inputRef}
