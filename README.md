@@ -319,3 +319,9 @@ For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, st
 ## Static route metadata
 
 `bun run build` runs `scripts/prepare-static-routes.mjs` after Vite. It writes route-specific HTML entry points for the public pages so non-JavaScript crawlers and link-preview bots receive the correct title, description, canonical URL, Open Graph URL, and a small crawlable page summary. The custom domain in `CNAME` is the canonical origin; GitHub Pages is only the deployment transport. Keep `scripts/static-seo.mjs`, `src/components/SeoHead.tsx`, `public/sitemap.xml`, and `public/robots.txt` synchronized when adding an indexable route.
+
+## Canonical PDF archive integration
+
+POLY PMNA reads study-note and question-paper manifests directly from [`nandurpm/poly-pmna-pdf-files`](https://github.com/nandurpm/poly-pmna-pdf-files) through the `NOTES_BASE` constant in `src/lib/polydata.ts`. The PDF repository is the single source of truth; `polypmna` intentionally does not copy PDF binaries into its application bundle.
+
+The `sync-pdf-archive-reference.yml` workflow listens for `pdf-archive-updated` events and records the source commit, changed paths, manifest URLs, and published counts in [`docs/pdf-archive-sync.json`](docs/pdf-archive-sync.json). Runtime data continues to resolve from the canonical raw URLs, so archive changes are reflected automatically. Run the workflow manually to refresh the integration record after a missed event.
