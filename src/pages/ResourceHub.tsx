@@ -28,6 +28,8 @@ const resourceGroups = [
     title: "Official academic resources",
     icon: Archive,
     items: [
+      { label: "SITTTR Revision 2026 syllabus", description: "Official current diploma programme schemes and syllabus resources.", href: "https://www.sitttrkerala.ac.in/index.php?r=site%2Fdiploma-syllabus&scheme=REV2026" },
+      { label: "SITTTR Revision 2026 model papers", description: "Official current diploma model-question-paper archive.", href: "https://www.sitttrkerala.ac.in/index.php?r=site%2Fdiploma-modelqp&scheme=REV2026" },
       { label: "SITTTR Revision 2021 papers", description: "Official SITTTR model-question-paper archive.", href: "https://www.sitttrkerala.ac.in/index.php?r=site%2Fdiploma-modelqp&scheme=REV2021" },
       { label: "SITTTR Revision 2015 papers", description: "Official SITTTR Revision 2015 model papers.", href: "https://www.sitttrkerala.ac.in/index.php?r=site%2Fdiploma-modelqp&scheme=REV2015" },
       { label: "SITTTR Revision 2026 lab manuals", description: "Official laboratory manuals for the current revision.", href: "https://www.sitttrkerala.ac.in/index.php?r=site%2Fdiploma-lab-manual&scheme=REV2026" },
