@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   generatePolyAiResponse,
+  isGenericPolyAiResponse,
   isPolyAiQueryInScope,
   POLY_AI_SCOPE_RESPONSE,
+  sanitizePolyAiResponse,
 } from "../src/lib/polyAi";
 
 const outOfScopePrompts = [
@@ -15,6 +17,19 @@ const outOfScopePrompts = [
 ] as const;
 
 describe("POLY AI scope guard", () => {
+  it("answers basic arithmetic locally instead of sending it to a scoped provider", () => {
+    expect(generatePolyAiResponse("2+2")).toContain("2 + 2 = 4");
+  });
+
+  it("recognizes provider scope refusals even when apostrophe styles differ", () => {
+    expect(isGenericPolyAiResponse("## POLY AI Scope\nI'm POLY AI. Please ask a Polytechnic-related question.")).toBe(true);
+  });
+
+  it("normalizes common provider LaTeX delimiters and functions", () => {
+    expect(sanitizePolyAiResponse(String.raw`\[ \sin 60^\circ = \frac{\sqrt{3}}{2} \]`))
+      .toBe("sin 60° = (√(3))/(2)");
+  });
+
   it.each(outOfScopePrompts)(
     "marks %j as outside the Kerala Polytechnic scope",
     (prompt) => {

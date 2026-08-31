@@ -6,7 +6,7 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { PolyAiMessage } from "@/components/PolyAiMessage";
-import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isPolyAiQueryInScope, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isPolyAiQueryInScope, isPolyAiUtilityQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
 import { clearPolyAiState, loadPolyAiState, savePolyAiState } from "@/lib/polyAiStorage";
 import {
   Send,
@@ -217,6 +217,25 @@ export default function AskAI() {
     const id = String(nextId.current);
     const messageId = `${id}-assistant`;
     const userMessage = { _id: `${id}-user`, role: "user" as const, content };
+
+    // Scoped providers may reject even harmless arithmetic or greetings. These
+    // deterministic utilities should respond immediately without a network hop.
+    if (isPolyAiUtilityQuery(content)) {
+      const response = sanitizePolyAiResponse(generatePolyAiResponse(content));
+      setLocalMessages((current) => [...current, userMessage, {
+        _id: messageId,
+        role: "assistant" as const,
+        content: response,
+        source: "local" as const,
+      }]);
+      setIsSending(false);
+      inputRef.current?.focus();
+      if (user) {
+        void storeMessages({ userContent: content, assistantContent: response })
+          .catch((persistError) => console.warn("Could not persist utility response:", persistError));
+      }
+      return;
+    }
 
     if (!isPolyAiQueryInScope(content)) {
       const response = POLY_AI_SCOPE_RESPONSE;

@@ -57,7 +57,7 @@ export function isLeakedPolyAiResponse(response: string): boolean {
 }
 
 export function isGenericPolyAiResponse(response: string): boolean {
-  return /exam preparation strategy|that's a great question|i can help (?:with|explain) kerala polytechnic|what specific topic would you like me to explain|please include the subject name or topic|i received (?:your )?question|i received [“"]|add the exact topic|add the subject or topic|i['’]?m ready to explain it|for example, ask ['“]why does|here is a focused study answer for/i.test(response);
+  return /poly ai scope|please ask a polytechnic-related question|exam preparation strategy|that's a great question|i can help (?:with|explain) kerala polytechnic|what specific topic would you like me to explain|please include the subject name or topic|i received (?:your )?question|i received [“"]|add the exact topic|add the subject or topic|i['’]?m ready to explain it|for example, ask ['“]why does|here is a focused study answer for/i.test(response);
 }
 
 export function isFocusedPolyAiQuery(query: string): boolean {
@@ -75,11 +75,13 @@ export function sanitizePolyAiResponse(response: string): string {
   return cleaned
     .replace(/^\s*(?:user|response)\s+safety\s*:\s*(?:safe|unsafe|unknown)\s*$/gim, "")
     .replace(/^\s*safety\s*:\s*(?:safe|unsafe|unknown)\s*$/gim, "")
-    .replace(/\\[()[\\]]/g, "")
+    .replace(/\\(?:\[|\]|\(|\))/g, "")
     .replace(/([A-Za-z])(?:_|\\*)\\{([^{}]+)\\}/g, "$1_$2")
     .replace(/\\+text\\{([^{}]+)\\}/g, "$1")
-    .replace(/\\+frac\\{([^{}]+)\\}\\{([^{}]+)\\}/g, "($1)/($2)")
-    .replace(/\\+sqrt\\{([^{}]+)\\}/g, "√($1)")
+    .replace(/\\+sqrt\{([^{}]+)\}/g, "√($1)")
+    .replace(/\\+frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)")
+    .replace(/\\+(sin|cos|tan|log|ln)\b/g, "$1")
+    .replace(/\^?\\+circ\b/g, "°")
     .replace(/\\+times/g, "×")
     .replace(/\\+cdot/g, "·")
     .replace(/\\+(?:dots|ldots)/g, "…")
@@ -87,7 +89,8 @@ export function sanitizePolyAiResponse(response: string): string {
     .replace(/\\,/g, " ")
     .replace(/\$\$?([\s\S]*?)\$\$?/g, "$1")
     .replace(/\b([A-Za-z])\*\{([A-Za-z0-9]+)\}/g, "$1_$2")
-    .replace(/\b([A-Za-z])\*(\d+)\b/g, "$1_$2");
+    .replace(/\b([A-Za-z])\*(\d+)\b/g, "$1_$2")
+    .trim();
 }
 
 function localAnswerForUnknownQuery(query: string): string {
