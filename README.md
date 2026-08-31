@@ -313,3 +313,10 @@ OPENROUTER_API_KEY='your-key-in-your-shell-only' \
 ```
 
 For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, start the Vite app with `bun run dev`, and open `http://127.0.0.1:5173/polypmna/ask-ai`. The legacy `/ask-poly.html` URL renders the same public page. The browser must not receive either provider key. Provider keys belong in Convex production environment variables; the static frontend uses the deterministic fallback when authentication, the backend action, or every provider is unavailable.
+
+
+## Canonical PDF archive integration
+
+POLY PMNA reads study-note and question-paper manifests directly from [`nandurpm/poly-pmna-pdf-files`](https://github.com/nandurpm/poly-pmna-pdf-files) through the `NOTES_BASE` constant in `src/lib/polydata.ts`. The PDF repository is the single source of truth; `polypmna` intentionally does not copy PDF binaries into its application bundle.
+
+The `sync-pdf-archive-reference.yml` workflow listens for `pdf-archive-updated` events and records the source commit, changed paths, manifest URLs, and published counts in [`docs/pdf-archive-sync.json`](docs/pdf-archive-sync.json). Runtime data continues to resolve from the canonical raw URLs, so archive changes are reflected automatically. Run the workflow manually to refresh the integration record after a missed event.
