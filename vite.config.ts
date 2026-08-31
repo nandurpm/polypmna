@@ -26,13 +26,13 @@ export default defineConfig({
         // Manual chunk splitting for better caching and lazy loading.
         // Vite 8 / Rolldown requires the function form here.
         manualChunks(id) {
-          if (!id.includes('node_modules')) return undefined;
-          if (/(^|\\/)node_modules\\/(react|react-dom|react-router)(\\/|$)/.test(id)) return 'react-vendor';
-          if (/(^|\\/)node_modules\\/convex(\\/|$)/.test(id)) return 'convex-vendor';
-          if (/(^|\\/)node_modules\\/@radix-ui\\//.test(id)) return 'radix-ui';
-          if (/(^|\\/)node_modules\\/framer-motion(\\/|$)/.test(id)) return 'framer-motion';
-          if (/(^|\\/)node_modules\\/recharts(\\/|$)/.test(id)) return 'charts';
-          if (/(^|\\/)node_modules\\/(react-hook-form|@hookform\\/resolvers|zod)(\\/|$)/.test(id)) return 'forms';
+          if (!id.includes('/node_modules/')) return undefined;
+          if (['/react/', '/react-dom/', '/react-router/'].some((part) => id.includes(`/node_modules${part}`))) return 'react-vendor';
+          if (id.includes('/node_modules/convex/')) return 'convex-vendor';
+          if (id.includes('/node_modules/@radix-ui/')) return 'radix-ui';
+          if (id.includes('/node_modules/framer-motion/')) return 'framer-motion';
+          if (id.includes('/node_modules/recharts/')) return 'charts';
+          if (['/react-hook-form/', '/@hookform/resolvers/', '/zod/'].some((part) => id.includes(`/node_modules${part}`))) return 'forms';
           return undefined;
         },
         // Optimize chunk size
