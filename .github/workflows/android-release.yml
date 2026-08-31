@@ -1,0 +1,84 @@
+name: Build signed Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "android-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate signing secrets
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for value in "$KEYSTORE" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD"; do
+            if [ -z "$value" ]; then
+              echo "::error::Configure all ANDROID_KEYSTORE_* and ANDROID_KEY_* repository secrets before building a release."
+              exit 1
+            fi
+          done
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Decode release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$GITHUB_WORKSPACE/android/release.jks"
+
+      - name: Build signed release APK
+        working-directory: android
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          gradle :app:assembleRelease \
+            -PPOLYPMNA_KEYSTORE_PATH="$GITHUB_WORKSPACE/android/release.jks" \
+            -PPOLYPMNA_KEYSTORE_PASSWORD="$STORE_PASSWORD" \
+            -PPOLYPMNA_KEY_ALIAS="$KEY_ALIAS" \
+            -PPOLYPMNA_KEY_PASSWORD="$KEY_PASSWORD"
+          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/POLY-PMNA-${GITHUB_REF_NAME}.apk
+
+      - name: Verify APK signature
+        run: "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "android/app/build/outputs/apk/release/POLY-PMNA-${GITHUB_REF_NAME}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: POLY-PMNA-signed-${{ github.ref_name }}
+          path: android/app/build/outputs/apk/release/POLY-PMNA-${{ github.ref_name }}.apk
+          if-no-files-found: error
+
+      - name: Publish APK on tagged releases
+        if: startsWith(github.ref, 'refs/tags/android-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "android/app/build/outputs/apk/release/POLY-PMNA-${GITHUB_REF_NAME}.apk" --generate-notes --verify-tag
+
+      - name: Remove decoded keystore
+        if: always()
+        run: rm -f android/release.jks

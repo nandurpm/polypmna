@@ -12,6 +12,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:seo": "node --test tests/staticSeo.test.mjs",
+    "test:android": "node scripts/check-android-project.mjs",
     "test:watch": "vitest",
     "check:resources": "node scripts/check-public-resources.mjs",
     "check:openrouter-usage": "node scripts/check-openrouter-usage.mjs",

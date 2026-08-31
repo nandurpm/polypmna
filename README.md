@@ -322,6 +322,18 @@ For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, st
 
 `bun run build` runs `scripts/prepare-static-routes.mjs` after Vite. It writes route-specific HTML entry points for the public pages so non-JavaScript crawlers and link-preview bots receive the correct title, description, canonical URL, Open Graph URL, and a small crawlable page summary. The custom domain in `CNAME` is the canonical origin; GitHub Pages is only the deployment transport. Keep `scripts/static-seo.mjs`, `src/components/SeoHead.tsx`, `public/sitemap.xml`, and `public/robots.txt` synchronized when adding an indexable route.
 
+## Android application and signed APK
+
+The `android/` project is a small native Android shell for the canonical HTTPS application. It preserves Convex Auth cookies and DOM storage, keeps internal POLY PMNA links in the app, opens external resources in the device browser, supports Android back navigation and deep links, shows page-load progress, and provides a branded retry screen when the network is unavailable. It requires Android 7.0 (API 24) or newer.
+
+Release signing material must never be committed. Configure these GitHub Actions repository secrets:
+
+- `ANDROID_KEYSTORE_BASE64`: `base64 -w 0 release.jks` output.
+- `ANDROID_KEYSTORE_PASSWORD`: keystore password.
+- `ANDROID_KEY_ALIAS`: signing-key alias.
+- `ANDROID_KEY_PASSWORD`: signing-key password.
+
+Run the **Build signed Android APK** workflow to download a verified signed APK artifact. To publish the APK on GitHub Releases, create and push a tag such as `android-v1.0.0`; the workflow verifies the APK signature before release. Keep the original keystore and passwords securely backed up because every future update must use the same signing identity.
 ## Canonical PDF archive integration
 
 POLY PMNA reads study-note and question-paper manifests directly from [`nandurpm/poly-pmna-pdf-files`](https://github.com/nandurpm/poly-pmna-pdf-files) through the `NOTES_BASE` constant in `src/lib/polydata.ts`. The PDF repository is the single source of truth; `polypmna` intentionally does not copy PDF binaries into its application bundle.
