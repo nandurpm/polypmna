@@ -1,4 +1,14 @@
 .env.local
+.env
+.env.*
+!.env.example
 node_modules
 dist
-
+.convex/
+convex/.env.local
+android/.gradle/
+android/local.properties
+android/**/build/
+android/*.jks
+android/*.keystore
+*.apk

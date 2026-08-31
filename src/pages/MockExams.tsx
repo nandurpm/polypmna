@@ -15,6 +15,7 @@ import {
   Trophy,
   RotateCcw,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];  type Exam = {
   _id: string;
@@ -82,6 +83,7 @@ export default function MockExams() {
       setSubmitted(true);
     } catch (e) {
       console.error("Could not submit exam:", e);
+      toast.error("Could not submit your exam. Please try again.");
     }
   };
 

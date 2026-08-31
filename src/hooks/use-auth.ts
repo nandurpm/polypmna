@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { api } from "@/convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useQuery } from "convex/react";
@@ -7,7 +7,6 @@ export function useAuth() {
   const { isLoading: isAuthLoading, isAuthenticated } = useConvexAuth();
   const user = useQuery(api.users.currentUser);
   const { signIn, signOut } = useAuthActions();
-  const anonymousAttempted = useRef(false);
 
   // Public study features, including Ask POLY AI, should work without a
   // blocking sign-in screen. Create one anonymous Convex session per visitor.
@@ -15,13 +14,26 @@ export function useAuth() {
     if (
       !isAuthLoading &&
       !isAuthenticated &&
-      user === null &&
-      !anonymousAttempted.current
+      user === null
     ) {
-      anonymousAttempted.current = true;
-      void signIn("anonymous").catch(() => {
-        // Keep public read-only pages usable if anonymous auth is unavailable.
-      });
+      let cancelled = false;
+      const connectAnonymousSession = async () => {
+        for (let attempt = 0; attempt < 3 && !cancelled; attempt += 1) {
+          try {
+            await signIn("anonymous");
+            return;
+          } catch (error) {
+            console.warn(`Anonymous session attempt ${attempt + 1} failed`, error);
+            if (attempt < 2) {
+              await new Promise((resolve) => window.setTimeout(resolve, 1_000 * (attempt + 1)));
+            }
+          }
+        }
+      };
+      void connectAnonymousSession();
+      return () => {
+        cancelled = true;
+      };
     }
   }, [isAuthLoading, isAuthenticated, user, signIn]);
 
