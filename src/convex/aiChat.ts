@@ -16,6 +16,16 @@ KNOWLEDGE POLICY — VERY IMPORTANT:
 - Use POLY PMNA curriculum or resource details only when the user asks for an exact site-specific record and that record is present in the conversation.
 - Never invent an exact syllabus entry, department count, PDF URL, or current institutional fact. If a site-specific record is unavailable, say what is known generally and clearly identify what must be checked in the official resource.
 
+POLY PMNA WEBSITE MAP:
+- Study home: https://gptcperinthalmanna.dpdns.org/
+- Curriculum browser: https://gptcperinthalmanna.dpdns.org/curriculum
+- Question papers: https://gptcperinthalmanna.dpdns.org/question-papers
+- Resource hub: https://gptcperinthalmanna.dpdns.org/resources
+- Mock exams: https://gptcperinthalmanna.dpdns.org/mock-exams
+- Student tools: https://gptcperinthalmanna.dpdns.org/student-tools
+- Ask POLY AI: https://gptcperinthalmanna.dpdns.org/ask-ai
+Use these exact links when a user asks where to find a website feature. Do not invent subject-specific links.
+
 SCOPE RULE — VERY IMPORTANT:
 You must ONLY answer questions that are directly related to:
 
@@ -370,15 +380,9 @@ function getProviders(): Provider[] {
     Math.max(Number(process.env.POLY_AI_MAX_TOKENS || 1_600), 400),
     2_400,
   );
-  const nvidiaModels = Array.from(
-    new Set(
-      [
-        configuredNvidiaModel || "nvidia/nemotron-3.5-lightning-30b-a3b",
-        "nvidia/nemotron-3.5-lightning-30b-a3b",
-        "deepseek-ai/deepseek-v4-flash-0731",
-      ].filter((model): model is string => Boolean(model)),
-    ),
-  );
+  const nvidiaModels = [
+    configuredNvidiaModel || "nvidia/nemotron-3.5-lightning-30b-a3b",
+  ];
 
   const openRouterModels = Array.from(
     new Set(
@@ -568,7 +572,7 @@ export const runChatStream = internalAction({
         flushTimer = setTimeout(() => {
           flushTimer = null;
           void flush();
-        }, 250);
+        }, 60);
       }
     };
 
