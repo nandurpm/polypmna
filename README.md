@@ -312,4 +312,8 @@ OPENROUTER_API_KEY='your-key-in-your-shell-only' \
   "Explain a revision-aware SQL GROUP BY query for subject counts by department and semester."
 ```
 
-For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, start the Vite app with `pnpm run dev`, and open `http://127.0.0.1:5173/polypmna/#/ask-ai`. The browser must not receive either provider key. Provider keys belong in Convex production environment variables; the static frontend uses the deterministic fallback when the backend action is unavailable.
+For a full local UI test, set `VITE_CONVEX_URL` to the Convex deployment URL, start the Vite app with `bun run dev`, and open `http://127.0.0.1:5173/polypmna/ask-ai`. The legacy `/ask-poly.html` URL renders the same public page. The browser must not receive either provider key. Provider keys belong in Convex production environment variables; the static frontend uses the deterministic fallback when authentication, the backend action, or every provider is unavailable.
+
+## Static route metadata
+
+`bun run build` runs `scripts/prepare-static-routes.mjs` after Vite. It writes route-specific HTML entry points for the public pages so non-JavaScript crawlers and link-preview bots receive the correct title, description, canonical URL, Open Graph URL, and a small crawlable page summary. The custom domain in `CNAME` is the canonical origin; GitHub Pages is only the deployment transport. Keep `scripts/static-seo.mjs`, `src/components/SeoHead.tsx`, `public/sitemap.xml`, and `public/robots.txt` synchronized when adding an indexable route.

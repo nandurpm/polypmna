@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const listBySubject = query({
@@ -37,7 +37,7 @@ export const recent = query({
 });
 
 // Seed question papers
-export const seedQuestionPapers = mutation({
+export const seedQuestionPapers = internalMutation({
   args: {},
   handler: async (ctx) => {
     const existing = await ctx.db.query("questionPapers").first();
