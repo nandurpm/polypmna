@@ -1,8 +1,8 @@
 User-agent: *
 Allow: /
-Disallow: /polypmna/auth
-Disallow: /polypmna/dashboard
-Disallow: /polypmna/pdf
-Disallow: /polypmna/lesson
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /pdf
+Disallow: /lesson
 
-Sitemap: https://nandurpm.github.io/polypmna/sitemap.xml
+Sitemap: https://gptcperinthalmanna.dpdns.org/sitemap.xml

@@ -5,6 +5,7 @@ import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import SeoHead from "./components/SeoHead";
+import { RequireAuth } from "./components/RequireAuth";
 import { getRuntimeBasePath } from "./lib/siteBase";
 import "./index.css";
 
@@ -131,11 +132,14 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/" element={<Landing />} />
               <Route
                 path="/auth"
-                element={<AuthPage redirectAfterAuth="/curriculum" />}
+                element={<AuthPage />}
               />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              {/* POLY AI remains public and creates an anonymous Convex session
+                  when available; its offline fallback must work without auth. */}
               <Route path="/ask-ai" element={<AskAI />} />
-              <Route path="/mock-exams" element={<MockExams />} />
+              <Route path="/ask-poly.html" element={<AskAI />} />
+              <Route path="/mock-exams" element={<RequireAuth><MockExams /></RequireAuth>} />
               <Route path="/question-papers" element={<QuestionPapers />} />
               <Route path="/student-tools" element={<StudentTools />} />
               <Route path="/subject/:subjectId" element={<SubjectDetail />} />
