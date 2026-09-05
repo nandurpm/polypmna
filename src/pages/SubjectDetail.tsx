@@ -14,7 +14,6 @@ import {
 import {
   getLessonUrl,
   getModelPaperUrl,
-  getPdfDownloadUrl,
   getPdfForCode,
   getRevisionSubjects,
   getSyllabusUrl,
@@ -84,7 +83,7 @@ export default function SubjectDetail() {
   useEffect(() => { loadSubject(); }, [loadSubject]);
 
   const title = subject?.name || (pdf ? cleanTitle(pdf.title) : `Subject ${code}`);
-  const notesUrl = subject?.notesUrl || (revision === "2026" ? getPdfDownloadUrl(code) : "");
+  const notesUrl = pdf?.pdfUrl || subject?.notesUrl || "";
   const lessonUrl = subject?.lessonUrl || getLessonUrl(code, revision);
   const syllabusUrl = subject?.syllabusUrl || getSyllabusUrl(code, revision);
   const modelPaperUrl = subject?.modelPaperUrl || (revision === "2015" ? "" : getModelPaperUrl(code, revision));
@@ -150,3 +149,4 @@ export default function SubjectDetail() {
     </div>
   );
 }
+
