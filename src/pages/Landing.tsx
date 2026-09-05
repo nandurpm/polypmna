@@ -27,7 +27,6 @@ import {
   getAllPdfs,
   getQuestionPapers,
   getProgrammes,
-  getPdfDownloadUrl,
   getLessonUrl,
   type SubjectEntry,
   type PdfSubject,
@@ -239,7 +238,7 @@ export default function Landing() {
                             </Link>
                           )}
                           {pdf && (
-                            <a href={getPdfDownloadUrl(r.code)} download target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-600 hover:bg-emerald-500/20 transition-colors">
+                            <a href={pdf.pdfUrl} download target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-600 hover:bg-emerald-500/20 transition-colors">
                               <Download className="h-3 w-3" /> Download
                             </a>
                           )}
@@ -494,6 +493,8 @@ export default function Landing() {
         </div>
       )}
 
+      <a href={`${import.meta.env.BASE_URL}pdf-library.html`} className="mx-auto my-6 text-primary underline">All PDFs — browse the shared archive</a>
+
       {/* Footer */}
       <footer className="mt-auto w-full border-t border-border bg-muted/30">
         <div className="w-full px-4 sm:px-6 lg:px-10 py-6">
@@ -512,3 +513,4 @@ export default function Landing() {
     </div>
   );
 }
+

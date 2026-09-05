@@ -120,7 +120,7 @@ const _curriculumCache = new Map<Revision, CurriculumSubject[]>();
 
 /* ─── Fetch helpers ─── */
 async function fetchJSON<T>(url: string): Promise<T> {
-  const resp = await fetch(url);
+  const resp = await fetch(url, { cache: "no-store" });
   if (!resp.ok) throw new Error(`Fetch failed: ${resp.status} ${url}`);
   return resp.json();
 }
@@ -162,13 +162,15 @@ function normalizeSitttrSourceUrl(sourceUrl: string): string {
   return sourceUrl;
 }
 
-function curriculum2026(subjects: SubjectEntry[]): CurriculumSubject[] {
+async function curriculum2026(subjects: SubjectEntry[]): Promise<CurriculumSubject[]> {
+  const pdfs = await getAllPdfs();
+  const urls = new Map(pdfs.map((pdf) => [pdf.code, pdf.pdfUrl]));
   return subjects.map((subject) => ({
     ...subject,
     revision: "2026",
     syllabusUrl: currentSitttrUrl("site%2Fdiploma-syllabus-course-contents", subject.code, "2026"),
     modelPaperUrl: currentSitttrUrl("site%2Fdiploma-modelqp-courses-show", subject.code, "2026"),
-    notesUrl: getPdfDownloadUrl(subject.code),
+    notesUrl: urls.get(subject.code),
     lessonUrl: getLessonUrl(subject.code, "2026") || undefined,
   }));
 }
@@ -177,7 +179,10 @@ async function curriculum2021(): Promise<CurriculumSubject[]> {
   const data = await fetchJSON<{ subjects: Revision2021Record[] }>(
     `${DIPLOMA_BASE}/assets/data/revision-2021-subjects.json`,
   );
+  const pdfs = await fetchJSON<{ subjects: PdfSubject[] }>(`${NOTES_BASE}/manifests/notes-2021.json`);
+  const urls = new Map(pdfs.subjects.filter((pdf) => pdf.status === "published").map((pdf) => [pdf.code, pdf.pdfUrl]));
   return data.subjects.map((subject) => ({
+    notesUrl: urls.get(subject.assetCode || subject.code),
     revision: "2021",
     code: subject.code,
     name: subject.name,
@@ -237,7 +242,7 @@ export async function getRevisionSubjects(revision: Revision): Promise<Curriculu
   const cached = _curriculumCache.get(revision);
   if (cached) return cached;
   const subjects = revision === "2026"
-    ? curriculum2026(await getAllSubjects())
+    ? await curriculum2026(await getAllSubjects())
     : revision === "2021"
       ? await curriculum2021()
       : await curriculum2015();
@@ -320,9 +325,6 @@ export function getModelPaperUrl(code: string, revision: Revision): string {
   return currentSitttrUrl("site%2Fdiploma-modelqp-courses-show", code, revision);
 }
 
-export function getPdfDownloadUrl(code: string): string {
-  return `${NOTES_BASE}/notes/2026/${code}/v1/${code}.pdf`;
-}
 
 export async function getPapersForCode(code: string): Promise<QuestionPaperDoc[]> {
   const all = await getQuestionPapers();
@@ -361,3 +363,4 @@ export async function getStats(): Promise<{ totalSubjects: number; totalPdfs: nu
     totalProgrammes: new Set(subjects.map((s) => s.programmeCode)).size,
   };
 }
+
