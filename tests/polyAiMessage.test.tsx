@@ -40,7 +40,8 @@ describe("POLY AI rich answers", () => {
 
   it("preserves code literally", () => {
     const html = render("```text\n$V_{CC}$ **literal**\n```");
-    expect(html.replace(/<[^>]+>/g, "")).toContain("$V_{CC}$ **literal**");
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    expect(doc.body.textContent ?? "").toContain("$V_{CC}$ **literal**");
     expect(html).not.toContain('class="katex"');
   });
 });
