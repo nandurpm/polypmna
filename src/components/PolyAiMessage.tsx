@@ -1,4 +1,6 @@
 import { Fragment, type ReactNode } from "react";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 
 type MessageBlock =
   | { kind: "heading"; level: number; text: string }
@@ -18,6 +20,15 @@ const codeKeywords: Record<string, string[]> = {
   python: ["and", "as", "class", "def", "elif", "else", "for", "from", "if", "import", "in", "is", "None", "not", "or", "print", "return", "True", "False", "while", "with"],
   sql: ["alter", "and", "as", "by", "create", "delete", "from", "group", "having", "insert", "into", "join", "left", "limit", "not", "null", "on", "or", "order", "select", "set", "table", "update", "values", "where"],
 };
+
+function splitTableRow(row: string): string[] {
+  return row.trim().replace(/^\|/, "").replace(/\|$/, "").split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, "|"));
+}
+
+function isTableSeparator(line: string): boolean {
+  const cells = splitTableRow(line);
+  return cells.length > 1 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
 
 function parseBlocks(markdown: string): MessageBlock[] {
   const lines = markdown.replace(/\r/g, "").trim().split("\n");
@@ -80,8 +91,8 @@ function parseBlocks(markdown: string): MessageBlock[] {
       blocks.push({ kind: "numbers", items });
       continue;
     }
-    if (line.includes("|") && index + 1 < lines.length && /^\s*\|?\s*:?-{3,}(?:\s*:?\s*\|\s*:?-{3,})+\s*\|?\s*$/.test(lines[index + 1])) {
-      const splitRow = (row: string) => row.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+    if (line.includes("|") && index + 1 < lines.length && isTableSeparator(lines[index + 1])) {
+      const splitRow = splitTableRow;
       const headers = splitRow(line);
       index += 2;
       const rows: string[][] = [];
@@ -97,7 +108,7 @@ function parseBlocks(markdown: string): MessageBlock[] {
     while (index < lines.length && lines[index].trim()) {
       const next = lines[index];
       if (/^\s*(?:#{1,4}\s|```|>|[-*+]\s+|\d+[.)]\s+|---+|\*\*\*+)/.test(next)) break;
-      if (next.includes("|") && index + 1 < lines.length && /^\s*\|?\s*:?-{3,}/.test(lines[index + 1])) break;
+      if (next.includes("|") && index + 1 < lines.length && isTableSeparator(lines[index + 1])) break;
       paragraph.push(next.trim());
       index += 1;
     }
@@ -107,7 +118,7 @@ function parseBlocks(markdown: string): MessageBlock[] {
 }
 
 function renderInline(text: string, keyPrefix: string): ReactNode[] {
-  const pattern = /(`[^`]+`|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_|~~[^~]+~~|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g;
+  const pattern = /(`[^`]+`|\$\$[\s\S]+?\$\$|\$(?!\s)(?:[^$\\\n]|\\[\s\S])+\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\]|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_|~~[^~]+~~|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g;
   const parts: ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -116,7 +127,16 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
     if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
     const token = match[0];
     if (token.startsWith("`")) parts.push(<code key={`${keyPrefix}-${key++}`} className="rounded bg-slate-900/8 px-1.5 py-0.5 font-mono text-[0.92em] text-amber-700">{token.slice(1, -1)}</code>);
-    else if (token.startsWith("**") || token.startsWith("__")) parts.push(<strong key={`${keyPrefix}-${key++}`}>{token.slice(2, -2)}</strong>);
+    else if (token.startsWith("$") || token.startsWith("\\(" ) || token.startsWith("\\[")) {
+      const displayMode = token.startsWith("$$") || token.startsWith("\\[");
+      const delimiterLength = token.startsWith("$") && !displayMode ? 1 : 2;
+      const html = katex.renderToString(token.slice(delimiterLength, -delimiterLength), {
+        displayMode, throwOnError: false, trust: false, strict: "ignore", maxSize: 20, maxExpand: 1000,
+      });
+      // Only KaTeX-generated markup is inserted; raw model HTML remains escaped by React.
+      parts.push(<span key={`${keyPrefix}-${key++}`} className={displayMode ? "block max-w-full overflow-x-auto" : "inline-block max-w-full overflow-x-auto align-middle"} dangerouslySetInnerHTML={{ __html: html }} />);
+    }
+    else if (token.startsWith("**") || token.startsWith("__")) parts.push(<strong key={`${keyPrefix}-${key++}`}>{renderInline(token.slice(2, -2), `${keyPrefix}-strong-${key}`)}</strong>);
     else if (token.startsWith("~~")) parts.push(<del key={`${keyPrefix}-${key++}`}>{token.slice(2, -2)}</del>);
     else if (token.startsWith("*") || token.startsWith("_")) parts.push(<em key={`${keyPrefix}-${key++}`}>{token.slice(1, -1)}</em>);
     else {
@@ -196,7 +216,7 @@ export function PolyAiMessage({ content }: { content: string }) {
         if (block.kind === "bullets") return <ul key={index} className="ml-5 list-disc space-y-1 text-slate-700">{block.items.map((item, itemIndex) => <li key={itemIndex}>{renderInline(item, `bullet-${index}-${itemIndex}`)}</li>)}</ul>;
         if (block.kind === "numbers") return <ol key={index} className="ml-5 list-decimal space-y-1 text-slate-700">{block.items.map((item, itemIndex) => <li key={itemIndex}>{renderInline(item, `number-${index}-${itemIndex}`)}</li>)}</ol>;
         if (block.kind === "divider") return <hr key={index} className="border-slate-200" />;
-        if (block.kind === "table") return <div key={index} className="my-3 overflow-x-auto rounded-xl border border-slate-200"><table className="min-w-full text-left text-xs"><thead className="bg-slate-100 text-slate-800"><tr>{block.headers.map((header, headerIndex) => <th key={headerIndex} className="whitespace-nowrap px-3 py-2 font-semibold">{renderInline(header, `header-${index}-${headerIndex}`)}</th>)}</tr></thead><tbody className="divide-y divide-slate-100 bg-white">{block.rows.map((row, rowIndex) => <tr key={rowIndex} className="align-top even:bg-slate-50/70">{block.headers.map((_, cellIndex) => <td key={cellIndex} className="px-3 py-2 text-slate-700">{renderInline(row[cellIndex] ?? "", `cell-${index}-${rowIndex}-${cellIndex}`)}</td>)}</tr>)}</tbody></table></div>;
+        if (block.kind === "table") return <div key={index} className="my-3 overflow-x-auto rounded-xl border border-slate-200" role="region" aria-label="Response table" tabIndex={0}><table className="min-w-full text-left text-xs"><thead className="bg-slate-100 text-slate-800"><tr>{block.headers.map((header, headerIndex) => <th scope="col" key={headerIndex} className="whitespace-nowrap px-3 py-2 font-semibold">{renderInline(header, `header-${index}-${headerIndex}`)}</th>)}</tr></thead><tbody className="divide-y divide-slate-100 bg-white">{block.rows.map((row, rowIndex) => <tr key={rowIndex} className="align-top even:bg-slate-50/70">{block.headers.map((_, cellIndex) => <td key={cellIndex} className="px-3 py-2 text-slate-700">{renderInline(row[cellIndex] ?? "", `cell-${index}-${rowIndex}-${cellIndex}`)}</td>)}</tr>)}</tbody></table></div>;
         if (block.language === "mermaid" || block.language === "flowchart") return <Flowchart key={index} code={block.code} />;
         return <div key={index} className="my-3 overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-inner"><div className="flex items-center justify-between border-b border-slate-800 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400"><span>{block.language || "code"}</span><span className="flex gap-1"><i className="h-2 w-2 rounded-full bg-rose-400" /><i className="h-2 w-2 rounded-full bg-amber-300" /><i className="h-2 w-2 rounded-full bg-emerald-400" /></span></div><pre className="overflow-x-auto p-4 text-xs leading-6"><code>{highlightCode(block.code, block.language)}</code></pre></div>;
       })}
