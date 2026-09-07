@@ -118,7 +118,7 @@ function parseBlocks(markdown: string): MessageBlock[] {
 }
 
 function renderInline(text: string, keyPrefix: string): ReactNode[] {
-  const pattern = /(`[^`]+`|\$\$[\s\S]+?\$\$|\$(?!\s)(?:\\.|[^$\n])+?\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\]|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_|~~[^~]+~~|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g;
+  const pattern = /(`[^`]+`|\$\$[\s\S]+?\$\$|\$(?!\s)(?:[^$\\\n]|\\[\s\S])+\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\]|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_|~~[^~]+~~|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g;
   const parts: ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
