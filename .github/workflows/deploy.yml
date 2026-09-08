@@ -74,7 +74,6 @@ jobs:
   convex:
     name: Deploy Convex AI backend
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -87,8 +86,11 @@ jobs:
       - name: Install dependencies
         # The repository currently carries a Bun lockfile generated from a
         # different dependency graph; allow Bun to reconcile it for this
-        # optional backend job rather than failing before the credential gate.
+        # backend job rather than failing before the credential gate.
         run: bun install
+      - name: Type-check Convex backend
+        run: bunx tsc --noEmit -p src/convex/tsconfig.json
+
       - name: Check Convex deployment credential
         id: convex_gate
         env:

@@ -6,6 +6,8 @@
   "compilerOptions": {
     /* These settings are not required by Convex and can be modified. */
     "allowJs": true,
+    // Include process.env and server Web APIs with TypeScript 6+.
+    "types": ["node"],
     "strict": true,
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
