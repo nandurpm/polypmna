@@ -7,7 +7,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { POLY_AI_UNAVAILABLE, visiblePolyAiMessages } from "@/lib/polyAiConversation";
 import { PolyAiMessage } from "@/components/PolyAiMessage";
-import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isPolyAiQueryInScope, isPolyAiUtilityQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { generatePolyAiResponse, isPolyAiUtilityQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
 import { clearPolyAiState, loadPolyAiState, savePolyAiState } from "@/lib/polyAiStorage";
 import {
   Send,
@@ -162,8 +162,8 @@ export default function AskAI() {
     const messageId = `${id}-assistant`;
     const userMessage = { _id: `${id}-user`, role: "user" as const, content };
 
-    // Scoped providers may reject even harmless arithmetic or greetings. These
-    // deterministic utilities should respond immediately without a network hop.
+    // Deterministic utilities can respond without a network request.
+    // Every other question goes to the provider; there is no academic-only gate.
     if (isPolyAiUtilityQuery(content)) {
       const response = sanitizePolyAiResponse(generatePolyAiResponse(content));
       setLocalMessages((current) => [...current, userMessage, {
@@ -177,20 +177,6 @@ export default function AskAI() {
       if (user) {
         void storeMessages({ userContent: content, assistantContent: response })
           .catch((persistError) => console.warn("Could not persist utility response:", persistError));
-      }
-      return;
-    }
-
-    if (!isPolyAiQueryInScope(content)) {
-      const response = POLY_AI_SCOPE_RESPONSE;
-      setLocalMessages((current) => [...current, userMessage, { _id: messageId, role: "assistant" as const, content: response, source: "local" as const }]);
-      setIsSending(false);
-      inputRef.current?.focus();
-      if (user) {
-        void Promise.race([
-          storeMessages({ userContent: content, assistantContent: response }),
-          new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error("Chat history save timed out")), 5000)),
-        ]).catch((persistError) => console.warn("Could not persist chat history; local answer remains visible:", persistError));
       }
       return;
     }
@@ -324,8 +310,8 @@ export default function AskAI() {
                 Welcome to POLY AI
               </h2>
               <p className="mt-2 text-sm text-muted-foreground max-w-2xl leading-relaxed">
-                Your personal AI study assistant for Kerala Polytechnic. Ask doubts, understand concepts,
-                get explanations in simple language, and prepare for exams.
+                Ask about technology, everyday questions, writing, coding, or your studies.
+                POLY AI also helps with Kerala Polytechnic subjects and exam preparation.
               </p>
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2 w-full max-w-3xl">
                 {quickPrompts.map((prompt) => (
@@ -434,7 +420,7 @@ export default function AskAI() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything about your subjects..."
+              placeholder="Ask POLY AI anything..."
               rows={1}
               className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 outline-none py-1 max-h-24"
               style={{ minHeight: "24px" }}
