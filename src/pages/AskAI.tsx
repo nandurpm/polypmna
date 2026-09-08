@@ -5,8 +5,9 @@ import { useNavigate } from "react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { POLY_AI_UNAVAILABLE, visiblePolyAiMessages } from "@/lib/polyAiConversation";
 import { PolyAiMessage } from "@/components/PolyAiMessage";
-import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isGenericPolyAiResponse, isLeakedPolyAiResponse, isPolyAiQueryInScope, isPolyAiUtilityQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
+import { POLY_AI_SCOPE_RESPONSE, generatePolyAiResponse, isPolyAiQueryInScope, isPolyAiUtilityQuery, sanitizePolyAiResponse } from "@/lib/polyAi";
 import { clearPolyAiState, loadPolyAiState, savePolyAiState } from "@/lib/polyAiStorage";
 import {
   Send,
@@ -58,66 +59,11 @@ export default function AskAI() {
     activeStreamId ? { streamId: activeStreamId } : "skip",
   );
   const allMessages = useMemo(() => {
-    const visible: { _id: string; role: "user" | "assistant"; content: string; source?: "provider" | "local" }[] = [];
     const mergedMessages = [
       ...(chatHistory ?? []).map((message: { _id: string; role: string; content: string }) => ({ _id: String(message._id), role: message.role as "user" | "assistant", content: message.content, source: undefined as "provider" | "local" | undefined })),
       ...localMessages,
     ];
-    const seenExchanges = new Set<string>();
-    let pendingUser: (typeof visible)[number] | null = null;
-    for (const message of mergedMessages) {
-      if (message.role === "user") {
-        visible.push(message);
-        pendingUser = message;
-        continue;
-      }
-
-      const content = sanitizePolyAiResponse(message.content);
-      const isLegacyScopeRefusal = content === POLY_AI_SCOPE_RESPONSE;
-      const needsLocalRepair = !content || isLegacyScopeRefusal || isLeakedPolyAiResponse(message.content) || isGenericPolyAiResponse(content);
-      let repairedContent = content;
-      let repairedId = message._id;
-      let repairedSource = message.source;
-      if (needsLocalRepair) {
-        if (pendingUser) {
-          repairedContent = sanitizePolyAiResponse(generatePolyAiResponse(pendingUser.content));
-          repairedId = `${message._id}-local-repair`;
-          repairedSource = "local";
-        } else {
-          // Invalid assistant records without a paired user are stale/orphaned.
-          continue;
-        }
-      }
-      if (pendingUser) {
-        const exchangeKey = `${pendingUser.content}\u0000${repairedContent}`;
-        if (seenExchanges.has(exchangeKey)) {
-          const previousExchangeIndex = visible.findIndex((item, index) => (
-            item.role === "user"
-            && item.content === pendingUser?.content
-            && visible[index + 1]?.role === "assistant"
-            && visible[index + 1]?.content === repairedContent
-          ));
-          if (previousExchangeIndex >= 0) visible.splice(previousExchangeIndex, 2);
-        }
-        seenExchanges.add(exchangeKey);
-        pendingUser = null;
-      }
-      visible.push({ ...message, _id: repairedId, content: repairedContent, source: repairedSource });
-    }
-    const normalized: typeof visible = [];
-    for (let index = 0; index < visible.length; index += 1) {
-      const message = visible[index];
-      normalized.push(message);
-      if (message.role === "user" && visible[index + 1]?.role !== "assistant") {
-        normalized.push({
-          _id: `${message._id}-orphan-repair`,
-          role: "assistant",
-          content: sanitizePolyAiResponse(generatePolyAiResponse(message.content)),
-          source: "local",
-        });
-      }
-    }
-    return normalized;
+    return visiblePolyAiMessages(mergedMessages);
   }, [chatHistory, localMessages]);
   const hiddenMessageCount = Math.max(0, allMessages.length - 16);
   const messages = showOlderMessages ? allMessages : allMessages.slice(-16);
@@ -145,13 +91,13 @@ export default function AskAI() {
       )));
     }
     if (streamState.status === "completed") {
-      const finalContent = streamedContent || sanitizePolyAiResponse(generatePolyAiResponse(active.userContent));
+      const finalContent = streamedContent || POLY_AI_UNAVAILABLE;
       setLocalMessages((current) => current.map((message) => (
         message._id === active.messageId
-          ? { ...message, content: finalContent, source: "provider" }
+          ? { ...message, content: finalContent, source: streamedContent ? "provider" : "local" }
           : message
       )));
-      setProviderError(null);
+      setProviderError(streamedContent ? null : "The AI returned an empty answer. Please retry.");
       setIsSending(false);
       activeStreamRef.current = null;
       setActiveStreamId(null);
@@ -161,14 +107,14 @@ export default function AskAI() {
       ]).catch((persistError) => console.warn("Could not persist streamed chat history; local answer remains visible:", persistError));
       inputRef.current?.focus();
     } else if (streamState.status === "failed") {
-      const fallback = sanitizePolyAiResponse(generatePolyAiResponse(active.userContent));
+      const fallback = POLY_AI_UNAVAILABLE;
       setLocalMessages((current) => current.map((message) => (
         message._id === active.messageId
           ? { ...message, content: fallback, source: "local" }
           : message
       )));
-      setProviderError("The external AI provider did not finish streaming. This answer was generated offline; please retry shortly.");
-      toast.error("External AI failed, so an offline answer was used.");
+      setProviderError("The external AI provider did not finish streaming. Please retry your question.");
+      toast.error("AI could not finish. Please retry.");
       setIsSending(false);
       activeStreamRef.current = null;
       setActiveStreamId(null);
@@ -186,19 +132,17 @@ export default function AskAI() {
       const active = activeStreamRef.current;
       if (!active || active.streamId !== activeStreamId) return;
 
-      const fallback = sanitizePolyAiResponse(
-        generatePolyAiResponse(active.userContent),
-      );
+      const fallback = POLY_AI_UNAVAILABLE;
       setLocalMessages((current) => current.map((message) => (
         message._id === active.messageId
           ? { ...message, content: fallback, source: "local" }
           : message
       )));
-      setProviderError("The external AI request timed out. This answer was generated offline.");
+      setProviderError("The external AI request timed out. Please retry your question.");
       setIsSending(false);
       activeStreamRef.current = null;
       setActiveStreamId(null);
-      toast.error("POLY AI timed out, so an offline answer was used.");
+      toast.error("AI timed out. Please retry.");
       inputRef.current?.focus();
     }, STREAM_WATCHDOG_MS);
 
@@ -271,12 +215,12 @@ export default function AskAI() {
       setActiveStreamId(streamId);
     } catch (error) {
       console.warn("Could not start streamed POLY AI response; using deterministic fallback:", error);
-      const fallback = sanitizePolyAiResponse(generatePolyAiResponse(content));
+      const fallback = POLY_AI_UNAVAILABLE;
       setLocalMessages((current) => current.map((message) => (
         message._id === messageId ? { ...message, content: fallback, source: "local" } : message
       )));
-      setProviderError("The external AI stream could not start. This answer was generated offline; please retry shortly.");
-      toast.error("External AI is unavailable, so an offline answer was used.");
+      setProviderError("The external AI stream could not start. Please retry your question.");
+      toast.error("AI is unavailable. Please retry.");
       setIsSending(false);
       inputRef.current?.focus();
       if (user) {
@@ -362,7 +306,7 @@ export default function AskAI() {
         <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 sm:py-5 lg:px-8">
           {providerError && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-              <p className="font-semibold">External AI unavailable — showing an offline answer</p>
+              <p className="font-semibold">AI answer unavailable</p>
               <p className="mt-1 opacity-80">{providerError}</p>
             </div>
           )}
@@ -435,7 +379,7 @@ export default function AskAI() {
                 {msg.role === "assistant" && (
                   <div className="mb-2 flex items-center justify-between gap-3 border-b border-slate-100 pb-2">
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">
-                      <Sparkles className="h-3 w-3" /> POLY AI · {msg.source === "provider" ? "AI answer" : msg.source === "local" ? "offline answer" : "answer"}
+                      <Sparkles className="h-3 w-3" /> POLY AI · {msg.content === POLY_AI_UNAVAILABLE ? "unavailable" : msg.source === "provider" ? "AI answer" : msg.source === "local" ? "offline answer" : "answer"}
                     </span>
                     <button
                       onClick={() => handleCopy(msg._id, msg.content)}
@@ -505,7 +449,7 @@ export default function AskAI() {
             </button>
           </div>
               <p className="text-[11px] text-muted-foreground/60 text-center mt-2">
-            {isAuthLoading ? "Secure history is connecting; offline answers are ready." : "POLY AI is an educational assistant. Verify important information with your textbooks."}
+            {isAuthLoading ? "Chat history is connecting." : "POLY AI is an educational assistant. Verify important information with your textbooks."}
           </p>
         </div>
       </div>
