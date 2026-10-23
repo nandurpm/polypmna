@@ -126,6 +126,11 @@ export default function ResourceHub() {
           })}
         </div>
 
+        <section className="mt-8 rounded-xl border border-border bg-card p-4" aria-label="Email support">
+          <h2 className="text-base font-semibold">Contact and corrections</h2>
+          <a href="mailto:contact@nandakumarm.dpdns.org?subject=POLY%20PMNA%20Support" className="mt-2 inline-block break-all text-sm text-primary underline underline-offset-4">contact@nandakumarm.dpdns.org</a>
+        </section>
+
         <div className="mt-10 rounded-xl border border-border bg-muted/30 p-4 text-xs leading-relaxed text-muted-foreground">
           <HelpCircle className="mr-1 inline h-3.5 w-3.5 text-primary" />
           PDF notes and lesson links in the study home and subject pages use the published GitHub manifests directly, so the resource URLs remain available independently of the GitHub Pages frontend deployment.

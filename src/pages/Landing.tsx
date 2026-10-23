@@ -503,6 +503,7 @@ export default function Landing() {
               <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10"><BookOpen className="h-3 w-3 text-primary" /></div>
               <span className="text-xs font-semibold text-foreground/80 tracking-tight">Polytechnic Study Materials</span>
             </div>
+            <a href="mailto:contact@nandakumarm.dpdns.org" className="break-all text-xs text-primary underline underline-offset-4">contact@nandakumarm.dpdns.org</a>
             <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
               Revision 2026 &amp; 2021 · Kerala Polytechnic Curriculum · {loading ? "..." : `${subjects.length.toLocaleString()} subjects · ${pdfs.length.toLocaleString()} PDFs`}
               <ExternalLink className="h-3 w-3" />
