@@ -16,6 +16,14 @@ const openRouterModels = csvModels(
 );
 
 const providers = {
+  sarvam: {
+    label: "Sarvam",
+    key: process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY,
+    endpoint: "https://api.sarvam.ai/v2/chat/completions",
+    model: process.env.SARVAM_MODEL || "sarvam-105b",
+    headers: { "api-subscription-key": process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY || "" },
+    body: (provider) => ({ model: provider.model }),
+  },
   nvidia: {
     label: "NVIDIA",
     key: process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API,
@@ -47,7 +55,7 @@ const providers = {
 
 const selected = requested === "both" ? Object.values(providers) : [providers[requested]];
 if (selected.some((provider) => !provider)) {
-  console.error("Usage: node scripts/monitor-ai-providers.mjs [openrouter|nvidia|both]");
+  console.error("Usage: node scripts/monitor-ai-providers.mjs [sarvam|openrouter|nvidia|both]");
   process.exit(2);
 }
 

@@ -5,6 +5,13 @@ const query = process.argv.slice(3).join(" ") ||
 const requested = process.argv[2] || "both";
 
 const providers = {
+  sarvam: {
+    label: "Sarvam",
+    key: process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY,
+    endpoint: "https://api.sarvam.ai/v2/chat/completions",
+    model: process.env.SARVAM_MODEL || "sarvam-105b",
+    headers: { "api-subscription-key": process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY || "" },
+  },
   openrouter: {
     label: "OpenRouter",
     key: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
@@ -26,7 +33,7 @@ const providers = {
 
 const selected = requested === "both" ? Object.values(providers) : [providers[requested]];
 if (selected.some((provider) => !provider)) {
-  console.error("Usage: node scripts/test-ai-providers.mjs [openrouter|nvidia|both] [question]");
+  console.error("Usage: node scripts/test-ai-providers.mjs [sarvam|openrouter|nvidia|both] [question]");
   process.exit(2);
 }
 

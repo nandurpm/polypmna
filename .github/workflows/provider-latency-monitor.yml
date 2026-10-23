@@ -25,10 +25,12 @@ jobs:
         with:
           node-version: 22
 
-      - name: Measure NVIDIA and OpenRouter latency
+      - name: Measure Sarvam, NVIDIA, and OpenRouter latency
         id: latency
         continue-on-error: true
         env:
+          SARVAM_API: ${{ secrets.SARVAM_API || secrets.SARYAM_API || secrets.SARVAM_API_KEY }}
+          SARVAM_MODEL: sarvam-105b
           NVIDIA_API_KEY: ${{ secrets.NVDIA_API || secrets.NVIDIA_API || secrets.NVIDIA_API_KEY }}
           NVIDIA_MODEL: nvidia/nemotron-3.5-lightning-30b-a3b
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API || secrets.OPENROUTER_API_KEY }}
