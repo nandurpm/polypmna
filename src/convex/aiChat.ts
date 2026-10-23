@@ -393,9 +393,10 @@ function getProviders(): Provider[] {
     model,
   }));
 
-  // Keep failover deterministic: Sarvam first, then NVIDIA and OpenRouter. The client
+  // Keep failover deterministic: NVIDIA and OpenRouter first, then Sarvam as the
+  // final configured server fallback. The client
   // supplies the final offline fallback if every server provider fails.
-  return [sarvamProvider, ...nvidiaProviders, ...openRouterProviders];
+  return [...nvidiaProviders, ...openRouterProviders, sarvamProvider];
 }
 
 export const startChatStream = action({

@@ -5,13 +5,6 @@ const query = process.argv.slice(3).join(" ") ||
 const requested = process.argv[2] || "both";
 
 const providers = {
-  sarvam: {
-    label: "Sarvam",
-    key: process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY,
-    endpoint: "https://api.sarvam.ai/v2/chat/completions",
-    model: process.env.SARVAM_MODEL || "sarvam-105b",
-    headers: { "api-subscription-key": process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY || "" },
-  },
   openrouter: {
     label: "OpenRouter",
     key: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API,
@@ -28,6 +21,13 @@ const providers = {
     endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
     model: process.env.NVIDIA_MODEL || "meta/llama-3.3-70b-instruct",
     headers: {},
+  },
+  sarvam: {
+    label: "Sarvam (fallback)",
+    key: process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY,
+    endpoint: "https://api.sarvam.ai/v2/chat/completions",
+    model: process.env.SARVAM_MODEL || "sarvam-105b",
+    headers: { "api-subscription-key": process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY || "" },
   },
 };
 

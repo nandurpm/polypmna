@@ -16,14 +16,6 @@ const openRouterModels = csvModels(
 );
 
 const providers = {
-  sarvam: {
-    label: "Sarvam",
-    key: process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY,
-    endpoint: "https://api.sarvam.ai/v2/chat/completions",
-    model: process.env.SARVAM_MODEL || "sarvam-105b",
-    headers: { "api-subscription-key": process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY || "" },
-    body: (provider) => ({ model: provider.model }),
-  },
   nvidia: {
     label: "NVIDIA",
     key: process.env.NVIDIA_API_KEY || process.env.NVIDIA_API || process.env.NVDIA_API,
@@ -50,6 +42,14 @@ const providers = {
         preferred_max_latency: { p90: 8 },
       },
     }),
+  },
+  sarvam: {
+    label: "Sarvam (fallback)",
+    key: process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY,
+    endpoint: "https://api.sarvam.ai/v2/chat/completions",
+    model: process.env.SARVAM_MODEL || "sarvam-105b",
+    headers: { "api-subscription-key": process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY || "" },
+    body: (provider) => ({ model: provider.model }),
   },
 };
 
