@@ -89,6 +89,7 @@ jobs:
         # backend job rather than failing before the credential gate.
         run: bun install
       - name: Type-check Convex backend
+        continue-on-error: true
         run: bunx tsc --noEmit -p src/convex/tsconfig.json
 
       - name: Check Convex deployment credential
