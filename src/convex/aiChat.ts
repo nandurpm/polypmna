@@ -314,6 +314,11 @@ function getUtcDayStart(timestamp: number): number {
 }
 
 function getProviders(): Provider[] {
+  const sarvamApiKey =
+    process.env.SARVAM_API ||
+    process.env.SARYAM_API ||
+    process.env.SARVAM_API_KEY;
+  const sarvamModel = process.env.SARVAM_MODEL || "sarvam-105b";
   const nvidiaApiKey =
     process.env.NVIDIA_API_KEY ||
     process.env.NVIDIA_API ||
@@ -373,15 +378,25 @@ function getProviders(): Provider[] {
     timeoutMs: nvidiaTimeoutMs,
     maxTokens,
   }));
+  const sarvamProvider = {
+    name: `Sarvam (${sarvamModel})`,
+    apiKey: sarvamApiKey,
+    endpoint: "https://api.sarvam.ai/v2/chat/completions",
+    model: sarvamModel,
+    headers: { "api-subscription-key": sarvamApiKey || "" },
+    timeoutMs: openRouterTimeoutMs,
+    maxTokens,
+  };
   const openRouterProviders = openRouterModels.map((model) => ({
     ...openRouterBase,
     name: `OpenRouter (${model})`,
     model,
   }));
 
-  // Keep failover deterministic: NVIDIA first, then OpenRouter. The client
+  // Keep failover deterministic: NVIDIA and OpenRouter first, then Sarvam as the
+  // final configured server fallback. The client
   // supplies the final offline fallback if every server provider fails.
-  return [...nvidiaProviders, ...openRouterProviders];
+  return [...nvidiaProviders, ...openRouterProviders, sarvamProvider];
 }
 
 export const startChatStream = action({

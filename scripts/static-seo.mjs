@@ -46,7 +46,7 @@ export function renderRouteHtml(template, route, config) {
   const canonical = `${SITE_ORIGIN}${route === "/" ? "/" : route}`;
   const title = escapeHtml(config.title);
   const description = escapeHtml(config.description);
-  const content = `<main id="seo-content"><h1>${escapeHtml(config.heading)}</h1><p>${description}</p><nav aria-label="Study pages"><a href="/curriculum">Curriculum</a> <a href="/question-papers">Question papers</a> <a href="/resources">Resources</a> <a href="/mock-exams">Mock exams</a> <a href="/student-tools">Student tools</a> <a href="/ask-ai">Ask POLY AI</a></nav></main>`;
+  const content = `<main id="seo-content"><h1>${escapeHtml(config.heading)}</h1><p>${description}</p><nav aria-label="Study pages"><a href="/curriculum">Curriculum</a> <a href="/question-papers">Question papers</a> <a href="/resources">Resources</a> <a href="/mock-exams">Mock exams</a> <a href="/student-tools">Student tools</a> <a href="/ask-ai">Ask POLY AI</a></nav><p>Contact: <a href="mailto:contact@nandakumarm.dpdns.org">contact@nandakumarm.dpdns.org</a></p></main>`;
 
   return template
     .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)

@@ -22,11 +22,18 @@ const providers = {
     model: process.env.NVIDIA_MODEL || "meta/llama-3.3-70b-instruct",
     headers: {},
   },
+  sarvam: {
+    label: "Sarvam (fallback)",
+    key: process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY,
+    endpoint: "https://api.sarvam.ai/v2/chat/completions",
+    model: process.env.SARVAM_MODEL || "sarvam-105b",
+    headers: { "api-subscription-key": process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY || "" },
+  },
 };
 
 const selected = requested === "both" ? Object.values(providers) : [providers[requested]];
 if (selected.some((provider) => !provider)) {
-  console.error("Usage: node scripts/test-ai-providers.mjs [openrouter|nvidia|both] [question]");
+  console.error("Usage: node scripts/test-ai-providers.mjs [sarvam|openrouter|nvidia|both] [question]");
   process.exit(2);
 }
 

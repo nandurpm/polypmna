@@ -43,11 +43,19 @@ const providers = {
       },
     }),
   },
+  sarvam: {
+    label: "Sarvam (fallback)",
+    key: process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY,
+    endpoint: "https://api.sarvam.ai/v2/chat/completions",
+    model: process.env.SARVAM_MODEL || "sarvam-105b",
+    headers: { "api-subscription-key": process.env.SARVAM_API || process.env.SARYAM_API || process.env.SARVAM_API_KEY || "" },
+    body: (provider) => ({ model: provider.model }),
+  },
 };
 
 const selected = requested === "both" ? Object.values(providers) : [providers[requested]];
 if (selected.some((provider) => !provider)) {
-  console.error("Usage: node scripts/monitor-ai-providers.mjs [openrouter|nvidia|both]");
+  console.error("Usage: node scripts/monitor-ai-providers.mjs [sarvam|openrouter|nvidia|both]");
   process.exit(2);
 }
 
